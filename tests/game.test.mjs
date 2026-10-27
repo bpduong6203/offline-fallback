@@ -25,18 +25,19 @@ test('bomb capacity is released after explosion and chain reactions are immediat
   updateBombs(s,.02);assert.equal(s.bombs.length,0);assert(s.fire.some(f=>f.x===5&&f.y===1));
   assert(place(s,p));
 });
-test('all players can cross bombs in both directions without changing walls',()=>{
+test('players may leave a newly placed bomb but cannot re-enter; others are blocked',()=>{
   const s=game(),p=s.players[0],q=s.players[1];place(s,p);
-  assert(canStand(s,p,1.2,1));assert(canStand(s,q,1,1));
+  assert(canStand(s,p,1.2,1));assert(!canStand(s,q,1,1));
   move(s,p,1,0,.3);assert(p.x>2);
-  move(s,p,-1,0,.3);assert(Math.abs(p.x-1)<1e-8);
-  q.x=3;q.y=1;move(s,q,-1,0,.4);assert(q.x<2);assert.equal(s.bombs.length,1);
+  move(s,p,-1,0,.3);assert(p.x>1.74);
+  q.x=3;q.y=1;move(s,q,-1,0,.4);assert(q.x>1.74);assert.equal(s.bombs.length,1);
   assert(!canStand(s,p,2,2));
 });
 test('shield consumes one hit, grants immunity through the same fire, then expires',()=>{
-  const s=game(),p=s.players[0];p.shield=true;s.fire=[{x:1,y:1,t:2}];
+  const s=game(),p=s.players[0];p.shield=true;s.fire=[{x:1,y:1,t:2,fresh:true}];
   damage(s,.016);assert(p.alive);assert(!p.shield);assert(p.invincible>1);
-  damage(s,.6);assert(p.alive);damage(s,.7);assert(!p.alive);
+  damage(s,.6);assert(p.alive);damage(s,.7);assert(p.alive);
+  s.fire.push({x:1,y:1,t:.65,fresh:true});damage(s,.01);assert(!p.alive);
 });
 test('early and late corner turns align safely in all four directions',()=>{
   for(const [x,y,dx,dy] of [[2.55,1,0,1],[3.45,3,0,-1],[1,2.55,1,0],[3,3.45,-1,0]]) {
@@ -56,18 +57,20 @@ test('running is faster, frame independent and cannot tunnel through a crate',()
   s.map[1][3]=2;p.speed=6.6;move(s,p,1,0,1);assert(p.x<2.27);assert(canStand(s,p,p.x,p.y));
 });
 test('simultaneous deaths produce a draw after all damage is resolved',()=>{
-  const s=game();s.fire=s.players.map(p=>({x:p.x,y:p.y,t:.5}));step(s,1/60);
+  const s=game();s.bombs=s.players.map(p=>({x:p.x,y:p.y,t:0,range:1}));step(s,1/60);
   assert(s.players.every(p=>!p.alive));assert.match(s.result,/Hòa/);
 });
 test('last survivor wins; timeout with multiple survivors draws',()=>{
-  const s=game();s.fire=[{x:1,y:1,t:.5}];step(s,1/60);assert.match(s.result,/Người chơi 2/);
+  const s=game();s.bombs=[{x:1,y:1,t:0,range:1}];step(s,1/60);assert.match(s.result,/Người chơi 2/);
   const t=game();t.time=.01;step(t,.02);assert.match(t.result,/hòa/);
 });
-test('active fire kills on subsequent ticks, destroyed crate blocks simultaneous fire',()=>{
+test('entering old fire is safe; a new explosion still damages there',()=>{
   const s=game();s.map[1][3]=2;s.players[0].x=5;
   s.bombs=[{x:1,y:1,range:8,t:0,pass:new Set(),owner:0},{x:2,y:1,range:8,t:0,pass:new Set(),owner:1}];
   updateBombs(s,.01);assert.equal(s.map[1][3],0);assert(!s.fire.some(f=>f.x===4&&f.y===1));
-  s.players[0].x=3;damage(s,.01);assert(!s.players[0].alive);
+  damage(s,.01);assert(s.players[0].alive);
+  s.players[0].x=3;damage(s,.01);assert(s.players[0].alive);
+  s.bombs=[{x:3,y:1,range:1,t:0}];updateBombs(s,.01);damage(s,.01);assert(!s.players[0].alive);
 });
 test('powerups have caps and shields can be collected',()=>{
   const s=game(),p=s.players[0];

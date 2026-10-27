@@ -1,7 +1,9 @@
 export function canStand(s,p,x,y) {
   const radius=.24;
   for(const xx of [x-radius,x+radius])for(const yy of [y-radius,y+radius]) {
-    if(s.map[Math.round(yy)]?.[Math.round(xx)]!==0)return false;
+    const cx=Math.round(xx),cy=Math.round(yy);
+    if(s.map[cy]?.[cx]!==0)return false;
+    if(s.bombs.some(b=>b.x===cx&&b.y===cy&&!b.pass?.has(p.id)))return false;
   }
   return true;
 }
@@ -13,7 +15,9 @@ export function move(s,p,dx,dy,dt) {
   let travelled=0;
   const advance=(x,y)=>{
     if(!canStand(s,p,x,y))return false;
-    travelled+=Math.hypot(x-p.x,y-p.y);p.x=x;p.y=y;return true;
+    travelled+=Math.hypot(x-p.x,y-p.y);p.x=x;p.y=y;
+    for(const b of s.bombs)if(Math.abs(x-b.x)>.74||Math.abs(y-b.y)>.74)b.pass?.delete(p.id);
+    return true;
   };
   for(let i=0;i<steps;i++) {
     let remaining=stride;

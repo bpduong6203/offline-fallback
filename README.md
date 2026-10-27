@@ -1,4 +1,4 @@
-﻿# Offline Fallback Games
+# Offline Fallback Games
 
 Cloudflare Worker hiển thị trang chờ kèm mini game khi máy chủ gốc (origin), máy chủ local hoặc Cloudflare Tunnel không truy cập được. Người dùng có thể chơi trong lúc chờ kết nối khôi phục; các phòng online được Worker xử lý độc lập với origin.
 
@@ -96,7 +96,7 @@ Các phòng hiện không có cơ chế lưu và khôi phục trận xuyên su�
 ### Chơi Bomb Arena
 
 - Bản đồ 21×15 ô, giao diện tông cam và font hệ thống. Mỗi thùng có 38% khả năng rơi vật phẩm; trong số vật phẩm rơi ra, buff tốc độ chiếm 50% (tương đương 19% mỗi thùng).
-- Tốc độ chạy cơ bản 4,2 ô/giây, tăng bằng buff tới tối đa 6,6 ô/giây. Tự căn vào lối đi khi rẽ gần góc. Người chơi và bot có thể đi xuyên ô bom; tường và thùng vẫn chặn đường, lửa bom vẫn gây sát thương.
+- Tốc độ chạy cơ bản 4,2 ô/giây, tăng bằng buff tới tối đa 6,6 ô/giây. Tự căn vào lối đi khi rẽ gần góc. Bom chặn đường: nhân vật đang đứng trên ô bom vừa đặt được bước ra, sau đó không thể đi xuyên lại. Sát thương chỉ tính tại thời điểm bom nổ; hiệu ứng lửa còn lại không gây sát thương cho người đi vào sau.
 - **Local:** P1 dùng WASD + Space; P2 dùng phím mũi tên + Enter. Esc tạm dừng/tiếp tục. Có bot, ba độ khó và ba theme bản đồ.
 - **Mobile:** D-pad và nút đặt bom, hỗ trợ nhấn đồng thời; tùy chọn hai người cùng bàn phím được ẩn trên thiết bị con trỏ cảm ứng.
 - **Online:** nhập tên, bấm **Tạo phòng**, gửi mã cho bạn bè. Người khác nhập mã và bấm **Vào**. Chủ phòng chọn bản đồ, bắt đầu khi có 2–4 người và có thể chơi lại sau khi kết thúc. Mỗi người dùng WASD + Space hoặc điều khiển cảm ứng trên thiết bị của mình.

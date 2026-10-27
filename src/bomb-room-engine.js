@@ -50,7 +50,7 @@ export class BombRoomEngine {
   snapshot(){
     if(!this.game)return;
     const {random,...state}=this.game;
-    this.broadcast({t:'state',sequence:++this.sequence,state});
+    this.broadcast({t:'state',sequence:++this.sequence,state:{...state,bombs:state.bombs.map(({pass,...bomb})=>bomb)}});
     this.game.events=[];
   }
   leave(id){

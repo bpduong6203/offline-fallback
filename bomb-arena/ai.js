@@ -12,8 +12,7 @@ export function danger(s,bombs=s.bombs) {
   }
   const zones=new Map();
   const add=(x,y,a,b)=>{const k=key(x,y);if(!zones.has(k))zones.set(k,[]);zones.get(k).push([a,b]);};
-  areas.forEach((area,i)=>area.forEach(([x,y])=>add(x,y,times[i],times[i]+.75)));
-  s.fire.forEach(f=>add(f.x,f.y,0,f.t));
+  areas.forEach((area,i)=>area.forEach(([x,y])=>add(x,y,times[i],times[i]+1/60)));
   return zones;
 }
 const unsafe=(zones,x,y,a,b)=> (zones.get(key(x,y))||[]).some(([start,end])=>a<end&&b>start-.18);
@@ -27,6 +26,7 @@ export function route(s,p,zones,goal,bombs=s.bombs,maxTime=4) {
     for(const [dx,dy] of [...dirs,[0,0]]) {
       const x=n.x+dx,y=n.y+dy,t=n.t+duration;
       if(t>maxTime||s.map[y]?.[x]!==0)continue;
+      if(bombs.some(b=>b.x===x&&b.y===y&&b.t>t&&!(x===sx&&y===sy&&n.x===sx&&n.y===sy)))continue;
       if(unsafe(zones,x,y,n.t,t+.12)||unsafe(zones,n.x,n.y,n.t,t-.05))continue;
       const k=`${x},${y},${Math.round(t/duration)}`;if(seen.has(k))continue;seen.add(k);
       queue.push({x,y,t,path:[...n.path,[x,y]]});
