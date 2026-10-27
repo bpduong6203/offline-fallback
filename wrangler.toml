@@ -1,0 +1,30 @@
+name = "offline-fallback"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# Route wildcard cho toàn bộ subdomain mebidev.site
+routes = [
+  { pattern = "*.mebidev.site/*", zone_name = "mebidev.site" }
+]
+
+# Nếu trước đây bạn đã tắt địa chỉ *.workers.dev cho Worker này thì bỏ dấu # ở dòng dưới
+# workers_dev = false
+
+# Bi-a và Caro (chuyển tin nhắn giữa 2 người)
+[[durable_objects.bindings]]
+name = "POOL"
+class_name = "PoolRoom"
+
+# Ma sói (server giữ vai trò và luật chơi)
+[[durable_objects.bindings]]
+name = "WOLF"
+class_name = "WolfRoom"
+
+# Migration cũ giữ nguyên, chỉ THÊM v2
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["PoolRoom"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["WolfRoom"]
