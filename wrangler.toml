@@ -28,3 +28,12 @@ new_sqlite_classes = ["PoolRoom"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["WolfRoom"]
+
+# Bomb Arena: phòng tối đa 4 người, server xử lý luật chơi.
+[[durable_objects.bindings]]
+name = "BOMB"
+class_name = "BombRoom"
+
+[[migrations]]
+tag = "v3"
+new_sqlite_classes = ["BombRoom"]

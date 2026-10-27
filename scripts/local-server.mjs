@@ -1,0 +1,44 @@
+import {createServer} from 'node:http';
+import {WebSocketServer} from 'ws';
+import {BombRoomEngine} from '../src/bomb-room-engine.js';
+
+export function localServer(getHtml){
+  const rooms=new Map(),wss=new WebSocketServer({noServer:true,maxPayload:512});
+  const server=createServer(async(req,res)=>{
+    if(!['/','/__game/bomb-arena'].includes(req.url?.split('?')[0])){res.writeHead(404);res.end('Not found');return;}
+    try{const html=await getHtml();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}
+  });
+  server.on('upgrade',(req,socket,head)=>{
+    const url=new URL(req.url,'http://'+req.headers.host),code=(url.searchParams.get('room')||'').toUpperCase(),create=url.searchParams.get('action')==='create';
+    const reject=(status,text)=>{socket.end(`HTTP/1.1 ${status} ${text}\r\nConnection: close\r\n\r\n`);};
+    if(req.headers.origin){try{if(new URL(req.headers.origin).host!==req.headers.host)return reject(403,'Forbidden');}catch{return reject(403,'Forbidden');}}
+    if(url.pathname!=='/__game/ws'||url.searchParams.get('g')!=='bomb'||!/^[A-Z0-9]{4}$/.test(code))return reject(400,'Bad Request');
+    let room=rooms.get(code);
+    if(create&&room)return reject(409,'Room exists');
+    if(!create&&!room)return reject(404,'Room not found');
+    if(room&&(room.engine.peers.size>=4||room.engine.game&&!room.engine.game.result))return reject(409,'Room unavailable');
+    if(!room){room={engine:new BombRoomEngine(),timer:null};rooms.set(code,room);}
+    wss.handleUpgrade(req,socket,head,ws=>{
+      const send=message=>{if(ws.readyState===1)ws.send(JSON.stringify(message));};
+      const id=room.engine.join(url.searchParams.get('name'),send);
+      let left=false,count=0,windowStart=Date.now();
+      const leave=()=>{if(left)return;left=true;room.engine.leave(id);if(!room.engine.peers.size){clearInterval(room.timer);rooms.delete(code);}};
+      ws.on('close',leave);ws.on('error',leave);
+      ws.on('message',(data,binary)=>{
+        if(binary)return;const now=Date.now();if(now-windowStart>1000){windowStart=now;count=0;}if(++count>90){ws.close(1008,'Too many messages');leave();return;}
+        let message;try{message=JSON.parse(data.toString());}catch{return;}
+        room.engine.handle(id,message,now);
+        if(room.engine.game&&!room.engine.game.result&&!room.timer){
+          let last=now,accumulator=0,frames=0;
+          room.timer=setInterval(()=>{
+            const now=Date.now();accumulator+=Math.min(.1,(now-last)/1000);last=now;
+            while(accumulator>=1/60){room.engine.tick(1/60,now);accumulator-=1/60;}
+            if(++frames%3===0||room.engine.game?.result)room.engine.snapshot();
+            if(!room.engine.game||room.engine.game.result){clearInterval(room.timer);room.timer=null;}
+          },1000/60);
+        }
+      });
+    });
+  });
+  return {server,close:async()=>{for(const room of rooms.values())clearInterval(room.timer);for(const ws of wss.clients)ws.terminate();wss.close();await new Promise(resolve=>server.close(resolve));}};
+}
