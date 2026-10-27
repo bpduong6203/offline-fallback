@@ -62,17 +62,17 @@ document.querySelectorAll('.m').forEach((b,k)=>b.classList.toggle('on',k==i));$(
 function spawn(c,d){const z=d?[[3,2],[2,3]][(Math.random()*2)|0]:[1,1],w=z[0],h=z[1];for(let k=0;k<400;k++){const x=(1+Math.random()*(G-1-w))|0,y=(1+Math.random()*(H-1-h))|0,i=y*G+x;
 let bad=0;for(let a=0;a<w;a++)for(let e=0;e<h;e++){const j=i+e*G+a;if(water[j]||road[j]||bAt[j]>=0)bad=1}if(bad)continue;
 if(bl.some(b=>x-1<b.x+b.w&&x+w+1>b.x&&y-1<b.y+b.h&&y+h+1>b.y))continue;
-if(bl.some(b=>b.en.some(q=>{const qx=q.o%G,qy=(q.o/G)|0;return qx>=x&&qx<x+w&&qy>=y&&qy<y+h})))continue;
+if(bl.some(b=>(b.opts||b.en).some(q=>{const qx=q.o%G,qy=(q.o/G)|0;return qx>=x&&qx<x+w&&qy>=y&&qy<y+h})))continue;
 const cand=[];for(let a=0;a<w;a++)for(let e=0;e<h;e++)D.forEach(([dx,dy])=>{const u=a+dx,v=e+dy;if(u>=0&&v>=0&&u<w&&v<h)return;const X=x+u,Y=y+v;if(inb(X,Y)&&!water[Y*G+X]&&bAt[Y*G+X]<0)cand.push({o:Y*G+X,i:(y+e)*G+x+a})});
-let en=[],dbl=false,lot=null,bld=null;if(!d){if(cand.length)en=[cand[(Math.random()*cand.length)|0]]}else{const hz=w==3,sA=Math.random()<.5;
+let en=[],opts=null,dbl=false,lot=null,bld=null;if(!d){opts=cand}else{const hz=w==3,sA=Math.random()<.5;
 lot=hz?(sA?[[0,0,1,2]]:[[2,0,1,2]]):(sA?[[0,0,2,1]]:[[0,2,2,1]]);bld=hz?(sA?[1,0,2,2]:[0,0,2,2]):(sA?[0,1,2,2]:[0,0,2,2]);
 const lx=x+lot[0][0],ly=y+lot[0][1];let ends;
 if(hz)ends=[{o:(ly-1)*G+lx,i:ly*G+lx,j:(ly+1)*G+lx,k:inb(lx,ly-1)},{o:(ly+2)*G+lx,i:(ly+1)*G+lx,j:ly*G+lx,k:inb(lx,ly+2)}];
 else ends=[{o:ly*G+lx-1,i:ly*G+lx,j:ly*G+lx+1,k:inb(lx-1,ly)},{o:ly*G+lx+2,i:ly*G+lx+1,j:ly*G+lx,k:inb(lx+2,ly)}];
 ends=ends.filter(q=>q.k&&!water[q.o]&&bAt[q.o]<0).map(({o,i,j})=>({o,i,j}));
 if(ends.length)en=[ends[(Math.random()*ends.length)|0]]}
-if(!en.length)continue;
-for(let a=0;a<w;a++)for(let e=0;e<h;e++)bAt[i+e*G+a]=bl.length;const rd=d&&bl.some(q=>q.d)&&t>=40&&Math.random()<.45;bl.push({x,y,w,h,c,d,en,dbl,lot,bld,rd,cap:rd?8:6,idle:true,pin:0,out:0,tm:3,cd:0,dg:0});return}}
+if(d&&!en.length)continue;
+for(let a=0;a<w;a++)for(let e=0;e<h;e++)bAt[i+e*G+a]=bl.length;const rd=d&&bl.some(q=>q.d)&&t>=40&&Math.random()<.45;bl.push({x,y,w,h,c,d,en,opts,dbl,lot,bld,rd,cap:rd?8:6,idle:true,pin:0,out:0,tm:3,cd:0,dg:0});return}}
 function path(b){const goal=new Int16Array(N);
 bl.forEach((d,k)=>{if(d.d&&d.c==b.c)d.en.forEach((q,m)=>{if(road[q.o])goal[q.o]=k*8+m+1})});
 const prev=new Int16Array(N).fill(-2),q=[];
@@ -159,9 +159,10 @@ const w=C*.36,h=C*.19;ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.roundR
 function fitMap(){const root=$('#w'),old=C,d=devicePixelRatio||1,centerX=root.scrollLeft+root.clientWidth/2,centerY=root.scrollTop+root.clientHeight/2,zoom=Math.min(1.18,1+Math.max(0,wk-1)*.012);C=Math.max(12,Math.floor(baseC*zoom));cv.width=G*C*d;cv.height=H*C*d;cv.style.width=G*C+'px';cv.style.height=H*C+'px';if(old&&old!==C){root.scrollLeft=Math.max(0,centerX*C/old-root.clientWidth/2);root.scrollTop=Math.max(0,centerY*C/old-root.clientHeight/2)}}
 function rs(){const r=$('#w').getBoundingClientRect();baseC=Math.max(12,Math.floor(Math.min((r.width-16)/G,(r.height-16)/H)));fitMap()}
 function cell(e){const r=cv.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/C),y=Math.floor((e.clientY-r.top)/C);return inb(x,y)?[x,y]:null}
-function okH(i){const x=i%G,y=(i/G)|0;return D.every(([dx,dy])=>{const X=x+dx,Y=y+dy;if(!inb(X,Y))return true;const j=Y*G+X,k=bAt[j];if(k<0)return true;if(!bl[k].d){const e=bl[k].en[0];return !!e&&e.o===i}let n=0;D.forEach(([ex,ey])=>{const U=X+ex,V=Y+ey;if(inb(U,V)&&road[V*G+U])n++});return n<2})}
+function okH(i){const x=i%G,y=(i/G)|0;return D.every(([dx,dy])=>{const X=x+dx,Y=y+dy;if(!inb(X,Y))return true;const j=Y*G+X,k=bAt[j];if(k<0)return true;if(!bl[k].d){const b=bl[k];return b.en.length?b.en[0].o===i:b.opts.some(q=>q.o===i)}let n=0;D.forEach(([ex,ey])=>{const U=X+ex,V=Y+ey;if(inb(U,V)&&road[V*G+U])n++});return n<2})}
+function lockHouse(i){const x=i%G,y=(i/G)|0;D.forEach(([dx,dy])=>{const X=x+dx,Y=y+dy;if(!inb(X,Y))return;const k=bAt[Y*G+X];if(k<0)return;const b=bl[k];if(!b.d&&!b.en.length){const q=b.opts.find(q=>q.o===i);if(q)b.en=[q]}})}
 function apply(c){if(!c||over)return;const i=c[1]*G+c[0];
-if(er){if(road[i]){road[i]=0;if(water[i])br++;else left++}}else if(!road[i]&&bAt[i]<0){if(!okH(i))return;if(water[i]){if(br>0){road[i]=1;br--}}else if(left>0){road[i]=1;left--}}}
+if(er){if(road[i]){road[i]=0;bl.forEach(b=>{if(!b.d&&b.en.length&&b.en[0].o===i)b.en=[]});if(water[i])br++;else left++}}else if(!road[i]&&bAt[i]<0){if(!okH(i))return;if(water[i]){if(br>0){road[i]=1;br--;lockHouse(i)}}else if(left>0){road[i]=1;left--;lockHouse(i)}}}
 function walk(a,b){if(!a||!b)return apply(b);let[x,y]=a;const vf=bAt[y*G+x]>=0&&Math.abs(b[1]-y)>Math.abs(b[0]-x),H=()=>{while(x!=b[0]){x+=Math.sign(b[0]-x);apply([x,y])}},V=()=>{while(y!=b[1]){y+=Math.sign(b[1]-y);apply([x,y])}};if(vf){V();H()}else{H();V()}}
 cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);er=e.button==2||mode=='erase';drag=cell(e);apply(drag)};
 cv.onpointermove=e=>{if(!drag)return;const c=cell(e);if(c){walk(drag,c);drag=c}};
