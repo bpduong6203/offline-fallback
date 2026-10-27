@@ -11,7 +11,7 @@ export const body = (hostname) => `  </style>
       <a href="/__game/bomb-arena" style="display:inline-flex;align-items:center;padding:9px 15px;border-radius:12px;background:#c2f383;color:#20332b;font-weight:800;text-decoration:none">✹ Bomb Arena</a>
       <button class="tab on" data-g="flappy">Flappy</button>
       <!-- <button class="tab" data-g="pool">🎱 Bi-a</button> -->
-      <!-- <button class="tab" data-g="caro">⭕ Caro</button> -->
+      <button class="tab" data-g="caro">Caro</button>
       <button class="tab" data-g="motorways">Mini Motorways</button>
       <!-- <button class="tab" data-g="sword">⚔️ Đấu kiếm</button>  -->
       <button class="tab" data-g="wolf">Ma sói</button>
