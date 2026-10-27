@@ -1,8 +1,9 @@
 import {blast,cell,key} from './map.js';
+import {dropItem} from './items.js';
 export function place(s,p) {
   const [x,y]=cell(p);
   if (!p.alive || s.bombs.filter(b=>b.owner===p.id).length>=p.capacity || s.bombs.some(b=>b.x===x&&b.y===y) || s.map[y][x]!==0) return false;
-  s.bombs.push({x,y,owner:p.id,range:p.range,t:2.5,pass:new Set(s.players.filter(q=>q.alive&&Math.abs(q.x-x)<.79&&Math.abs(q.y-y)<.79).map(q=>q.id))});
+  s.bombs.push({x,y,owner:p.id,range:p.range,t:2.5});
   s.events.push('place');return true;
 }
 export function updateBombs(s,dt) {
@@ -24,7 +25,7 @@ export function updateBombs(s,dt) {
   for(const k of destroyed) {
     const [x,y]=k.split(',').map(Number);s.map[y][x]=0;
     s.particles.push({x,y,t:.5,color:'#ffbc72'});
-    if(s.random()<.38) s.items.push({x,y,type:['bomb','range','speed','shield'][Math.floor(s.random()*4)]});
+    const type=dropItem(s.random);if(type)s.items.push({x,y,type});
   }
 }
 export function damage(s,dt) {

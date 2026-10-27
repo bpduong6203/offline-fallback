@@ -1,5 +1,5 @@
-export const W = 15;
-export const H = 13;
+export const W = 21;
+export const H = 15;
 export const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
 export const key = (x,y) => `${x},${y}`;
 export const cell = p => [Math.round(p.x), Math.round(p.y)];

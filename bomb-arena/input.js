@@ -12,6 +12,11 @@ export class Input {
     }
   }
   clear(){this.keys.clear();this.pointers.clear();}
-  direction(id){const set=new Set([...this.keys,...this.pointers.values()]);const codes=id===0?['KeyA','KeyD','KeyW','KeyS']:['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];const dx=Number(set.has(codes[1]))-Number(set.has(codes[0])),dy=Number(set.has(codes[3]))-Number(set.has(codes[2]));return dx?[dx,0]:[0,dy];}
+  direction(id){
+    const codes=id===0?['KeyA','KeyD','KeyW','KeyS']:['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
+    // The newest held direction wins, so a turn does not require releasing the old key first.
+    const latest=[...this.keys,...this.pointers.values()].filter(code=>codes.includes(code)).at(-1);
+    return latest===codes[0]?[-1,0]:latest===codes[1]?[1,0]:latest===codes[2]?[0,-1]:latest===codes[3]?[0,1]:[0,0];
+  }
   destroy(){this.controller.abort();this.clear();}
 }

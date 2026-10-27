@@ -5,6 +5,7 @@ import path from 'node:path';
 import {localServer} from './local-server.mjs';
 import assert from 'node:assert/strict';
 import {build} from './build.mjs';
+import {W,H} from '../bomb-arena/map.js';
 const html=await build(),profile=await mkdtemp(path.join(tmpdir(),'bomb-arena-'));
 const app=localServer(()=>html),server=app.server;
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -27,7 +28,16 @@ try{
  await cdp('Emulation.setDeviceMetricsOverride',{width:1280,height:1100,deviceScaleFactor:1,mobile:false});
  await cdp('Page.navigate',{url:`http://127.0.0.1:${server.address().port}`});
  for(let i=0;i<100;i++){if(await evaluate('document.querySelectorAll(".robot-row").length>0'))break;await wait(150);}
- assert.equal(await evaluate('document.getElementById("board").height'),624);
+ assert.equal(await evaluate('document.getElementById("board").height'),H*48);
+ assert.equal(await evaluate('getComputedStyle(document.getElementById("primary")).backgroundColor'),'rgb(255, 156, 69)');
+ assert.equal(await evaluate('getComputedStyle(document.body).backgroundColor'),'rgb(21, 20, 29)');
+ // Check layout at desktop, laptop, tablet and narrow mobile sizes, including without external fonts.
+ for(const [width,height] of [[1920,1080],[1366,768],[1024,768],[390,844],[360,800],[1280,1100]]){
+  await cdp('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});await wait(60);
+  const layout=await evaluate(`(()=>{const board=document.getElementById('board').getBoundingClientRect(),arena=document.querySelector('.arena').getBoundingClientRect(),aside=document.querySelector('aside').getBoundingClientRect(),timer=document.getElementById('timer').getBoundingClientRect(),top=document.querySelector('.arena-top').getBoundingClientRect();return {overflow:document.documentElement.scrollWidth>innerWidth,ratio:board.width/board.height,arenaHeight:arena.height,asideHeight:aside.height,arenaTop:arena.top,asideTop:aside.top,timerOffset:Math.abs((timer.left+timer.right)/2-(top.left+top.right)/2)}})()`);
+  assert(!layout.overflow,`horizontal overflow at ${width}`);assert(Math.abs(layout.ratio-W/H)<.01);assert(layout.timerOffset<1);
+  if(width>1050){assert(Math.abs(layout.arenaHeight-layout.asideHeight)<2);assert(Math.abs(layout.arenaTop-layout.asideTop)<1);}
+ }
  assert.equal(errors.length,0,JSON.stringify(errors));
  await click('primary');await key('Space');await wait(200);
  assert.match(await evaluate('document.querySelector(".robot-row small").textContent'),/1\/1/);
@@ -42,7 +52,7 @@ try{
  assert(await evaluate('document.getElementById("two-player").hidden'));
  assert.equal(await evaluate('getComputedStyle(document.querySelector(".touch")).display'),'flex');
  await click('primary');
- const ratio=await evaluate('(()=>{const r=document.getElementById("board").getBoundingClientRect();return r.width/r.height})()');assert(Math.abs(ratio-15/13)<.01);
+ const ratio=await evaluate('(()=>{const r=document.getElementById("board").getBoundingClientRect();return r.width/r.height})()');assert(Math.abs(ratio-W/H)<.01);
  await evaluate('document.querySelector(".touch").scrollIntoView({block:"center"})');
  const points=await evaluate(`['KeyD','Space'].map(code=>{const r=document.querySelector('[data-control="'+code+'"]').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})`);
  await cdp('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:points.map((p,i)=>({...p,id:i+1}))});await wait(180);await cdp('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await wait(150);
@@ -70,10 +80,16 @@ try{
   assert.equal(await evaluate('document.querySelectorAll("#room-players li").length'),i+1);
   assert(await evaluate('document.getElementById("primary").disabled'));
  }
- socket=hostSocket;assert.equal(await evaluate('document.querySelectorAll("#room-players li").length'),4);await click('primary');await wait(300);
- for(const playerSocket of players){socket=playerSocket;assert(await evaluate('document.getElementById("overlay").hidden'));await key('Space');}
- await wait(250);
- for(const playerSocket of players){socket=playerSocket;assert.equal(await evaluate('[...document.querySelectorAll(".robot-row small")].filter(el=>el.textContent.includes("1/1")).length'),4);}
+ socket=hostSocket;
+ for(let i=0;i<80;i++){if(await evaluate('document.querySelectorAll("#room-players li").length===4'))break;await wait(100);}
+ assert.equal(await evaluate('document.querySelectorAll("#room-players li").length'),4);await click('primary');await wait(300);
+ for(const playerSocket of players){socket=playerSocket;assert(await evaluate('document.getElementById("overlay").hidden'));}
+ // Observe each player's own bomb while its fuse is active, instead of assuming four transient HUD updates arrive together.
+ for(let i=0;i<players.length;i++){
+  socket=players[i];await key('Space');let seen=false;
+  for(let j=0;j<20;j++){seen=await evaluate(`document.querySelectorAll('.robot-row small')[${i}].textContent.includes('1/1')`);if(seen)break;await wait(50);}
+  assert(seen,`online player ${i+1} bomb`);
+ }
  socket=hostSocket;const online=await cdp('Page.captureScreenshot',{format:'png'});await writeFile(new URL('../dist/online-check.png',import.meta.url),Buffer.from(online.data,'base64'));await click('leave-room');await wait(200);
  socket=players[1];assert.match(await evaluate('document.querySelector("#room-players li").textContent'),/Chủ phòng/);
  for(const playerSocket of players.slice(1)){socket=playerSocket;await click('leave-room');}

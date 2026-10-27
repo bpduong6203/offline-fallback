@@ -16,7 +16,9 @@ export async function build(){
   await visit('main.js');
   const script=`const modules = {};\n${modules.join('\n')}`;
   const template=await readFile(path.join(root,'bomb-arena/index.html'),'utf8');
-  const css=await readFile(path.join(root,'bomb-arena/style.css'),'utf8');
+  // An inline stylesheet cannot contain a UTF-8 BOM before its first selector.
+  // PowerShell-written files may include one; strip it before embedding in HTML.
+  const css=(await readFile(path.join(root,'bomb-arena/style.css'),'utf8')).replace(/^\uFEFF/,'');
   const html=template.replace('/* STYLE */',()=>css).replace('/* SCRIPT */',()=>script);
   await mkdir(path.join(root,'dist'),{recursive:true});
   await writeFile(path.join(root,'dist/index.html'),html);
