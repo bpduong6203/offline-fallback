@@ -60,13 +60,15 @@ export const styleBase = `  <style>
       box-shadow: inset 6px 6px 12px #e6d3be, inset -6px -6px 12px #ffffff;
       max-width: 900px; margin: 0 auto 12px;
     }
-    .card[data-w="motorways"] .game { max-width: none; }
+    .card[data-w="motorways"] .game, .card[data-w="bangbang"] .game { max-width: none; }
     canvas { width: 100%; height: auto; display: block; touch-action: none; cursor: pointer; border-radius: 12px; }
     #motorwaysFrame { width: 100%; height: min(82vh, 1000px); min-height: 420px; display: block; border: 0; border-radius: 12px; background: #292e37; }
     #motorwaysFrame[hidden] { display: none; }
     #busEscapeFrame { width: 100%; height: min(82vh, 700px); min-height: 420px; display: block; border: 0; border-radius: 12px; background: #0f1218; }
     #busEscapeFrame[hidden] { display: none; }
-    @media (max-width: 600px) { .card { padding: 18px 12px; } .card[data-w="motorways"] { width: calc(100vw - 16px); padding: 14px 10px; } .game-library { padding: 10px 9px 3px; } .library-heading { font-size: 0.68rem; } .library-heading span { font-size: 0.68rem; } .tab { min-height: 40px; padding: 0 13px; } #motorwaysFrame { height: 72vh; min-height: 360px; } #busEscapeFrame { height: 72vh; min-height: 360px; } }
+    #bangBangFrame { width: 100%; height: min(90vh, 960px); min-height: 620px; display: block; border: 0; border-radius: 12px; background: #101722; }
+    #bangBangFrame[hidden] { display: none; }
+    @media (max-width: 600px) { .card { padding: 18px 12px; } .card[data-w="motorways"] { width: calc(100vw - 16px); padding: 14px 10px; } .game-library { padding: 10px 9px 3px; } .library-heading { font-size: 0.68rem; } .library-heading span { font-size: 0.68rem; } .tab { min-height: 40px; padding: 0 13px; } #motorwaysFrame { height: 72vh; min-height: 360px; } #busEscapeFrame { height: 72vh; min-height: 360px; } #bangBangFrame { height: 86vh; min-height: 660px; } }
     .poolui { margin-bottom: 12px; }
     .row { display: flex; gap: 8px; margin-bottom: 8px; }
     .mini {

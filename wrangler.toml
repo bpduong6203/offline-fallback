@@ -43,9 +43,10 @@ new_sqlite_classes = ["BombRoom"]
 name = "STICKMAN"
 class_name = "StickmanRoom"
 
-[[migrations]]
-tag = "v4"
-new_sqlite_classes = ["StickmanRoom"]
+# Bang Bang 3v3 global ready queue and authoritative match simulation.
+[[durable_objects.bindings]]
+name = "BANGBANG"
+class_name = "BangBangQueue"
 
 # Tiến Lên Miền Nam: server-authoritative room cho tối đa 4 người
 [[durable_objects.bindings]]
@@ -53,5 +54,13 @@ name = "TIENLEN"
 class_name = "TienLenRoom"
 
 [[migrations]]
+tag = "v4"
+new_sqlite_classes = ["StickmanRoom"]
+
+[[migrations]]
 tag = "v5"
 new_sqlite_classes = ["TienLenRoom"]
+
+[[migrations]]
+tag = "v6"
+new_sqlite_classes = ["BangBangQueue"]

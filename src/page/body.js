@@ -7,19 +7,23 @@ export const body = (hostname) => `  </style>
     <div class="domain-badge">${hostname}</div>
     <h1>Máy chủ local chưa bật 🐞</h1>
     <p class="sub">Giúp con bug bay qua các tủ máy chủ, thử Ma sói hoặc YOU GOT PLAYED, hoặc rủ bạn bè chơi các mini game trong lúc chờ nhé. Khi có kết nối trang sẽ tự tải lại.</p>
-    <div class="tabs">
-      <a class="tab" href="/tien-len" style="display:inline-flex;align-items:center;padding:9px 15px;border-radius:12px;background:#2ecc71;color:#052e16;font-weight:800;text-decoration:none">🃏 Tiến Lên</a>
-      <a class="tab" href="/stickman-fight">Stickman Showdown</a>
-      <a href="/__game/bomb-arena" style="display:inline-flex;align-items:center;padding:9px 15px;border-radius:12px;background:#ff9c45;color:#302015;font-weight:800;text-decoration:none">✹ Bomb Arena</a>
-      <button class="tab on" data-g="flappy">Flappy</button>
+    <section class="game-library" aria-label="Thư viện trò chơi">
+      <div class="library-heading"><strong>CHỌN GAME</strong><span>Cuộn ngang để xem thêm</span></div>
+      <nav class="tabs" aria-label="Danh sách game">
+      <button class="tab on" data-g="flappy" aria-pressed="true">Flappy</button>
       <!-- <button class="tab" data-g="pool">🎱 Bi-a</button> -->
-      <button class="tab" data-g="caro">Caro</button>
-      <button class="tab" data-g="motorways">Mini Motorways</button>
+      <button class="tab" data-g="caro" aria-pressed="false">Caro</button>
+      <button class="tab" data-g="wolf" aria-pressed="false">🐺 Ma sói</button>
+      <button class="tab" data-g="played" aria-pressed="false">YOU GOT PLAYED</button>
+      <button class="tab" data-g="motorways" aria-pressed="false">🚗 Mini Motorways</button>
+      <button class="tab" data-g="bangbang" aria-pressed="false">🚀 Bang Bang</button>
       <!-- <button class="tab" data-g="sword">⚔️ Đấu kiếm</button>  -->
-      <button class="tab" data-g="wolf">Ma sói</button>
-      <button class="tab" data-g="played">YOU GOT PLAYED</button>
-    </div>
-    <div class="game" id="gameBox"><canvas id="g"></canvas><div class="pg-touch" id="playedControls" hidden><div class="pg-touch-group"><button type="button" aria-label="Đi sang trái" data-played-control="left">←</button><button type="button" aria-label="Đi sang phải" data-played-control="right">→</button><button type="button" aria-label="Tạm dừng hoặc tiếp tục" data-played-control="pause">Ⅱ</button></div><button type="button" class="jump" aria-label="Nhảy" data-played-control="jump">NHẢY</button></div><iframe id="motorwaysFrame" title="Mini Motorways" src="/__game/mini-motorways" hidden></iframe></div>
+      <a class="tab tab-link" href="/tien-len">🃏 Tiến Lên <span aria-hidden="true">↗</span></a>
+      <a class="tab tab-link" href="/stickman-fight">🥊 Stickman Showdown <span aria-hidden="true">↗</span></a>
+      <a class="tab tab-link" href="/__game/bomb-arena">✹ Bomb Arena <span aria-hidden="true">↗</span></a>
+      </nav>
+    </section>
+    <div class="game" id="gameBox"><canvas id="g"></canvas><div class="pg-touch" id="playedControls" hidden><div class="pg-touch-group"><button type="button" aria-label="Đi sang trái" data-played-control="left">←</button><button type="button" aria-label="Đi sang phải" data-played-control="right">→</button><button type="button" aria-label="Tạm dừng hoặc tiếp tục" data-played-control="pause">Ⅱ</button></div><button type="button" class="jump" aria-label="Nhảy" data-played-control="jump">NHẢY</button></div><iframe id="motorwaysFrame" title="Mini Motorways" src="/__game/mini-motorways" hidden></iframe><iframe id="bangBangFrame" title="Bang Bang đấu trường xe tăng" data-src="/__game/bang-bang" hidden></iframe></div>
     <div class="poolui" id="poolui" hidden>
       <div id="pMenu">
         <div class="row">
