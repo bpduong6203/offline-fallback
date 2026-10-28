@@ -95,27 +95,61 @@ try {
   await cdp('Page.enable');
   await cdp('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
   await cdp('Page.navigate', { url: `http://127.0.0.1:${server.address().port}/tien-len` });
+  await wait(200);
 
-  // Wait for cards to deal
+  const title = await evaluate('document.title');
+  assert.match(title, /Tiến Lên Miền Nam/);
+
+  // 1. Verify Mode Selection Menu is visible on initial load
+  const isMenuVisible = await evaluate('getComputedStyle(document.getElementById("menuOverlay")).display !== "none"');
+  assert.equal(isMenuVisible, true, 'Menu overlay should be visible on initial load');
+
+  // Verify all 3 options exist in the DOM
+  assert.equal(await evaluate('!!document.getElementById("btnStartSolo")'), true);
+  assert.equal(await evaluate('!!document.getElementById("btnMenuCreateRoom")'), true);
+  assert.equal(await evaluate('!!document.getElementById("btnMenuJoinRoom")'), true);
+
+  // 2. Click "Chơi ngay với máy"
+  await evaluate('document.getElementById("btnStartSolo").click()');
+  await wait(300);
+
+  // Verify menu is hidden and cards are dealt
   for (let i = 0; i < 40; i++) {
     const cardCount = await evaluate('document.querySelectorAll("#userCards .playing-card").length');
     if (cardCount === 13) break;
     await wait(100);
   }
-
-  const title = await evaluate('document.title');
-  assert.match(title, /Tiến Lên Miền Nam/);
-
-  // Check 13 cards rendered in user's hand
   const cardsInHand = await evaluate('document.querySelectorAll("#userCards .playing-card").length');
-  assert.equal(cardsInHand, 13);
+  assert.equal(cardsInHand, 13, 'User should have 13 cards');
 
-  // Check clicking a card selects it
+  // Verify selecting a card
   await evaluate('document.querySelector("#userCards .playing-card").click()');
   const selectedCards = await evaluate('document.querySelectorAll("#userCards .playing-card.selected").length');
-  assert.equal(selectedCards, 1);
+  assert.equal(selectedCards, 1, 'Clicked card should have .selected class');
 
-  // Check responsive sizing without overflow
+  // 3. Click "Về Menu" button
+  await evaluate('document.getElementById("btnMenu").click()');
+  await wait(200);
+  const menuReopened = await evaluate('getComputedStyle(document.getElementById("menuOverlay")).display !== "none"');
+  assert.equal(menuReopened, true, 'Menu should reopen after clicking Về Menu');
+
+  // 4. Click "Tạo phòng mới" to test multiplayer room lobby
+  await evaluate('document.getElementById("btnMenuCreateRoom").click()');
+  await wait(500);
+
+  const isLobbyVisible = await evaluate('getComputedStyle(document.getElementById("lobbyOverlay")).display !== "none"');
+  assert.equal(isLobbyVisible, true, 'Lobby overlay should be visible after creating room');
+
+  const roomIdText = await evaluate('document.getElementById("lobbyRoomId").textContent');
+  assert.match(roomIdText, /^#[A-Z0-9]{4}$/, 'Room ID should be formatted as #XXXX');
+
+  // Leave lobby back to menu
+  await evaluate('document.getElementById("btnLobbyLeave").click()');
+  await wait(200);
+  const menuBack = await evaluate('getComputedStyle(document.getElementById("menuOverlay")).display !== "none"');
+  assert.equal(menuBack, true, 'Should return to menu after leaving lobby');
+
+  // 5. Check responsive sizing without overflow
   for (const [w, h] of [[1920, 1080], [1024, 768], [390, 844]]) {
     await cdp('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false });
     await wait(60);
@@ -126,7 +160,7 @@ try {
   // Ensure no uncaught browser runtime errors
   assert.equal(errors.length, 0, `Browser had exceptions: ${JSON.stringify(errors)}`);
 
-  console.log('✅ Tien Len browser checks passed successfully!');
+  console.log('✅ Tien Len menu, solo, and room lobby browser checks passed successfully!');
 } finally {
   if (socket) socket.close();
   chrome.kill();

@@ -78,10 +78,6 @@ export class TienLenRoomEngine {
     // Start game
     if (message.t === 'start' && id === this.host) {
       if (this.game && !this.game.ended) return;
-      if (this.peers.size < 2) {
-        peer.send({ t: 'error', message: 'Cần ít nhất 2 người để bắt đầu.' });
-        return;
-      }
       this.startGame();
     }
 
@@ -167,6 +163,7 @@ export class TienLenRoomEngine {
         return;
       }
     }
+    this.checkBotTurn();
   }
 
   handlePlayerPlay(playerId, cardIds) {
@@ -218,6 +215,7 @@ export class TienLenRoomEngine {
 
     this.advanceTurn();
     this.snapshot();
+    this.checkBotTurn();
   }
 
   handlePlayerPass(playerId) {
@@ -245,6 +243,7 @@ export class TienLenRoomEngine {
       this.advanceTurn();
     }
     this.snapshot();
+    this.checkBotTurn();
   }
 
   advanceTurn() {
@@ -253,6 +252,25 @@ export class TienLenRoomEngine {
       next = (next + 1) % 4;
     }
     this.game.currentTurn = next;
+  }
+
+  checkBotTurn() {
+    if (!this.game || this.game.ended) return;
+    const curPlayer = this.game.players[this.game.currentTurn];
+    if (curPlayer && curPlayer.isBot && !curPlayer.won) {
+      setTimeout(() => {
+        if (!this.game || this.game.ended || this.game.currentTurn !== curPlayer.id) return;
+        const ai = new BotAI(AI_DIFFICULTY.MEDIUM);
+        const isNewRound = this.game.currentCombo === null;
+        const enemySizes = this.game.players.filter(p => p.id !== curPlayer.id && !p.won).map(p => p.cardCount);
+        const move = ai.chooseMove(curPlayer.hand, this.game.currentCombo, isNewRound, null, enemySizes);
+        if (move) {
+          this.handlePlayerPlay(curPlayer.id, move.cards.map(c => c.id));
+        } else {
+          this.handlePlayerPass(curPlayer.id);
+        }
+      }, 700);
+    }
   }
 
   snapshot() {

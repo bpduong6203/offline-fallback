@@ -27,9 +27,9 @@ class TienLenGameApp {
 
     this.bots = [
       null,
-      new BotAI(AI_DIFFICULTY.HARD),
       new BotAI(AI_DIFFICULTY.MEDIUM),
-      new BotAI(AI_DIFFICULTY.HARD)
+      new BotAI(AI_DIFFICULTY.MEDIUM),
+      new BotAI(AI_DIFFICULTY.MEDIUM)
     ];
 
     this.currentTurn = 0;
@@ -40,6 +40,7 @@ class TienLenGameApp {
     this.isFirstGame = true;
     this.turnTimer = null;
     this.turnTimeRemaining = 15;
+    this.lobbyRoomCode = '';
 
     this.ui = new UIManager({
       onPlay: (cards) => this.handleUserPlay(cards),
@@ -48,11 +49,9 @@ class TienLenGameApp {
       onSort: (byCombo) => this.handleUserSort(byCombo)
     });
 
-    this.setupModals();
     this.setupHeaderActions();
-
-    // Start initial solo match
-    this.startSoloMatch();
+    this.setupMenu();
+    this.setupLobby();
   }
 
   setupHeaderActions() {
@@ -72,16 +71,34 @@ class TienLenGameApp {
       });
     }
 
+    const btnMenuRules = document.getElementById('btnMenuRules');
+    if (btnMenuRules) {
+      btnMenuRules.addEventListener('click', () => {
+        document.getElementById('rulesModal').style.display = 'flex';
+      });
+    }
+
     const roomBadge = document.getElementById('roomBadge');
     if (roomBadge) {
       roomBadge.addEventListener('click', () => {
-        document.getElementById('multiplayerModal').style.display = 'flex';
+        if (this.mode === 'online' && this.lobbyRoomCode) {
+          navigator.clipboard.writeText(this.lobbyRoomCode);
+          this.effects.showBanner(`MÃ PHÒNG: #${this.lobbyRoomCode}`, 'Đã sao chép vào bộ nhớ đệm!', 'chop');
+        } else {
+          this.showMenu();
+        }
       });
     }
-  }
 
-  setupModals() {
-    // Close buttons
+    // Top bar "Về Menu" button
+    const btnMenu = document.getElementById('btnMenu');
+    if (btnMenu) {
+      btnMenu.addEventListener('click', () => {
+        this.showMenu();
+      });
+    }
+
+    // Close buttons for modals
     document.querySelectorAll('.btn-close-modal').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const modal = e.target.closest('.modal-backdrop');
@@ -89,63 +106,211 @@ class TienLenGameApp {
       });
     });
 
-    // Multiplayer room creation & join
-    const btnCreateRoom = document.getElementById('btnCreateRoom');
-    const btnJoinRoom = document.getElementById('btnJoinRoom');
-    const inputRoomCode = document.getElementById('inputRoomCode');
-    const inputPlayerName = document.getElementById('inputPlayerName');
-
-    if (btnCreateRoom) {
-      btnCreateRoom.addEventListener('click', () => {
-        const name = inputPlayerName.value.trim() || 'Bạn';
-        const code = Math.random().toString(36).substring(2, 6).toUpperCase();
-        this.joinOnlineRoom(code, 'create', name);
+    const btnGameOverMenu = document.getElementById('btnGameOverMenu');
+    if (btnGameOverMenu) {
+      btnGameOverMenu.addEventListener('click', () => {
+        document.getElementById('gameOverModal').style.display = 'none';
+        this.showMenu();
       });
     }
 
-    if (btnJoinRoom) {
-      btnJoinRoom.addEventListener('click', () => {
-        const name = inputPlayerName.value.trim() || 'Bạn';
-        const code = (inputRoomCode.value.trim() || '').toUpperCase();
-        if (code.length === 4) {
-          this.joinOnlineRoom(code, 'join', name);
-        } else {
-          alert('Vui lòng nhập mã phòng 4 ký tự!');
-        }
-      });
-    }
-
-    // Play Again button
     const btnPlayAgain = document.getElementById('btnPlayAgain');
     if (btnPlayAgain) {
       btnPlayAgain.addEventListener('click', () => {
         document.getElementById('gameOverModal').style.display = 'none';
-        this.startSoloMatch();
+        if (this.mode === 'solo') {
+          this.startSoloMatch();
+        } else {
+          this.network.startGame();
+        }
       });
     }
   }
 
-  joinOnlineRoom(roomCode, action, playerName) {
+  showMenu() {
+    clearInterval(this.turnTimer);
+    if (this.mode === 'online') {
+      this.network.disconnect();
+    }
+    document.getElementById('gameOverModal').style.display = 'none';
+    document.getElementById('lobbyOverlay').style.display = 'none';
+    document.getElementById('menuOverlay').style.display = 'flex';
+  }
+
+  setupMenu() {
+    const inputName = document.getElementById('menuPlayerName');
+    const inputCode = document.getElementById('menuRoomCode');
+    const btnStartSolo = document.getElementById('btnStartSolo');
+    const btnCreateRoom = document.getElementById('btnMenuCreateRoom');
+    const btnJoinRoom = document.getElementById('btnMenuJoinRoom');
+
+    // Restore saved name
+    try {
+      const savedName = localStorage.getItem('tlmn_player_name');
+      if (savedName && inputName) inputName.value = savedName;
+    } catch (e) {}
+
+    // Check URL search params for invite link (?room=8899)
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomParam = urlParams.get('room');
+      if (roomParam && inputCode) {
+        inputCode.value = roomParam.trim().toUpperCase();
+      }
+    } catch (e) {}
+
+    const saveName = () => {
+      const name = (inputName?.value.trim()) || 'Bạn';
+      try { localStorage.setItem('tlmn_player_name', name); } catch (e) {}
+      this.players[0].name = name;
+      const podName = document.getElementById('userPodName');
+      if (podName) podName.textContent = name;
+      return name;
+    };
+
+    // 1. Chơi với máy (Solo)
+    btnStartSolo.addEventListener('click', () => {
+      const name = saveName();
+      const diffRadio = document.querySelector('input[name="aiDiff"]:checked');
+      const diff = diffRadio ? diffRadio.value : AI_DIFFICULTY.MEDIUM;
+
+      this.bots = [
+        null,
+        new BotAI(diff),
+        new BotAI(diff),
+        new BotAI(diff)
+      ];
+
+      document.getElementById('menuOverlay').style.display = 'none';
+      document.getElementById('roomBadge').innerHTML = '<span>🤖</span> Chơi Với Máy';
+      this.startSoloMatch();
+    });
+
+    // 2. Tạo phòng mới
+    btnCreateRoom.addEventListener('click', () => {
+      const name = saveName();
+      const code = Math.random().toString(36).substring(2, 6).toUpperCase();
+      this.enterLobby(code, 'create', name);
+    });
+
+    // 3. Vào phòng bằng mã
+    btnJoinRoom.addEventListener('click', () => {
+      const name = saveName();
+      const code = (inputCode.value.trim() || '').toUpperCase();
+      if (code.length !== 4) {
+        alert('Vui lòng nhập mã phòng gồm 4 ký tự!');
+        return;
+      }
+      this.enterLobby(code, 'join', name);
+    });
+  }
+
+  setupLobby() {
+    const btnCopyCode = document.getElementById('btnCopyCode');
+    const btnCopyLink = document.getElementById('btnCopyLink');
+    const btnLobbyStart = document.getElementById('btnLobbyStart');
+    const btnLobbyLeave = document.getElementById('btnLobbyLeave');
+
+    btnCopyCode.addEventListener('click', () => {
+      if (!this.lobbyRoomCode) return;
+      navigator.clipboard.writeText(this.lobbyRoomCode);
+      this.effects.showBanner(`MÃ: #${this.lobbyRoomCode}`, 'Đã sao chép mã phòng!', 'chop');
+    });
+
+    btnCopyLink.addEventListener('click', () => {
+      if (!this.lobbyRoomCode) return;
+      const link = `${window.location.origin}${window.location.pathname}?room=${this.lobbyRoomCode}`;
+      navigator.clipboard.writeText(link);
+      this.effects.showBanner('LINK MỜI BẠN BÈ', 'Đã sao chép link mời vào bộ nhớ đệm!', 'chop');
+    });
+
+    btnLobbyLeave.addEventListener('click', () => {
+      this.showMenu();
+    });
+
+    btnLobbyStart.addEventListener('click', () => {
+      this.network.startGame();
+    });
+  }
+
+  enterLobby(roomCode, action, playerName) {
+    this.lobbyRoomCode = roomCode;
+    document.getElementById('menuOverlay').style.display = 'none';
+    document.getElementById('lobbyOverlay').style.display = 'flex';
+    document.getElementById('lobbyRoomId').textContent = `#${roomCode}`;
+    document.getElementById('lobbyStatusMsg').textContent = 'Đang kết nối đến máy chủ phòng...';
+
     this.network.connect({ room: roomCode, action, name: playerName })
       .then(() => {
         this.mode = 'online';
-        document.getElementById('multiplayerModal').style.display = 'none';
-        document.getElementById('roomBadge').innerHTML = `🌐 Phòng: <b>#${roomCode}</b>`;
+        document.getElementById('lobbyStatusMsg').textContent = 'Gửi mã hoặc link cho bạn bè để cùng vào bàn (Tối đa 4 người).';
         this.setupOnlineListeners();
       })
       .catch(err => {
         alert('Không thể kết nối phòng: ' + err);
+        this.showMenu();
       });
   }
 
   setupOnlineListeners() {
+    // 1. LOBBY EVENT
+    this.network.on('lobby', (msg) => {
+      const isHost = this.network.playerId === msg.host;
+      const btnStart = document.getElementById('btnLobbyStart');
+      const waitHost = document.getElementById('lobbyWaitingHost');
+
+      if (btnStart) btnStart.style.display = isHost ? 'block' : 'none';
+      if (waitHost) waitHost.style.display = isHost ? 'none' : 'block';
+
+      // Render 4 seats
+      const seatsContainer = document.getElementById('lobbySeats');
+      if (seatsContainer) {
+        seatsContainer.innerHTML = '';
+        for (let i = 0; i < 4; i++) {
+          const player = msg.players.find(p => p.id === i);
+          const row = document.createElement('div');
+          if (player) {
+            row.className = 'seat-row occupied';
+            const isPlayerHost = player.id === msg.host;
+            row.innerHTML = `
+              <div class="seat-info">
+                <span class="seat-avatar">${isPlayerHost ? '👑' : '🤠'}</span>
+                <span class="seat-name">${player.name}</span>
+              </div>
+              <span class="seat-badge ${isPlayerHost ? 'host' : 'ready'}">
+                ${isPlayerHost ? 'Chủ phòng' : 'Đã vào bàn'}
+              </span>
+            `;
+          } else {
+            row.className = 'seat-row';
+            row.innerHTML = `
+              <div class="seat-info">
+                <span class="seat-avatar" style="opacity:0.5">🤖</span>
+                <span class="seat-name" style="color:#747d8c">Ghế ${i + 1} (Bot sẽ chơi cùng nếu để trống)</span>
+              </div>
+              <span class="seat-badge">Đang chờ</span>
+            `;
+          }
+          seatsContainer.appendChild(row);
+        }
+      }
+    });
+
+    // 2. GAME START EVENT
+    this.network.on('started', () => {
+      document.getElementById('lobbyOverlay').style.display = 'none';
+      document.getElementById('roomBadge').innerHTML = `🌐 Phòng: <b>#${this.lobbyRoomCode}</b>`;
+      sounds.playDeal();
+    });
+
+    // 3. GAME STATE SYNC
     this.network.on('state', (msg) => {
-      // Sync multiplayer server authoritative state
+      document.getElementById('lobbyOverlay').style.display = 'none';
       const state = msg.state;
       this.currentCombo = state.currentCombo ? Combination.fromJSON(state.currentCombo) : null;
       this.currentTurn = state.currentTurn;
       this.passedPlayerIds = new Set(state.passedPlayerIds || []);
-      
+
       const myInfo = state.players.find(p => p.id === this.network.playerId);
       if (myInfo && myInfo.hand) {
         this.players[0].hand = myInfo.hand.map(c => Card.fromJSON(c));
@@ -153,23 +318,34 @@ class TienLenGameApp {
         this.ui.renderHand(this.players[0].hand);
       }
 
-      state.players.forEach((sp, idx) => {
+      state.players.forEach((sp) => {
         const localIdx = (sp.id - this.network.playerId + 4) % 4;
         if (this.players[localIdx]) {
           this.players[localIdx].name = sp.name;
           this.players[localIdx].cardCount = sp.cardCount;
+          this.players[localIdx].won = sp.won;
+          this.players[localIdx].rank = sp.rank;
         }
       });
 
       this.ui.renderArena(this.currentCombo, state.lastPlayerName);
       this.ui.renderPlayers(this.players, this.currentTurn, this.passedPlayerIds);
       this.updateControls();
+
+      if (state.ended) {
+        this.endMatch();
+      }
     });
 
+    // 4. BEAT EVENT
     this.network.on('beat', (msg) => {
       sounds.playChop();
-      this.effects.shakeScreen(15, 300);
+      this.effects.shakeScreen(16, 320);
       this.effects.showBanner(msg.title || 'CHẶT HEO!', msg.sub || '', 'chop');
+    });
+
+    this.network.on('server_error', (msg) => {
+      alert(msg.message || 'Lỗi từ máy chủ phòng!');
     });
   }
 
@@ -208,7 +384,6 @@ class TienLenGameApp {
 
     // Determine who goes first
     if (this.isFirstGame) {
-      // Person with 3 of Spades
       let starterId = 0;
       for (const p of this.players) {
         if (p.hand.some(c => c.value === VALUES.THREE && c.suit === SUITS.SPADE)) {
@@ -218,7 +393,6 @@ class TienLenGameApp {
       }
       this.currentTurn = starterId;
     } else {
-      // Winner of previous game starts
       this.currentTurn = this.lastWinnerId || 0;
     }
 
@@ -233,7 +407,6 @@ class TienLenGameApp {
     clearInterval(this.turnTimer);
     const activePlayer = this.players[this.currentTurn];
 
-    // If current player has already won, skip
     if (activePlayer.won) {
       this.advanceTurn();
       return;
@@ -241,11 +414,9 @@ class TienLenGameApp {
 
     this.turnTimeRemaining = 15;
     this.ui.updateTimer(100, false);
-
     this.ui.renderPlayers(this.players, this.currentTurn, this.passedPlayerIds);
     this.updateControls();
 
-    // Countdown loop
     this.turnTimer = setInterval(() => {
       this.turnTimeRemaining -= 0.1;
       const pct = (this.turnTimeRemaining / 15) * 100;
@@ -262,7 +433,6 @@ class TienLenGameApp {
       }
     }, 100);
 
-    // If it's a Bot's turn, execute bot logic after brief delay
     if (activePlayer.isBot) {
       const delay = Math.random() * 800 + 700;
       setTimeout(() => {
@@ -276,7 +446,6 @@ class TienLenGameApp {
   handleTimeout() {
     const isNewRound = this.currentCombo === null;
     if (isNewRound) {
-      // Must play something: play smallest single
       const hand = this.players[this.currentTurn].hand;
       const plays = findValidPlays(hand, null, true);
       if (plays.length > 0) {
@@ -288,7 +457,10 @@ class TienLenGameApp {
   }
 
   updateControls() {
-    const isMyTurn = this.currentTurn === 0 && !this.players[0].won;
+    const isMyTurn = (this.mode === 'online') ?
+      (this.currentTurn === this.network.playerId) :
+      (this.currentTurn === 0 && !this.players[0].won);
+
     const isNewRound = this.currentCombo === null;
 
     this.ui.setControlsState({
@@ -300,6 +472,12 @@ class TienLenGameApp {
   }
 
   handleUserPlay(selectedCardIds) {
+    if (this.mode === 'online') {
+      if (this.currentTurn !== this.network.playerId) return;
+      this.network.playCards(selectedCardIds);
+      return;
+    }
+
     if (this.currentTurn !== 0) return;
     const cards = this.players[0].hand.filter(c => selectedCardIds.includes(c.id));
     const combo = identifyCombination(cards);
@@ -322,23 +500,27 @@ class TienLenGameApp {
   }
 
   handleUserPass() {
+    if (this.mode === 'online') {
+      if (this.currentTurn !== this.network.playerId) return;
+      this.network.passTurn();
+      return;
+    }
+
     if (this.currentTurn !== 0) return;
     if (this.currentCombo === null) {
       sounds.playError();
-      return; // Cannot pass when leading new round
+      return;
     }
     this.executePass(0);
   }
 
   handleUserHint() {
-    if (this.currentTurn !== 0) return;
-    const isNewRound = this.currentCombo === null;
     const hand = this.players[0].hand;
+    const isNewRound = this.currentCombo === null;
     const mustInclude = (this.isFirstGame && isNewRound) ? new Card(VALUES.THREE, SUITS.SPADE) : null;
 
     const validPlays = findValidPlays(hand, this.currentCombo, isNewRound, mustInclude);
     if (validPlays.length > 0) {
-      // Pick smallest valid play
       validPlays.sort((a, b) => a.highestCard.compareTo(b.highestCard));
       const target = validPlays[0];
       this.ui.selectCards(target.cards.map(c => c.id));
@@ -350,13 +532,11 @@ class TienLenGameApp {
 
   handleUserSort(byCombo) {
     if (byCombo) {
-      // Group pairs, straights, triples
-      // Simple combo sort: group by card value counts
       const counts = {};
       this.players[0].hand.forEach(c => counts[c.value] = (counts[c.value] || 0) + 1);
       this.players[0].hand.sort((a, b) => {
         if (counts[b.value] !== counts[a.value]) {
-          return counts[b.value] - counts[a.value]; // groups of 4, 3, 2 first
+          return counts[b.value] - counts[a.value];
         }
         return a.compareTo(b);
       });
@@ -385,7 +565,6 @@ class TienLenGameApp {
     clearInterval(this.turnTimer);
     const player = this.players[playerId];
 
-    // Check if this was a CHOP (Chặt Heo / Hàng)
     const wasChop = this.currentCombo && (
       (this.currentCombo.highestCard.isTwo() && combo.highestCard.isTwo() && combo.cards.length === this.currentCombo.cards.length) ||
       (this.currentCombo.highestCard.isTwo() && [COMBO_TYPE.THREE_CONSECUTIVE_PAIRS, COMBO_TYPE.FOUR_OF_A_KIND, COMBO_TYPE.FOUR_CONSECUTIVE_PAIRS].includes(combo.type)) ||
@@ -401,7 +580,6 @@ class TienLenGameApp {
       if (combo.type === COMBO_TYPE.FOUR_CONSECUTIVE_PAIRS) title = '4 ĐÔI THÔNG ĐÈ HÀNG!';
       this.effects.showBanner(title, `${player.name} chặt ${this.players[this.lastPlayerId]?.name || ''}!`, 'chop');
 
-      // Floating score transfer
       const lastPod = this.ui.playerPods[this.lastPlayerId];
       const winPod = this.ui.playerPods[playerId];
       this.effects.showFloatingScore(lastPod, 10000, false);
@@ -410,26 +588,22 @@ class TienLenGameApp {
       sounds.playCard();
     }
 
-    // Remove cards from player's hand
     const playedIds = new Set(combo.cards.map(c => c.id));
     player.hand = player.hand.filter(c => !playedIds.has(c.id));
     player.cardCount = player.hand.length;
 
-    // Record for AI card counting
     this.bots.forEach(b => b?.recordPlayed(combo.cards));
 
     this.currentCombo = combo;
     this.lastPlayerId = playerId;
     this.isFirstGame = false;
 
-    // Render UI updates
     if (playerId === 0) {
       this.ui.clearSelection();
       this.ui.renderHand(player.hand);
     }
     this.ui.renderArena(this.currentCombo, player.name);
 
-    // Check if player won
     if (player.cardCount === 0) {
       player.won = true;
       player.rank = this.rankCounter++;
@@ -438,7 +612,6 @@ class TienLenGameApp {
 
       const remainingActive = this.players.filter(p => !p.won);
       if (remainingActive.length <= 1) {
-        // Match ended
         if (remainingActive.length === 1) {
           remainingActive[0].rank = 4;
         }
@@ -454,19 +627,15 @@ class TienLenGameApp {
     sounds.playPass();
     this.passedPlayerIds.add(playerId);
 
-    // Count how many active players have passed
     const activeNonWon = this.players.filter(p => !p.won);
     const passedCount = activeNonWon.filter(p => this.passedPlayerIds.has(p.id)).length;
 
-    // If everyone except the last player who played has passed -> New Trick!
     if (passedCount >= activeNonWon.length - 1) {
-      // Clear arena
       setTimeout(() => {
         this.currentCombo = null;
         this.passedPlayerIds.clear();
         this.ui.renderArena(null);
 
-        // Turn goes to the last person who played (or next if they won)
         let nextLeader = this.lastPlayerId;
         if (this.players[nextLeader].won) {
           nextLeader = (nextLeader + 1) % 4;
@@ -496,10 +665,9 @@ class TienLenGameApp {
     clearInterval(this.turnTimer);
     this.lastWinnerId = this.players.find(p => p.rank === 1)?.id || 0;
 
-    // Calculate penalties (Thối heo, cóng)
     let scoreSummaryHtml = '';
     this.players.forEach(p => {
-      const { penalty, details } = calculatePenalties(p.hand);
+      const { details } = calculatePenalties(p.hand);
       const isCong = p.hand.length === 13;
       let badge = `Hạng ${p.rank}`;
       if (isCong) badge += ' (CÓNG!)';
