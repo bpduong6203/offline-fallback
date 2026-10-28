@@ -18,7 +18,7 @@ export const styleBase = `  <style>
       background: #fff;
       border-radius: 28px;
       padding: 28px 24px;
-      max-width: 520px; width: 100%;
+      max-width: 1120px; width: 100%;
       text-align: center;
       box-shadow: 20px 20px 60px #e6d3be, -20px -20px 60px #ffffff;
       border: 1px solid rgba(255, 237, 213, 0.8);
@@ -35,14 +35,22 @@ export const styleBase = `  <style>
     }
     h1 { font-size: 1.35rem; color: #1e293b; margin-bottom: 8px; }
     p.sub { color: #64748b; font-size: 0.9rem; line-height: 1.5; margin-bottom: 14px; }
-    .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; }
+    .game-library { margin: 18px auto 16px; padding: 12px 14px 5px; border: 1px solid #ffedd5; border-radius: 18px; background: #fffaf5; box-shadow: inset 3px 3px 8px #f1dfcd, inset -3px -3px 8px #ffffff; }
+    .library-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 2px 8px; color: #9a3412; font-size: 0.72rem; letter-spacing: 0.08em; }
+    .library-heading span { color: #94a3b8; font-size: 0.72rem; font-weight: 500; letter-spacing: 0; }
+    .tabs { display: flex; gap: 8px; justify-content: flex-start; margin-bottom: 0; padding: 2px 2px 9px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #fdba74 transparent; }
     .tab {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto; min-height: 42px;
       text-decoration: none;
-      padding: 8px 16px; border-radius: 9999px; border: none;
+      padding: 0 16px; border-radius: 12px; border: 1px solid #ffedd5;
       font-weight: 600; font-size: 0.85rem; cursor: pointer;
       background: #fff7ed; color: #9a3412;
-      box-shadow: inset 2px 2px 5px #e6d3be, inset -2px -2px 5px #ffffff;
+      box-shadow: 0 2px 5px rgba(154, 52, 18, 0.06);
     }
+    .tab:hover { background: #ffedd5; }
+    .tab-link { background: #fff7ed; color: #9a3412; }
+    .tab-link span { color: #c2410c; font-size: 0.75rem; }
+    .tab:focus-visible { outline: 3px solid #fb923c; outline-offset: 2px; }
     .tab.on {
       background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
       color: #fff; box-shadow: 0 6px 14px -4px rgba(249, 115, 22, 0.5);
@@ -50,12 +58,15 @@ export const styleBase = `  <style>
     .game {
       background: #fff7ed; border-radius: 18px; padding: 8px;
       box-shadow: inset 6px 6px 12px #e6d3be, inset -6px -6px 12px #ffffff;
-      margin-bottom: 12px;
+      max-width: 900px; margin: 0 auto 12px;
     }
+    .card[data-w="motorways"] .game { max-width: none; }
     canvas { width: 100%; height: auto; display: block; touch-action: none; cursor: pointer; border-radius: 12px; }
     #motorwaysFrame { width: 100%; height: min(82vh, 1000px); min-height: 420px; display: block; border: 0; border-radius: 12px; background: #292e37; }
     #motorwaysFrame[hidden] { display: none; }
-    @media (max-width: 600px) { .card[data-w="motorways"] { width: calc(100vw - 16px); padding: 14px 10px; } #motorwaysFrame { height: 72vh; min-height: 360px; } }
+    #busEscapeFrame { width: 100%; height: min(82vh, 700px); min-height: 420px; display: block; border: 0; border-radius: 12px; background: #0f1218; }
+    #busEscapeFrame[hidden] { display: none; }
+    @media (max-width: 600px) { .card { padding: 18px 12px; } .card[data-w="motorways"] { width: calc(100vw - 16px); padding: 14px 10px; } .game-library { padding: 10px 9px 3px; } .library-heading { font-size: 0.68rem; } .library-heading span { font-size: 0.68rem; } .tab { min-height: 40px; padding: 0 13px; } #motorwaysFrame { height: 72vh; min-height: 360px; } #busEscapeFrame { height: 72vh; min-height: 360px; } }
     .poolui { margin-bottom: 12px; }
     .row { display: flex; gap: 8px; margin-bottom: 8px; }
     .mini {
@@ -70,7 +81,7 @@ export const styleBase = `  <style>
       letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.9rem;
       color: #9a3412; background: #fff;
     }
-    .tabs { flex-wrap: wrap; }
+    .tabs { flex-wrap: nowrap; }
     .pmsg { font-size: 0.82rem; color: #9a3412; font-weight: 600; min-height: 1.2em; }
     .hint { font-size: 0.78rem; color: #94a3b8; margin-bottom: 14px; }
     .status { font-size: 0.8rem; color: #ea580c; font-weight: 600; margin-bottom: 14px; }

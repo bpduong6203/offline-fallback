@@ -17,7 +17,9 @@ export const clientMain = `    // ===================== CHUNG ==================
       if (cur.enter) cur.enter();
       setSize(cur.w, cur.h);
       for (var i = 0; i < tabs.length; i++) {
-        tabs[i].className = 'tab' + (tabs[i].getAttribute('data-g') === g ? ' on' : '');
+        var selected = tabs[i].getAttribute('data-g') === g;
+        tabs[i].className = 'tab' + (selected ? ' on' : '');
+        tabs[i].setAttribute('aria-pressed', String(selected));
       }
       document.getElementById('poolui').hidden = (g !== 'pool');
       document.getElementById('caroui').hidden = (g !== 'caro');
