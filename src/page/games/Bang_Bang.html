@@ -830,7 +830,7 @@
             return;
           }
           ready = !ready;
-          send({ t: "ready", ready });
+          send({ t: "ready", ready, mode });
         }
         $("readyMain").onclick = toggleReady;
         const ISO_X = 0.43, ISO_Y = 0.24;

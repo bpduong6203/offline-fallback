@@ -32,7 +32,7 @@ export class BangBangEngine{
   handle(id,m){const p=this.peers.get(id);if(!p||!m||typeof m!=='object')return;
     if(m.t==='select'&&!p.matchId&&Object.hasOwn(TANKS,m.tank)){p.tank=m.tank;if(typeof m.name==='string')p.name=m.name.trim().slice(0,18)||'Người chơi '+id;this.lobby();}
     if(m.t==='mode'&&!p.matchId&&!p.ready&&[1,2,3].includes(m.mode)){p.mode=m.mode;this.lobby();}
-    if(m.t==='ready'&&!p.matchId){p.ready=m.ready===true;this.lobby();if(p.ready)this.tryMatch();}
+    if(m.t==='ready'&&!p.matchId){if(!p.ready&&[1,2,3].includes(m.mode))p.mode=m.mode;p.ready=m.ready===true;this.lobby();if(p.ready)this.tryMatch();}
     if(m.t==='input'&&p.matchId&&this.match?.id===p.matchId){if(!Number.isInteger(m.seq)||m.seq<=p.lastSeq)return;p.lastSeq=m.seq;const q=this.players.get(id);if(!q)return;const i=m.input||{};q.input={dx:clamp(Number(i.dx)||0,-1,1),dy:clamp(Number(i.dy)||0,-1,1),angle:Number.isFinite(i.angle)?i.angle:q.turretAngle,fire:i.fire===true,skill:['Q','W','R'].includes(i.skill)?i.skill:''};}
   }
   tryMatch(){
