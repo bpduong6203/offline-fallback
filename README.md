@@ -25,6 +25,7 @@ Trang chờ kiểm tra lại kết nối bằng request `HEAD` mỗi 10 giây kh
 | Mini Motorways | Tab trên trang chờ hoặc `/__game/mini-motorways` | Trang HTML riêng, được nhúng bằng iframe |
 | Ma sói | Tab trên trang chờ | Phòng online 5–12 người, server quản lý vai trò và luật chơi |
 | YOU GOT PLAYED | Tab trên trang chờ | Game Canvas, có điều khiển cảm ứng |
+| Bang Bang Web | Tab trên trang chờ hoặc `/__game/bang-bang` | Đấu trường xe tăng online 3v3; chọn xe, bấm sẵn sàng và ghép trận khi đủ 6 người |
 | Bomb Arena | Liên kết trên trang chờ hoặc `/__game/bomb-arena` | Đấu bot, hai người cùng bàn phím hoặc phòng online 2–4 người |
 | Bi-a, Caro, Đấu kiếm | Có source trong `src/page/client/` | Nút chọn game hiện được comment trong `src/page/body.js` |
 
@@ -81,6 +82,8 @@ npm.cmd run dev
 | Route | Chức năng |
 | --- | --- |
 | `/__game/mini-motorways` | Phục vụ HTML Mini Motorways |
+| `/__game/bang-bang` | Phục vụ Bang Bang Web 3v3 |
+| `/__game/bang-bang-ws` | Hàng chờ sẵn sàng và mô phỏng trận Bang Bang Web |
 | `/__game/bomb-arena` | Phục vụ Bomb Arena; hỗ trợ GET và HEAD |
 | `/__game/ws?g=<game>&room=<code>` | Kết nối phòng WebSocket |
 | Các đường dẫn còn lại | Chuyển đến origin, trả fallback khi origin gặp lỗi phù hợp |
@@ -92,6 +95,7 @@ Mã phòng WebSocket gồm 4 chữ cái hoặc chữ số, được chuẩn hóa
 | `pool`, `caro`, `sword` | `POOL` | `PoolRoom` | Chuyển tiếp tin nhắn giữa hai người |
 | `wolf` | `WOLF` | `WolfRoom` | Quản lý phòng và luật Ma sói |
 | `bomb` | `BOMB` | `BombRoom` | Quản lý phòng tối đa 4 người và mô phỏng trận Bomb Arena |
+| `/__game/bang-bang-ws` | `BANGBANG` | `BangBangQueue` | Ghép sáu người đã sẵn sàng thành hai đội 3v3 và mô phỏng trận trên server |
 
 Các phòng hiện không có cơ chế lưu và khôi phục trận xuyên suốt khi instance bị khởi động lại hoặc mất kết nối. Với Bomb Arena, người rời giữa trận bị loại, quyền chủ phòng được chuyển cho người còn lại; phòng kết thúc khi tất cả rời.
 

@@ -2,6 +2,7 @@
 import { renderOffline } from './src/page/render.js';
 import { handleGameSocket } from './src/game-socket.js';
 import miniMotorways from './src/page/games/Mini_Motorways.html';
+import bangBang from './src/page/games/Bang_Bang.html';
 import bombArena from './src/page/games/bomb-arena.generated.js';
 import stickmanFight from './src/page/games/stickman-fight.generated.js';
 import { renderBusJamPage } from './src/page/games/bus-jam.html.js';
@@ -11,12 +12,26 @@ export { PoolRoom } from './src/pool-room.js';
 export { WolfRoom } from './src/wolf/room.js';
 export { BombRoom } from './src/bomb-room.js';
 export { StickmanRoom } from './src/stickman-room.js';
+export { BangBangQueue } from './src/bang-bang-queue.js';
 
 const OFFLINE_STATUS = new Set([502, 503, 504, 521, 522, 523, 524, 530]);
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (url.pathname === '/__game/bang-bang-ws') {
+      const origin = request.headers.get('Origin');
+      if (origin) {
+        try { if (new URL(origin).host !== url.host) return new Response('Forbidden', { status: 403 }); }
+        catch { return new Response('Forbidden', { status: 403 }); }
+      }
+      const id = env.BANGBANG.idFromName('global-matchmaking');
+      return env.BANGBANG.get(id).fetch(request);
+    }
+    if (url.pathname === '/__game/bang-bang') {
+      if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+      return new Response(request.method === 'HEAD' ? null : bangBang, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
+    }
     if (['/__game/bus-escape', '/bus-escape'].includes(url.pathname)) {
       if (request.method !== 'GET' && request.method !== 'HEAD') {
         return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });

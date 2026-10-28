@@ -4,7 +4,8 @@
 export const clientMain = `    // ===================== CHUNG =====================
     var motorways = { w: 480, h: 270, hint: 'Kéo chuột hoặc ngón tay để vẽ đường nối nhà với điểm đến cùng màu.', update: function () {}, draw: function () {} };
     var busescape = { w: 380, h: 580, hint: 'Chạm vào xe buýt để đón khách cùng màu. Sắp xếp bến đỗ hợp lý để không bị kẹt!', update: function () {}, draw: function () {} };
-    var games = { flappy: flappy, pool: pool, caro: caro, sword: sword, wolf: wolf, motorways: motorways, busescape: busescape, played: played };
+    var bangbang = { w: 1280, h: 800, hint: 'Chọn xe tăng, nhấn Sẵn sàng và chờ đủ sáu người để ghép trận 3v3.', busy: function () { var f = document.getElementById('bangBangFrame'); return !!(f && f.contentWindow && f.contentWindow.bangBangBusy); }, update: function () {}, draw: function () {} };
+    var games = { flappy: flappy, pool: pool, caro: caro, sword: sword, wolf: wolf, motorways: motorways, busescape: busescape, bangbang: bangbang, played: played };
     var cur = flappy;
     var hint = document.getElementById('hint');
     var tabs = document.querySelectorAll('.tab[data-g]');
@@ -26,7 +27,7 @@ export const clientMain = `    // ===================== CHUNG ==================
       document.getElementById('swordui').hidden = (g !== 'sword');
       document.getElementById('wolfui').hidden = (g !== 'wolf');
       document.getElementById('gameBox').hidden = (g === 'wolf');
-      document.getElementById('g').hidden = (g === 'motorways' || g === 'busescape');
+      document.getElementById('g').hidden = (g === 'motorways' || g === 'busescape' || g === 'bangbang');
       document.getElementById('motorwaysFrame').hidden = (g !== 'motorways');
       var bf = document.getElementById('busEscapeFrame');
       if (bf) {
@@ -35,8 +36,14 @@ export const clientMain = `    // ===================== CHUNG ==================
           bf.src = bf.getAttribute('data-src');
         }
       }
+      var bbf = document.getElementById('bangBangFrame');
+      if (bbf) {
+        bbf.hidden = (g !== 'bangbang');
+        if (g === 'bangbang' && !bbf.getAttribute('src')) bbf.src = bbf.getAttribute('data-src');
+        else if (g !== 'bangbang' && bbf.getAttribute('src')) { bbf.src = 'about:blank'; bbf.removeAttribute('src'); }
+      }
       var cardEl = document.querySelector('.card');
-      if (cardEl) cardEl.setAttribute('data-w', g === 'wolf' ? 'menu' : (g === 'sword' ? 'arena' : (g === 'motorways' ? 'motorways' : (g === 'busescape' ? 'busescape' : (g === 'played' ? 'played' : '')))));
+      if (cardEl) cardEl.setAttribute('data-w', g === 'wolf' ? 'menu' : (g === 'sword' ? 'arena' : (g === 'motorways' ? 'motorways' : (g === 'busescape' ? 'busescape' : (g === 'bangbang' ? 'bangbang' : (g === 'played' ? 'played' : ''))))));
       hint.textContent = cur.hint;
     }
     for (var t = 0; t < tabs.length; t++) {
@@ -76,7 +83,7 @@ export const clientMain = `    // ===================== CHUNG ==================
       fetch(location.pathname + location.search, { method: 'HEAD', cache: 'no-store' })
         .then(function (r) {
           if (r.status < 500) {
-            if (pool.busy() || caro.busy() || sword.busy() || wolf.busy() || played.busy()) {
+            if (pool.busy() || caro.busy() || sword.busy() || wolf.busy() || played.busy() || bangbang.busy()) {
               st.textContent = 'Server đã sống lại! Chơi xong ván rồi bấm Tải lại trang nhé.';
             } else {
               st.textContent = 'Đã kết nối lại! Đang tải trang...';

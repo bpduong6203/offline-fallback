@@ -43,6 +43,15 @@ new_sqlite_classes = ["BombRoom"]
 name = "STICKMAN"
 class_name = "StickmanRoom"
 
+# Bang Bang 3v3 global ready queue and authoritative match simulation.
+[[durable_objects.bindings]]
+name = "BANGBANG"
+class_name = "BangBangQueue"
+
 [[migrations]]
 tag = "v4"
 new_sqlite_classes = ["StickmanRoom"]
+
+[[migrations]]
+tag = "v5"
+new_sqlite_classes = ["BangBangQueue"]

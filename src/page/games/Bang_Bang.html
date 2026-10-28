@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <meta name="theme-color" content="#101722" />
+    <title>Bang Bang Web · 3v3</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101722;
+        --panel: #182331;
+        --line: #2b3948;
+        --text: #e9f0f7;
+        --muted: #91a2b5;
+        --blue: #57c8ff;
+        --red: #ff706e;
+        --gold: #ffc568;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: radial-gradient(
+          ellipse at 50% -20%,
+          #35485b,
+          var(--bg) 68%
+        );
+        color: var(--text);
+        font:
+          14px/1.45 system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        color: inherit;
+      }
+      .app {
+        max-width: 1240px;
+        margin: auto;
+        padding: 20px;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .mark {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 13px;
+        background: linear-gradient(145deg, #ffbd61, #fa765f);
+        color: #26202a;
+        font-size: 24px;
+        font-weight: 900;
+        box-shadow: 0 8px 25px #fa765f30;
+      }
+      .brand h1 {
+        font-size: 19px;
+        margin: 0;
+        letter-spacing: 0.02em;
+      }
+      .brand p {
+        margin: 2px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .connection {
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #758292;
+      }
+      .dot.live {
+        background: #55d69a;
+        box-shadow: 0 0 10px #55d69a88;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 260px;
+        gap: 14px;
+      }
+      .board-wrap,
+      .side,
+      .queue {
+        background: #131d29;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .board-head {
+        height: 54px;
+        padding: 0 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--line);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        color: #b6c5d4;
+      }
+      .board-head b {
+        color: var(--gold);
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 8/5;
+        background: #1b2930;
+        touch-action: none;
+      }
+      .side {
+        padding: 14px;
+      }
+      .team-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        margin: 2px 0 9px;
+      }
+      .team-title.blue {
+        color: var(--blue);
+      }
+      .team-title.red {
+        color: var(--red);
+      }
+      .team-list {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+      .player {
+        display: grid;
+        grid-template-columns: 9px 1fr auto;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 9px;
+        border-radius: 9px;
+        background: #1b2836;
+        font-size: 11px;
+      }
+      .player small {
+        color: var(--muted);
+      }
+      .player .hp {
+        grid-column: 2/4;
+        height: 4px;
+        border-radius: 9px;
+        background: #334151;
+        overflow: hidden;
+        margin-top: -3px;
+      }
+      .hp i {
+        display: block;
+        height: 100%;
+        background: #57d69b;
+      }
+      .player.me {
+        outline: 1px solid #ffffff30;
+      }
+      .score {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 11px;
+        padding: 12px;
+        margin: 8px 0 15px;
+        border-radius: 10px;
+        background: #101923;
+        font-size: 23px;
+        font-weight: 900;
+      }
+      .score .b {
+        color: var(--blue);
+      }
+      .score .r {
+        color: var(--red);
+      }
+      .score small {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .controls {
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.9;
+      }
+      .controls kbd {
+        display: inline-grid;
+        place-items: center;
+        min-width: 22px;
+        height: 21px;
+        border: 1px solid #445365;
+        border-bottom-width: 2px;
+        border-radius: 5px;
+        background: #202e3d;
+        color: #eaf2f8;
+        font: 10px system-ui;
+        margin: 0 2px;
+      }
+      .skills {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin: 12px 0;
+      }
+      .skill {
+        border: 1px solid #36475a;
+        border-radius: 8px;
+        background: #1b2836;
+        padding: 7px 4px;
+        text-align: center;
+        font-size: 10px;
+        color: #c5d1dc;
+      }
+      .skill b {
+        display: block;
+        color: var(--gold);
+        font-size: 12px;
+      }
+      .skill small { display: block; color: #93a5b7; font-size: 9px; margin-top: 3px; }
+      .skill.cooldown { opacity: .48; }
+      .energy { margin: 9px 0 4px; color: #98a9b9; font-size: 10px; }
+      .energy-track { height: 6px; margin-top: 5px; border-radius: 8px; background: #304050; overflow: hidden; }
+      .energy-track i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg,#47bde9,#75ecdb); }
+      .queue {
+        margin-top: 14px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .queue-copy strong {
+        display: block;
+        font-size: 13px;
+      }
+      .queue-copy span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 3px;
+      }
+      .queue-count {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .queue-count b {
+        font-size: 18px;
+        color: var(--text);
+      }
+      .overlay {
+        position: fixed;
+        z-index: 5;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        background: #070d15c9;
+        backdrop-filter: blur(8px);
+      }
+      .dialog {
+        width: min(650px, 100%);
+        padding: 24px;
+        border: 1px solid #35475a;
+        border-radius: 18px;
+        background: #151f2c;
+        box-shadow: 0 26px 100px #0009;
+      }
+      .dialog h2 {
+        font-size: 24px;
+        margin: 0 0 5px;
+      }
+      .dialog > p {
+        color: var(--muted);
+        margin: 0 0 17px;
+        font-size: 13px;
+      }
+      .name-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .name-row input {
+        flex: 1;
+        min-width: 0;
+        padding: 10px 12px;
+        border: 1px solid #35475a;
+        border-radius: 9px;
+        background: #0f1823;
+        color: white;
+      }
+      .tank-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 9px;
+      }
+      .tank {
+        min-height: 132px;
+        padding: 12px;
+        border: 1px solid #344253;
+        border-radius: 12px;
+        background: #1a2735;
+        text-align: left;
+        transition: 0.15s;
+      }
+      .tank:hover {
+        border-color: #93a6b7;
+        transform: translateY(-1px);
+      }
+      .tank.selected {
+        border-color: var(--gold);
+        box-shadow: inset 0 0 0 1px var(--gold);
+        background: #312c25;
+      }
+      .tank b {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 2px;
+      }
+      .tank span {
+        display: block;
+        font-size: 10px;
+        color: var(--gold);
+        margin-bottom: 8px;
+      }
+      .tank small {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.45;
+      }
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 15px;
+      }
+      .action {
+        border: 1px solid #3a4a5c;
+        border-radius: 9px;
+        background: #202e3d;
+        padding: 10px 16px;
+        font-weight: 700;
+      }
+      .action.primary {
+        border-color: #ffbb56;
+        background: linear-gradient(135deg, #ffd273, #f99a4d);
+        color: #32251b;
+      }
+      .action:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .queue-note {
+        min-height: 17px;
+        margin-top: 10px;
+        color: var(--gold);
+        font-size: 11px;
+      }
+      .touch {
+        display: none;
+      }
+      .result {
+        color: var(--gold);
+        font-weight: 800;
+      }
+      @media (max-width: 850px) {
+        .app {
+          padding: 12px;
+        }
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .side {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0 12px;
+        }
+        .score {
+          grid-column: 1/-1;
+          grid-row: 1;
+        }
+        .controls {
+          grid-column: 1/-1;
+        }
+        .team-list {
+          margin-bottom: 8px;
+        }
+        .board-head {
+          height: 44px;
+        }
+        .touch {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 7px;
+          padding: 9px;
+          background: #182331;
+        }
+        .touch button {
+          width: 42px;
+          height: 38px;
+          border: 1px solid #3b4b5d;
+          border-radius: 9px;
+          background: #243345;
+          font-weight: 800;
+          touch-action: none;
+        }
+        .touch .fire {
+          width: 72px;
+          color: #151a20;
+          background: #ffc568;
+        }
+        .queue {
+          padding: 11px;
+        }
+        .tank-grid {
+          gap: 6px;
+        }
+        .tank {
+          padding: 9px 7px;
+          min-height: 140px;
+        }
+        .tank b {
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 520px) {
+        .app {
+          padding: 8px;
+        }
+        .brand h1 {
+          font-size: 16px;
+        }
+        .brand p {
+          font-size: 10px;
+        }
+        .mark {
+          width: 36px;
+          height: 36px;
+        }
+        .connection {
+          font-size: 9px;
+        }
+        .side {
+          padding: 10px;
+          grid-template-columns: 1fr;
+        }
+        .team-title {
+          margin-top: 8px;
+        }
+        .score {
+          grid-column: auto;
+          grid-row: auto;
+        }
+        .controls {
+          grid-column: auto;
+        }
+        .tank-grid {
+          grid-template-columns: 1fr;
+        }
+        .tank {
+          min-height: 0;
+        }
+        .tank small {
+          font-size: 11px;
+        }
+        .dialog {
+          padding: 17px;
+        }
+        .dialog h2 {
+          font-size: 21px;
+        }
+        .queue-copy span {
+          max-width: 210px;
+        }
+        .queue-count {
+          gap: 5px;
+        }
+        .queue-count b {
+          font-size: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="top">
+        <div class="brand">
+          <div class="mark">✦</div>
+          <div>
+            <h1>BANG BANG WEB</h1>
+            <p>Chiến trường xe tăng 3v3 · phối hợp cùng đồng đội</p>
+          </div>
+        </div>
+        <div class="connection">
+          <i class="dot" id="dot"></i
+          ><span id="connection">Đang kết nối máy chủ ghép trận</span>
+        </div>
+      </header>
+      <main class="layout">
+        <section class="board-wrap">
+          <div class="board-head">
+            <span>ARENA · <b>3 vs 3</b></span
+            ><span id="matchStatus">CHỜ VÀO HÀNG</span>
+          </div>
+          <canvas
+            id="board"
+            width="1280"
+            height="800"
+            aria-label="Đấu trường xe tăng"
+          ></canvas>
+          <div class="touch">
+            <button data-key="w">▲</button><button data-key="a">◀</button
+            ><button data-key="s">▼</button><button data-key="d">▶</button
+            ><button class="fire" data-fire="1">BẮN</button
+            ><button data-skill="Q">Q</button><button data-skill="W">W</button
+            ><button data-skill="R">R</button>
+          </div>
+        </section>
+        <aside class="side">
+          <div class="score">
+            <span class="b" id="scoreBlue">0</span><small>VS</small
+            ><span class="r" id="scoreRed">0</span>
+          </div>
+          <section>
+            <div class="team-title blue">
+              <span>ĐỘI XANH</span><span>3</span>
+            </div>
+            <div class="team-list" id="teamBlue"></div>
+          </section>
+          <section>
+            <div class="team-title red"><span>ĐỘI ĐỎ</span><span>3</span></div>
+            <div class="team-list" id="teamRed"></div>
+          </section>
+          <div class="skills">
+            <div class="skill" id="skillQ"><b>Q</b>Chiêu 1<small id="cooldownQ">Sẵn sàng</small></div>
+            <div class="skill" id="skillW"><b>W</b>Chiêu 2<small id="cooldownW">Sẵn sàng</small></div>
+            <div class="skill" id="skillR"><b>R</b>Tuyệt kỹ<small id="cooldownR">Sẵn sàng</small></div>
+          </div>
+          <div class="energy"><span id="energyText">NĂNG LƯỢNG 100/100</span><div class="energy-track"><i id="energyBar"></i></div></div>
+          <div class="controls">
+            <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Di chuyển<br /><kbd
+              >Chuột</kbd
+            >
+            Ngắm · <kbd>Click</kbd> Bắn<br /><kbd>Q</kbd><kbd>Shift</kbd>+
+            <kbd>W</kbd><kbd>R</kbd> Kỹ năng
+          </div>
+        </aside>
+      </main>
+      <section class="queue">
+        <div class="queue-copy">
+          <strong id="queueTitle">Chưa vào hàng ghép trận</strong
+          ><span id="queueText"
+            >Chọn xe tăng rồi sẵn sàng. Khi đủ 6 người, hệ thống tự chia hai đội
+            3v3.</span
+          >
+        </div>
+        <div class="queue-count">
+          <span>ĐÃ SẴN SÀNG</span><b id="readyCount">0/6</b>
+        </div>
+      </section>
+    </div>
+    <div class="overlay" id="overlay">
+      <section class="dialog">
+        <h2 id="dialogTitle">Tìm đồng đội</h2>
+        <p id="dialogLead">
+          Chọn xe tăng, nhập tên hiển thị rồi bấm Sẵn sàng. Trận bắt đầu khi có
+          đủ sáu người chơi.
+        </p>
+        <div class="name-row">
+          <input
+            id="name"
+            maxlength="18"
+            placeholder="Tên người chơi"
+            autocomplete="nickname"
+          />
+        </div>
+        <div class="tank-grid">
+          <button class="tank selected" data-tank="pegasus">
+            <b>PEGASUS</b><span>ĐỘT KÍCH</span
+            ><small
+              >Cơ động, lướt nhanh và bắn xuyên mục tiêu bằng Q.</small
+            ></button
+          ><button class="tank" data-tank="tiger">
+            <b>TIGER TANK</b><span>TIÊN PHONG</span
+            ><small
+              >Máu và giáp cao, tạo khiên và xung phong bằng R.</small
+            ></button
+          ><button class="tank" data-tank="aegis">
+            <b>AEGIS</b><span>HỖ TRỢ</span
+            ><small>Che chắn đồng đội, hồi máu và đẩy lùi đối phương.</small>
+          </button>
+        </div>
+        <div class="queue-note" id="queueNote"></div>
+        <div class="actions">
+          <button class="action primary" id="readyMain">
+            Sẵn sàng tìm trận
+          </button>
+        </div>
+      </section>
+    </div>
+    <script>
+      (() => {
+        "use strict";
+        const $ = (id) => document.getElementById(id),
+          canvas = $("board");
+        let ctx = canvas.getContext("2d"), terrainCache = null, cacheHasMap = false;
+      let socket = null,
+          me = null,
+          players = [],
+          map = { width: 1600, height: 1000, blocks: [] },
+          bullets = [],
+          score = [0, 0],
+          tank = "pegasus",
+          ready = false,
+          matched = false,
+          seq = 0,
+        inputSeq = 0,
+          keys = {},
+          mouse = { x: 800, y: 500 },
+          fire = false,
+          skill = "",
+          worldTime = 0;
+        const names = {
+            pegasus: "PEGASUS",
+            tiger: "TIGER TANK",
+            aegis: "AEGIS",
+          },
+          colors = { pegasus: "#64d9ff", tiger: "#ffb454", aegis: "#b8a4ff" };
+        function send(m) {
+          if (socket && socket.readyState === 1) socket.send(JSON.stringify(m));
+        }
+        function setConn(ok, msg) {
+          $("dot").classList.toggle("live", ok);
+          $("connection").textContent = msg;
+        }
+        function connect() {
+          const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+          socket = new WebSocket(
+            protocol +
+              "//" +
+              location.host +
+              "/__game/bang-bang-ws?name=" +
+              encodeURIComponent($("name").value.trim() || "Người chơi"),
+          );
+          socket.onopen = () => setConn(true, "Đã kết nối hàng ghép trận");
+          socket.onclose = () => {
+            setConn(false, "Mất kết nối · tải lại để thử lại");
+            $("queueNote").textContent = "Kết nối đã đóng.";
+          };
+          socket.onerror = () => setConn(false, "Không kết nối được máy chủ");
+          socket.onmessage = (e) => {
+            let m;
+            try {
+              m = JSON.parse(e.data);
+            } catch {
+              return;
+            }
+            receive(m);
+          };
+        }
+        function receive(m) {
+        if (m.t === "hello") {
+          me = m.id;
+          send({ t: "select", tank, name: $("name").value });
+            return;
+          }
+          if (m.t === "lobby") {
+            renderQueue(m);
+            return;
+          }
+          if (m.t === "matched") {
+            seq = 0;
+            ready = false;
+            bullets = [];
+            score = [0, 0];
+            map = { width: 1600, height: 1000, blocks: [], decor: [] };
+            terrainCache = null;
+            cacheHasMap = false;
+            matched = true;
+            $("overlay").hidden = true;
+            $("matchStatus").textContent = "ĐANG GIAO TRANH";
+            $("queueTitle").textContent = "Đã ghép trận 3v3";
+            $("queueText").textContent =
+              "Đội xanh và đội đỏ · tiêu diệt đối thủ để ghi điểm.";
+            players = m.players || [];
+            return;
+          }
+          if (m.t === "match-ended") {
+            matched = false;
+            ready = false;
+            $("overlay").hidden = false;
+            $("queueNote").textContent = m.reason;
+            return;
+          }
+          if (m.t === "result") {
+            const won = m.winner === players.find((p) => p.id === me)?.team;
+            matched = false;
+            ready = false;
+            $("matchStatus").textContent = won ? "CHIẾN THẮNG" : "THẤT BẠI";
+            $("dialogTitle").textContent = won
+              ? "Chiến thắng!"
+              : "Trận đấu kết thúc";
+            $("dialogLead").textContent =
+              (won ? "Đội bạn đã thắng " : "Đội đối thủ đã thắng ") +
+              m.score[0] +
+              " — " +
+              m.score[1] +
+              ". Bạn có thể sẵn sàng để tìm trận mới.";
+            $("readyMain").textContent = "Tìm trận mới";
+            $("overlay").hidden = false;
+            return;
+          }
+          if (m.t === "state") {
+            if (m.sequence <= seq) return;
+            seq = m.sequence;
+            players = m.state.players;
+            bullets = m.state.bullets;
+            if (m.state.map) map = m.state.map;
+            score = m.state.score;
+            worldTime = m.state.time;
+            drawHud();
+          }
+        }
+        function renderQueue(m) {
+          if (matched) return;
+          const list = m.players || [];
+          $("readyCount").textContent = (m.readyCount || 0) + "/6";
+          const own = list.find((p) => p.id === me);
+          if (own) ready = own.ready;
+          $("queueTitle").textContent = ready
+            ? "Đang chờ ghép trận"
+            : "Chọn xe tăng và sẵn sàng";
+          $("queueText").textContent =
+            (m.readyCount || 0) +
+            " người đã sẵn sàng · cần đủ 6 người để bắt đầu trận 3v3.";
+          $("readyMain").textContent = ready
+            ? "Hủy sẵn sàng"
+            : "Sẵn sàng tìm trận";
+          $("queueNote").textContent = list.length
+            ? list
+                .map(
+                  (p) =>
+                    (p.ready ? "✓ " : "○ ") + p.name + " · " + names[p.tank],
+                )
+                .join("   ·   ")
+            : "Đang chờ người chơi vào hàng.";
+          $("matchStatus").textContent =
+            "ĐANG CHỜ " + (m.readyCount || 0) + "/6";
+        }
+        document.querySelectorAll("[data-tank]").forEach(
+          (b) =>
+            (b.onclick = () => {
+              if (ready) return;
+              tank = b.dataset.tank;
+              document
+                .querySelectorAll("[data-tank]")
+                .forEach((q) => q.classList.toggle("selected", q === b));
+              send({ t: "select", tank, name: $("name").value });
+            }),
+        );
+        $("name").addEventListener("change", () => {
+          if (!ready) send({ t: "select", tank, name: $("name").value });
+        });
+        function toggleReady() {
+          if (!socket || socket.readyState !== 1) {
+            $("queueNote").textContent = "Đang kết nối, thử lại sau giây lát.";
+            return;
+          }
+          ready = !ready;
+          send({ t: "ready", ready });
+        }
+        $("readyMain").onclick = toggleReady;
+        const ISO_X = 0.43, ISO_Y = 0.24;
+        function project(wx, wy) {
+          return {
+            x: canvas.width / 2 + (wx - wy - 300) * ISO_X,
+            y: canvas.height / 2 + (wx + wy - 1300) * ISO_Y,
+          };
+        }
+        function unproject(sx, sy) {
+          const u = (sx - canvas.width / 2) / ISO_X + 300;
+          const v = (sy - canvas.height / 2) / ISO_Y + 1300;
+          return { x: (u + v) / 2, y: (v - u) / 2 };
+        }
+        function point(e) {
+          const r = canvas.getBoundingClientRect();
+          return unproject(((e.clientX - r.left) / r.width) * canvas.width,
+            ((e.clientY - r.top) / r.height) * canvas.height);
+        }
+        canvas.addEventListener("pointermove", (e) => (mouse = point(e)));
+        canvas.addEventListener("pointerdown", (e) => {
+          mouse = point(e);
+          fire = true;
+          canvas.setPointerCapture(e.pointerId);
+        });
+        canvas.addEventListener("pointerup", () => (fire = false));
+        canvas.addEventListener("pointercancel", () => (fire = false));
+        window.addEventListener("keydown", (e) => {
+          if (e.target === $("name")) return;
+          const k = e.key.toLowerCase();
+          keys[k] = !(k === "w" && e.shiftKey);
+          if (k === "q" || k === "r" || (k === "w" && e.shiftKey)) {
+            skill = k.toUpperCase();
+            e.preventDefault();
+          }
+        });
+        window.addEventListener("keyup", (e) => {
+          keys[e.key.toLowerCase()] = false;
+        });
+        document.querySelectorAll("[data-key]").forEach((b) => {
+          const k = b.dataset.key;
+          b.onpointerdown = (e) => {
+            e.preventDefault();
+            keys[k] = true;
+          };
+          b.onpointerup =
+            b.onpointercancel =
+            b.onpointerleave =
+              () => (keys[k] = false);
+        });
+        document.querySelectorAll("[data-fire]").forEach((b) => {
+          b.onpointerdown = (e) => {
+            e.preventDefault();
+            fire = true;
+          };
+          b.onpointerup =
+            b.onpointercancel =
+            b.onpointerleave =
+              () => (fire = false);
+        });
+        document
+          .querySelectorAll("[data-skill]")
+          .forEach((b) => (b.onclick = () => (skill = b.dataset.skill)));
+        function sendInput() {
+          if (!matched) return;
+          const dx =
+              (keys.d || keys.arrowright ? 1 : 0) -
+              (keys.a || keys.arrowleft ? 1 : 0),
+            dy =
+              (keys.s || keys.arrowdown ? 1 : 0) -
+              (keys.w || keys.arrowup ? 1 : 0),
+            p = players.find((q) => q.id === me);
+          if (!p) return;
+          send({
+            t: "input",
+            seq: ++inputSeq,
+            timestamp: Date.now(),
+            input: {
+              dx,
+              dy,
+              angle: Math.atan2(mouse.y - p.y, mouse.x - p.x),
+              fire,
+              skill,
+            },
+          });
+          skill = "";
+        }
+        setInterval(sendInput, 50);
+        function diamond(x, y, rx, ry, fill, stroke) {
+          ctx.beginPath(); ctx.moveTo(x, y - ry); ctx.lineTo(x + rx, y);
+          ctx.lineTo(x, y + ry); ctx.lineTo(x - rx, y); ctx.closePath();
+          ctx.fillStyle = fill; ctx.fill(); if (stroke) { ctx.strokeStyle = stroke; ctx.stroke(); }
+        }
+        function drawCube(b) {
+          const c = project(b.x + b.w / 2, b.y + b.h / 2), rx = b.w * ISO_X, ry = b.h * ISO_Y;
+          const height = b.type === "wall" ? 28 : 20;
+          ctx.fillStyle = "#07110e55"; ctx.beginPath(); ctx.ellipse(c.x, c.y + 7, rx * 1.18, ry * .85, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(c.x-rx,c.y); ctx.lineTo(c.x,c.y+ry); ctx.lineTo(c.x,c.y+ry+height); ctx.lineTo(c.x-rx,c.y+height); ctx.closePath(); ctx.fillStyle = b.type === "wall" ? "#53636a" : "#84552f"; ctx.fill();
+          ctx.beginPath(); ctx.moveTo(c.x+rx,c.y); ctx.lineTo(c.x,c.y+ry); ctx.lineTo(c.x,c.y+ry+height); ctx.lineTo(c.x+rx,c.y+height); ctx.closePath(); ctx.fillStyle = b.type === "wall" ? "#34434a" : "#614026"; ctx.fill();
+          diamond(c.x,c.y-height,rx,ry,b.type === "wall" ? "#849096" : "#bf8850",b.type === "wall" ? "#a7b0b3" : "#e3b879");
+          if (b.type === "crate") { ctx.strokeStyle="#68452c";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(c.x-rx*.55,c.y-height);ctx.lineTo(c.x,c.y-height+ry*.56);ctx.lineTo(c.x+rx*.55,c.y-height);ctx.moveTo(c.x-rx*.42,c.y-height);ctx.lineTo(c.x,c.y-height-ry*.45);ctx.lineTo(c.x+rx*.42,c.y-height);ctx.stroke(); if(b.hp<b.maxHp){ctx.fillStyle="#182126";ctx.fillRect(c.x-14,c.y-height-10,28,3);ctx.fillStyle="#ffbf68";ctx.fillRect(c.x-14,c.y-height-10,28*b.hp/b.maxHp,3);} }
+          if (b.type === "wall") { ctx.strokeStyle="#d3dbd944";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(c.x-rx*.55,c.y-height-2);ctx.lineTo(c.x-rx*.1,c.y-height-ry*.35);ctx.lineTo(c.x+rx*.25,c.y-height);ctx.stroke(); }
+        }
+        function drawBush(b) {
+          const c=project(b.x+b.w/2,b.y+b.h/2),rx=b.w*ISO_X,ry=b.h*ISO_Y;
+          diamond(c.x,c.y+2,rx*1.15,ry*1.05,"#244532","#548152");
+          for(let i=0;i<5;i++){const xx=c.x+(i-2)*6,yy=c.y-3-Math.abs(i-2)*1.5;ctx.fillStyle=["#2b6845","#397a4e","#458656","#36734b","#285d3f"][i];ctx.beginPath();ctx.ellipse(xx,yy,8,7,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#7daf6b66";ctx.stroke();}
+        }
+        function drawTree(tree) {
+          const c=project(tree.x,tree.y),h=tree.height||34,palettes=[["#246344","#398454","#63a668"],["#315d3e","#47794d","#82a45d"],["#285a4e","#327765","#5aa17c"],["#485c35","#718849","#a1a85c"]][tree.tone||0];
+          ctx.fillStyle="#07120f66";ctx.beginPath();ctx.ellipse(c.x+3,c.y+3,15,8,0,0,Math.PI*2);ctx.fill();
+          ctx.fillStyle="#624c32";ctx.fillRect(c.x-3,c.y-h*.35,6,h*.45);ctx.fillStyle="#90704b";ctx.fillRect(c.x-1,c.y-h*.35,2,h*.42);
+          for(let i=0;i<3;i++){const yy=c.y-h*(.38+i*.2),r=15-i*2;ctx.fillStyle=palettes[i];ctx.beginPath();ctx.ellipse(c.x,yy,r,r*.62,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#b8d58a55";ctx.lineWidth=1;ctx.stroke();}
+          ctx.fillStyle="#d1e78a88";ctx.beginPath();ctx.arc(c.x-5,c.y-h*.72,2.2,0,Math.PI*2);ctx.fill();
+        }
+        function drawTerrainBlock(b) {
+          const c=project(b.x+b.w/2,b.y+b.h/2),rx=b.w*ISO_X,ry=b.h*ISO_Y;
+          if(b.type==="wall"||b.type==="crate"){drawCube(b);return;}
+          if(b.type==="bush"){drawBush(b);return;}
+          if(b.type==="water"){diamond(c.x,c.y,rx,ry,"#176175","#44a7b6");ctx.strokeStyle="#79d8dd77";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(c.x-rx*.45,c.y-2);ctx.quadraticCurveTo(c.x,c.y-ry*.55,c.x+rx*.4,c.y);ctx.stroke();return;}
+          if(b.type==="ice"){diamond(c.x,c.y,rx,ry,"#6baeb7","#b9e8dc");ctx.strokeStyle="#e0fff088";ctx.beginPath();ctx.moveTo(c.x-rx*.45,c.y+ry*.25);ctx.lineTo(c.x+rx*.35,c.y-ry*.35);ctx.moveTo(c.x-rx*.2,c.y-ry*.48);ctx.lineTo(c.x+rx*.28,c.y+ry*.38);ctx.stroke();}
+        }
+        function drawMapBase() {
+          const bg=ctx.createLinearGradient(0,0,0,canvas.height);bg.addColorStop(0,"#192f32");bg.addColorStop(1,"#101f25");ctx.fillStyle=bg;ctx.fillRect(0,0,canvas.width,canvas.height);
+          for(let y=0;y<1000;y+=32)for(let x=0;x<1600;x+=32){const c=project(x+16,y+16),seed=((x*31+y*17)>>>3)%7;diamond(c.x,c.y,32*ISO_X,32*ISO_Y,seed===0?"#31543e":seed===1?"#2d4d3a":"#294936","#41634866");if(seed===0){ctx.fillStyle="#9cb96a77";ctx.beginPath();ctx.ellipse(c.x-3,c.y-1,2,1,0,0,Math.PI*2);ctx.fill();}}
+          // Painted lanes, spawn pads and a raised stone border make the board read as a small MOBA arena.
+          ctx.save();ctx.setLineDash([8,7]);ctx.lineWidth=2;ctx.strokeStyle="#d9d3a633";let a=project(800,250),z=project(800,750);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(z.x,z.y);ctx.stroke();ctx.restore();
+          for(const [wx,color] of [[80,"#51caff"],[1520,"#ff666d"]]){const c=project(wx,500);ctx.fillStyle=color+"22";ctx.beginPath();ctx.ellipse(c.x,c.y,62,27,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle=color+"88";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(c.x,c.y,62,27,0,0,Math.PI*2);ctx.stroke();}
+          const blocks=(map.blocks||[]).filter(b=>b.type==="water"||b.type==="ice").slice().sort((a,b)=>(a.x+a.y)-(b.x+b.y));for(const b of blocks)drawTerrainBlock(b);
+          ctx.strokeStyle="#b9c88c88";ctx.lineWidth=3;const corners=[[0,0],[1600,0],[1600,1000],[0,1000],[0,0]].map(p=>project(p[0],p[1]));ctx.beginPath();ctx.moveTo(corners[0].x,corners[0].y);for(const p of corners.slice(1))ctx.lineTo(p.x,p.y);ctx.stroke();
+        }
+        function drawMap() {
+          if(!terrainCache||((map.blocks||[]).length>0&&!cacheHasMap)){
+            const screen=ctx;terrainCache=document.createElement("canvas");terrainCache.width=canvas.width;terrainCache.height=canvas.height;ctx=terrainCache.getContext("2d");drawMapBase();ctx=screen;cacheHasMap=(map.blocks||[]).length>0;
+          }
+          ctx.drawImage(terrainCache,0,0);
+        }
+        function screenAngle(a) { return Math.atan2((Math.cos(a)+Math.sin(a))*ISO_Y,(Math.cos(a)-Math.sin(a))*ISO_X); }
+        function poly(points,fill,stroke) { ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(const p of points.slice(1))ctx.lineTo(p[0],p[1]);ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.4;ctx.stroke();} }
+        function drawTank(p) {
+          const c=project(p.x,p.y),team=p.team===0?"#42b8e8":"#ec626c",trim=colors[p.tank]||"#fff",angle=screenAngle(p.bodyAngle),alpha=p.alive?1:.4;
+          ctx.save();ctx.globalAlpha=alpha;ctx.translate(c.x,c.y);ctx.fillStyle="#07110dc9";ctx.beginPath();ctx.ellipse(0,11,29,13,-.05,0,Math.PI*2);ctx.fill();ctx.shadowColor="#06100dcc";ctx.shadowBlur=10;ctx.shadowOffsetY=7;ctx.rotate(angle);
+          // Wide segmented tracks, detailed road wheels and a heavy armored hull.
+          ctx.fillStyle="#18252b";ctx.strokeStyle="#829096";ctx.lineWidth=1.2;ctx.beginPath();ctx.roundRect(-27,-20,54,11,5);ctx.fill();ctx.stroke();ctx.beginPath();ctx.roundRect(-27,9,54,11,5);ctx.fill();ctx.stroke();ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+          for(let i=-20;i<=20;i+=10){ctx.fillStyle="#a7b1ad";ctx.beginPath();ctx.arc(i,-14.5,3.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(i,14.5,3.2,0,Math.PI*2);ctx.fill();}
+          if(p.tank==="pegasus"){
+            poly([[-23,-12],[10,-15],[23,-7],[27,0],[17,14],[-18,13],[-27,5]],team,"#a9d5dc");
+            poly([[-16,-9],[7,-11],[17,-5],[20,0],[12,9],[-15,9],[-21,3]],trim,"#dafbff");
+            ctx.fillStyle="#c9ffff";ctx.fillRect(-23,-5,5,3);ctx.fillRect(-23,3,5,3);ctx.fillStyle="#172a35";ctx.fillRect(8,-8,6,3);ctx.fillRect(8,5,6,3);
+          }else if(p.tank==="tiger"){
+            poly([[-24,-13],[12,-17],[24,-10],[26,9],[15,16],[-21,13],[-27,5]],team,"#ffc879");
+            poly([[-19,-9],[9,-13],[19,-7],[20,7],[11,11],[-17,9],[-22,2]],trim,"#ffedbd");
+            ctx.fillStyle="#3d4140";for(let i=-12;i<=12;i+=12)ctx.fillRect(i-3,-6,6,3);ctx.fillStyle="#fff0bb";ctx.fillRect(-8,10,14,3);
+          }else{
+            poly([[-25,-11],[0,-18],[23,-10],[26,0],[21,11],[0,18],[-24,10],[-28,0]],team,"#d1c3ff");
+            poly([[-19,-8],[0,-13],[18,-7],[21,0],[15,8],[0,13],[-18,7],[-22,0]],trim,"#eeeaff");
+            ctx.strokeStyle="#fff2a8";ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,19,0,Math.PI*2);ctx.stroke();ctx.fillStyle="#fff2a8";ctx.fillRect(-25,-3,5,6);ctx.fillRect(20,-3,5,6);
+          }
+          // Turret rotates independently from the chassis; layered mantlet and barrel give it weight.
+          ctx.save();ctx.rotate(screenAngle(p.turretAngle)-angle);ctx.fillStyle="#23313a";ctx.fillRect(5,-5,30,10);ctx.fillStyle="#c9d3d4";ctx.fillRect(27,-3.2,13,6.4);ctx.fillStyle="#596a71";ctx.fillRect(37,-4.5,5,9);ctx.fillStyle=team;ctx.beginPath();ctx.ellipse(2,0,14,12,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#e0e9e7";ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle=trim;ctx.beginPath();ctx.ellipse(1,-1,8,7,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#1a2b34";ctx.fillRect(-3,-3,7,6);ctx.fillStyle="#dffcff";ctx.fillRect(1,-2,4,2);ctx.restore();
+          ctx.rotate(-angle);ctx.fillStyle="#f6d875";ctx.beginPath();ctx.arc(-17,-3,2.2,0,Math.PI*2);ctx.fill();ctx.restore();ctx.globalAlpha=1;
+          const bw=48;ctx.fillStyle="#101923";ctx.fillRect(c.x-bw/2,c.y-42,bw,5);ctx.fillStyle=p.team===0?"#58d899":"#ff7770";ctx.fillRect(c.x-bw/2,c.y-42,bw*Math.max(0,p.hp/p.maxHp),5);if(p.shield>0){ctx.strokeStyle="#7fe8ff";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(c.x,c.y,33,17,0,0,Math.PI*2);ctx.stroke();}
+          ctx.fillStyle="#eff6f4";ctx.font="bold 11px system-ui";ctx.textAlign="center";ctx.shadowColor="#102027";ctx.shadowBlur=4;ctx.fillText((p.id===me?"★ ":"")+p.name,c.x,c.y-47);ctx.shadowBlur=0;
+        }
+        function draw() {
+          drawMap();
+          for(const b of bullets){const c=project(b.x,b.y);ctx.shadowColor="#ffe28a";ctx.shadowBlur=12;ctx.fillStyle="#fff5c4";ctx.beginPath();ctx.ellipse(c.x,c.y-3,5,3,0,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;}
+          const objects=[...(map.blocks||[]).filter(b=>b.type==="wall"||b.type==="crate"||b.type==="bush").map(b=>({sort:b.x+b.y+b.w+b.h,block:b})),...(map.decor||[]).map(d=>({sort:d.x+d.y+32,tree:d})),...players.map(p=>({sort:p.x+p.y,player:p}))].sort((a,b)=>a.sort-b.sort);
+          for(const o of objects)if(o.player)drawTank(o.player);else if(o.tree)drawTree(o.tree);else drawTerrainBlock(o.block);
+          const mep=players.find(p=>p.id===me);if(mep&&matched){const c=project(mep.x,mep.y);ctx.strokeStyle="#eafaff88";ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(c.x,c.y,35,17,0,0,Math.PI*2);ctx.stroke();}
+          const aim=project(mouse.x,mouse.y);ctx.strokeStyle="#fff4c588";ctx.beginPath();ctx.arc(aim.x,aim.y,7,0,Math.PI*2);ctx.moveTo(aim.x-11,aim.y);ctx.lineTo(aim.x-5,aim.y);ctx.moveTo(aim.x+5,aim.y);ctx.lineTo(aim.x+11,aim.y);ctx.moveTo(aim.x,aim.y-11);ctx.lineTo(aim.x,aim.y-5);ctx.moveTo(aim.x,aim.y+5);ctx.lineTo(aim.x,aim.y+11);ctx.stroke();
+        }
+        function drawHud() {
+          $("scoreBlue").textContent = score[0] || 0;
+          $("scoreRed").textContent = score[1] || 0;
+          const render = (team, id) => {
+            const root = $(id);
+            root.replaceChildren();
+            players
+              .filter((p) => p.team === team)
+              .forEach((p) => {
+                const row = document.createElement("div");
+                row.className = "player" + (p.id === me ? " me" : "");
+                const dot = document.createElement("i");
+                dot.className = "dot live";
+                dot.style.background = colors[p.tank];
+                const name = document.createElement("span");
+                name.textContent = (p.id === me ? "★ " : "") + p.name;
+                const role = document.createElement("small");
+                role.textContent = names[p.tank];
+                const hp = document.createElement("div");
+                hp.className = "hp";
+                const bar = document.createElement("i");
+                bar.style.width = (100 * p.hp) / p.maxHp + "%";
+                bar.style.background = team ? "#ff706e" : "#57c8ff";
+                hp.append(bar);
+                row.append(dot, name, role, hp);
+                root.append(row);
+              });
+          };
+          render(0, "teamBlue");
+          render(1, "teamRed");
+          const own = players.find((p) => p.id === me);
+          if (own) {
+            $("energyText").textContent = "NĂNG LƯỢNG " + Math.round(own.energy) + "/" + own.maxEnergy;
+            $("energyBar").style.width = (100 * own.energy / own.maxEnergy) + "%";
+            for (const key of ["Q", "W", "R"]) {
+              const cooldown = (own.skillCd && own.skillCd[key]) || 0;
+              $("skill" + key).classList.toggle("cooldown", cooldown > 0);
+              $("cooldown" + key).textContent = cooldown > 0 ? cooldown.toFixed(1) + "s" : "Sẵn sàng";
+            }
+          }
+        }
+        function frame() {
+          draw();
+          requestAnimationFrame(frame);
+        }
+        Object.defineProperty(window, "bangBangBusy", {
+          get: () => ready || matched,
+        });
+        requestAnimationFrame(frame);
+        connect();
+      })();
+    </script>
+  </body>
+</html>
