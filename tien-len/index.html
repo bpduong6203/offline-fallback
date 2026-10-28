@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tiến Lên Miền Nam - Casino Edition</title>
+  <style>
+/* STYLE */
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- POKER ARENA TABLE -->
+    <div class="poker-table" id="pokerTable">
+      <!-- TOP BAR -->
+      <header class="top-bar">
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="btn-icon" id="btnMenu" title="Về Menu chọn chế độ" style="width:auto;padding:0 12px;border-radius:18px;font-size:0.85rem;font-weight:700;gap:4px">
+            🚪 Menu
+          </button>
+          <div class="brand">
+            <span>🃏</span> TIẾN LÊN MIỀN NAM
+          </div>
+        </div>
+        <div class="room-badge" id="roomBadge">
+          <span>👥</span> Tạo / Vào Phòng
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-icon" id="btnMute" title="Bật/Tắt âm thanh">🔊</button>
+          <button class="btn-icon" id="btnRules" title="Luật chơi">📖</button>
+        </div>
+      </header>
+
+      <!-- OPPONENT POD 2 (TOP) -->
+      <div class="player-pod player-top" id="pod2">
+        <div class="avatar-wrapper">
+          🤖
+          <span class="card-count-badge">13</span>
+        </div>
+        <div class="player-name">Sài Gòn</div>
+        <div class="status-tag" style="display:none"></div>
+        <div class="timer-bar-wrap"><div class="timer-bar"></div></div>
+      </div>
+
+      <!-- OPPONENT POD 1 (LEFT) -->
+      <div class="player-pod player-left" id="pod1">
+        <div class="avatar-wrapper">
+          🤖
+          <span class="card-count-badge">13</span>
+        </div>
+        <div class="player-name">Hải Phòng</div>
+        <div class="status-tag" style="display:none"></div>
+        <div class="timer-bar-wrap"><div class="timer-bar"></div></div>
+      </div>
+
+      <!-- OPPONENT POD 3 (RIGHT) -->
+      <div class="player-pod player-right" id="pod3">
+        <div class="avatar-wrapper">
+          🤖
+          <span class="card-count-badge">13</span>
+        </div>
+        <div class="player-name">Đà Nẵng</div>
+        <div class="status-tag" style="display:none"></div>
+        <div class="timer-bar-wrap"><div class="timer-bar"></div></div>
+      </div>
+
+      <!-- CENTER ARENA (DISCARD AREA) -->
+      <main class="arena-board">
+        <div class="arena-msg" id="arenaMsg">Vòng mới - Hãy ra bài mở đầu</div>
+        <div class="arena-cards-row" id="arenaCards"></div>
+      </main>
+
+      <!-- USER POD 0 (BOTTOM) -->
+      <div class="player-pod" id="pod0" style="bottom: 120px; left: 30px;">
+        <div class="avatar-wrapper">
+          🤠
+          <span class="card-count-badge">13</span>
+        </div>
+        <div class="player-name" id="userPodName">Bạn</div>
+        <div class="status-tag" style="display:none"></div>
+      </div>
+
+      <!-- USER HAND CARDS -->
+      <section class="user-hand-area">
+        <div class="user-cards-row" id="userCards"></div>
+      </section>
+
+      <!-- ACTION CONTROLS DOCK -->
+      <footer class="action-controls">
+        <button class="btn-action btn-pass" id="btnPass" disabled>Bỏ Lượt</button>
+        <button class="btn-action btn-sub" id="btnHint">Gợi Ý</button>
+        <button class="btn-action btn-play" id="btnPlay" disabled>ĐÁNH</button>
+        <button class="btn-action btn-sub" id="btnSort">Xếp: Số</button>
+      </footer>
+    </div>
+
+    <!-- OVERLAY 1: MAIN MENU / MODE SELECTION (HIỆN NGAY KHI VÀO TRANG) -->
+    <div class="menu-overlay" id="menuOverlay">
+      <div class="menu-card">
+        <div class="menu-hero">
+          <div class="menu-icon">🃏</div>
+          <h1 class="menu-title">TIẾN LÊN MIỀN NAM</h1>
+          <p class="menu-subtitle">Luật Chuẩn Nam Bộ · Sòng Bài Casino Cao Cấp</p>
+        </div>
+
+        <!-- PLAYER NAME INPUT -->
+        <div class="menu-section">
+          <label class="menu-label">Tên của bạn</label>
+          <input type="text" class="menu-input" id="menuPlayerName" maxlength="15" value="Người chơi" placeholder="Nhập tên của bạn">
+        </div>
+
+        <!-- MODE 1: PLAY VS BOTS -->
+        <div class="menu-box">
+          <div class="menu-box-header">
+            <span>🤖</span>
+            <b>CHƠI VỚI MÁY (SOLO)</b>
+          </div>
+          <p class="menu-box-desc">Tập luyện không cần mạng với 3 đối thủ AI thông minh.</p>
+          <div class="difficulty-group">
+            <label class="diff-btn"><input type="radio" name="aiDiff" value="easy"><span>Dễ</span></label>
+            <label class="diff-btn"><input type="radio" name="aiDiff" value="medium" checked><span>Vừa</span></label>
+            <label class="diff-btn"><input type="radio" name="aiDiff" value="hard"><span>Cao thủ (Đếm bài)</span></label>
+          </div>
+          <button class="btn-menu-action btn-play-solo" id="btnStartSolo">
+            ▶ Chơi Ngay Với Máy
+          </button>
+        </div>
+
+        <div class="menu-divider">
+          <span>HOẶC CHƠI CÙNG BẠN BÈ ONLINE</span>
+        </div>
+
+        <!-- MODE 2: MULTIPLAYER ONLINE -->
+        <div class="menu-box highlight">
+          <div class="menu-box-header">
+            <span>👥</span>
+            <b>PHÒNG CHƠI BẠN BÈ</b>
+          </div>
+          <p class="menu-box-desc">Tạo phòng riêng hoặc nhập mã để so tài cùng bạn bè.</p>
+          
+          <div class="online-action-row">
+            <button class="btn-menu-action btn-create-room" id="btnMenuCreateRoom">
+              ✨ Tạo Phòng Mới
+            </button>
+            <div class="join-box">
+              <input type="text" class="menu-input input-room-code" id="menuRoomCode" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off" spellcheck="false">
+              <button class="btn-menu-action btn-join-room" id="btnMenuJoinRoom">
+                Vào Phòng
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:center;margin-top:14px">
+          <button class="btn-subtle" id="btnMenuRules">📖 Xem Luật Chơi Chuẩn</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OVERLAY 2: ROOM LOBBY (SẢNH CHỜ PHÒNG MULTIPLAYER) -->
+    <div class="menu-overlay" id="lobbyOverlay" style="display:none">
+      <div class="menu-card lobby-card">
+        <div class="lobby-header">
+          <p class="eyebrow-tag">PHÒNG CHƠI BẠN BÈ</p>
+          <div class="lobby-code-box">
+            <span>MÃ PHÒNG:</span>
+            <strong id="lobbyRoomId">----</strong>
+            <button class="btn-copy" id="btnCopyCode" title="Sao chép mã phòng">Sao chép mã</button>
+            <button class="btn-copy" id="btnCopyLink" title="Sao chép link mời bạn bè">Sao chép link</button>
+          </div>
+          <p class="lobby-hint" id="lobbyStatusMsg">Gửi mã hoặc link cho bạn bè để cùng vào bàn (Tối đa 4 người).</p>
+        </div>
+
+        <!-- 4 PLAYER SEATS LIST -->
+        <div class="lobby-seats" id="lobbySeats">
+          <!-- Dynamically populated -->
+        </div>
+
+        <div class="lobby-actions">
+          <button class="btn-menu-action btn-play-solo" id="btnLobbyStart" style="display:none">
+            ▶ BẮT ĐẦU VÁN BÀI
+          </button>
+          <p class="waiting-text" id="lobbyWaitingHost" style="display:none">
+            ⏳ Đang chờ chủ phòng bắt đầu trận đấu...
+          </p>
+          <button class="btn-subtle" id="btnLobbyLeave">
+            🚪 Rời phòng về Menu
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: LUẬT CHƠI (RULES) -->
+    <div class="modal-backdrop" id="rulesModal" style="display:none">
+      <div class="modal-card">
+        <div class="modal-title">📖 Luật Tiến Lên Miền Nam Chuẩn</div>
+        <div class="modal-body">
+          <p>• <b>Thứ tự bài:</b> 3 &lt; 4 &lt; 5 &lt; ... &lt; K &lt; A &lt; <b>2 (Heo)</b>.</p>
+          <p>• <b>Thứ tự chất:</b> Bích (♠) &lt; Chuồn (♣) &lt; Rô (♦) &lt; Cơ (♥).</p>
+          <p>• <b>Sảnh:</b> Từ 3 lá liên tiếp trở lên (3..A). <i>Lưu ý: Quân 2 (Heo) không bao giờ nằm trong sảnh!</i></p>
+          <p>• <b>Chặt 1 Heo:</b> 3 đôi thông, Tứ quý hoặc 4 đôi thông.</p>
+          <p>• <b>Chặt Đôi Heo:</b> Tứ quý hoặc 4 đôi thông.</p>
+          <p>• <b>4 Đôi Thông:</b> Chặt được 1 heo, đôi heo, 3 đôi thông, tứ quý và <i>không cần đến vòng</i>.</p>
+          <p>• <b>Tới trắng:</b> Sảnh rồng, Tứ quý 2, 5 đôi thông, 6 đôi bất kỳ, bài đồng chất.</p>
+          <p>• <b>Cóng & Thối:</b> Không đánh được lá nào bị Cóng (x2 tiền). Thối Heo/Tứ quý bị phạt khi ván kết thúc.</p>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-action btn-play btn-close-modal">Đã Hiểu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: KẾT THÚC VÁN (GAME OVER) -->
+    <div class="modal-backdrop" id="gameOverModal" style="display:none">
+      <div class="modal-card">
+        <div class="modal-title">🏆 Kết Quả Ván Đấu</div>
+        <div class="modal-body" id="scoreboardList"></div>
+        <div class="modal-actions">
+          <button class="btn-action btn-play" id="btnPlayAgain">Ván Tiếp Theo</button>
+          <button class="btn-action btn-sub" id="btnGameOverMenu">Về Menu</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+/* SCRIPT */
+  </script>
+</body>
+</html>

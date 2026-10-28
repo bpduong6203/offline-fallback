@@ -23,20 +23,22 @@ test('Worker serves Bomb Arena GET/HEAD and rejects writes independently of orig
   }
   const rejected=await worker.fetch(new Request('https://example.test/__game/bomb-arena',{method:'POST'}));assert.equal(rejected.status,405);
 });
+test('Worker serves Tiến Lên Miền Nam routes and rejects writes',async()=>{
+  for(const route of ['/tien-len','/tien-len/','/__game/tien-len']){
+    const response=await worker.fetch(new Request('https://example.test'+route));
+    assert.equal(response.status,200);
+    assert.match(await response.text(),/TIẾN LÊN MIỀN NAM/);
+    const head=await worker.fetch(new Request('https://example.test'+route,{method:'HEAD'}));
+    assert.equal(head.status,200);
+    assert.equal(await head.text(),'');
+    const post=await worker.fetch(new Request('https://example.test'+route,{method:'POST'}));
+    assert.equal(post.status,405);
+  }
+});
 test('existing Mini Motorways route and fallback page remain available',async()=>{
   const response=await worker.fetch(new Request('https://example.test/__game/mini-motorways'));assert.equal(response.status,200);assert.equal(await response.text(),html);
   const {renderOffline}=await import('../src/page/render.js');
   const fallback=renderOffline(new Request('https://example.test/',{headers:{Accept:'text/html'}}));
   assert.equal(fallback.status,503);assert.match(await fallback.text(),/href="\/__game\/bomb-arena"/);
   assert.equal(renderOffline(new Request('https://example.test/api')).status,503);
-});
-test('Worker serves Bus Escape GET/HEAD and rejects writes',async()=>{
-  for(const route of ['/__game/bus-escape','/bus-escape']){
-    for(const method of ['GET','HEAD']){
-      const response=await worker.fetch(new Request('https://example.test'+route,{method}));
-      assert.equal(response.status,200);assert.match(response.headers.get('Content-Type'),/text\/html/);
-      const body=await response.text();if(method==='HEAD')assert.equal(body,'');else assert.match(body,/Bus Escape/);
-    }
-    const rejected=await worker.fetch(new Request('https://example.test'+route,{method:'POST'}));assert.equal(rejected.status,405);
-  }
 });

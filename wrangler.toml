@@ -48,10 +48,19 @@ class_name = "StickmanRoom"
 name = "BANGBANG"
 class_name = "BangBangQueue"
 
+# Tiến Lên Miền Nam: server-authoritative room cho tối đa 4 người
+[[durable_objects.bindings]]
+name = "TIENLEN"
+class_name = "TienLenRoom"
+
 [[migrations]]
 tag = "v4"
 new_sqlite_classes = ["StickmanRoom"]
 
 [[migrations]]
 tag = "v5"
+new_sqlite_classes = ["TienLenRoom"]
+
+[[migrations]]
+tag = "v6"
 new_sqlite_classes = ["BangBangQueue"]

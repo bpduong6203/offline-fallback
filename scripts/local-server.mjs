@@ -5,14 +5,17 @@ import {BombRoomEngine} from '../src/bomb-room-engine.js';
 import {BangBangEngine} from '../src/bang-bang-engine.js';
 import {buildStickman} from './build-stickman.mjs';
 import {StickmanRoomEngine} from '../src/stickman-room-engine.js';
-import {renderBusJamPage} from '../src/page/games/bus-jam.html.js';
+import {buildTienLen} from './build-tienlen.mjs';
+import {TienLenRoomEngine} from '../src/tienlen-room-engine.js';
 
 export function localServer(getHtml){
   const rooms=new Map(),wss=new WebSocketServer({noServer:true,maxPayload:512}),bangEngine=new BangBangEngine();let bangTimer=null;
   const server=createServer(async(req,res)=>{
     const path=req.url?.split('?')[0];
     if(path==='/__game/bang-bang'){try{const html=await readFile(new URL('../src/page/games/Bang_Bang.html',import.meta.url),'utf8');res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Bang Bang render failed');}return;}
-    if(['/__game/bus-escape','/bus-escape'].includes(path)){try{const html=renderBusJamPage();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Bus Jam render failed');}return;}
+    if(['/tien-len','/tien-len/','/__game/tien-len'].includes(path)){
+      try{const html=await buildTienLen();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}return;
+    }
     if(['/stickman-fight','/stickman-fight/','/__game/stickman-fight'].includes(path)){try{const html=await buildStickman();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}return;}
     if(!['/','/__game/bomb-arena'].includes(path)){res.writeHead(404);res.end('Not found');return;}
     try{const html=await getHtml();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}
@@ -30,14 +33,14 @@ export function localServer(getHtml){
         ws.on('message',(data,binary)=>{if(binary)return;const now=Date.now();if(now-windowStart>1000){windowStart=now;count=0;}if(++count>45){ws.close(1008,'Too many messages');leave();return;}let message;try{message=JSON.parse(data.toString());}catch{return;}bangEngine.handle(id,message);if(bangEngine.match&&!bangTimer){let last=Date.now(),acc=0,frames=0;bangTimer=setInterval(()=>{const t=Date.now();acc+=Math.min(.1,(t-last)/1000);last=t;while(acc>=1/30){bangEngine.tick(1/30);acc-=1/30;}if(++frames%3!==0)bangEngine.snapshot();if(!bangEngine.match){clearInterval(bangTimer);bangTimer=null;}},1000/30);}});
       });return;
     }
-    const game=url.searchParams.get('g'),stickman=game==='stickman',key=game+':'+code;
-    if(url.pathname!=='/__game/ws'||!['bomb','stickman'].includes(game)||!/^[A-Z0-9]{4}$/.test(code))return reject(400,'Bad Request');
+    const game=url.searchParams.get('g'),stickman=game==='stickman',tienlen=game==='tienlen',key=game+':'+code;
+    if(url.pathname!=='/__game/ws'||!['bomb','stickman','tienlen'].includes(game)||!/^[A-Z0-9]{4}$/.test(code))return reject(400,'Bad Request');
     let room=rooms.get(key);
     if(create&&room)return reject(409,'Room exists');
     if(!create&&!room)return reject(404,'Room not found');
-    const playing=()=>!!room.engine.game&&(stickman?room.engine.playing():!room.engine.game.result);
+    const playing=()=>tienlen?(!!room.engine.game&&!room.engine.game.ended):!!room.engine.game&&(stickman?room.engine.playing():!room.engine.game.result);
     if(room&&(room.engine.peers.size>=(stickman?2:4)||playing()))return reject(409,'Room unavailable');
-    if(!room){room={engine:stickman?new StickmanRoomEngine():new BombRoomEngine(),timer:null};rooms.set(key,room);}
+    if(!room){room={engine:tienlen?new TienLenRoomEngine():(stickman?new StickmanRoomEngine():new BombRoomEngine()),timer:null};rooms.set(key,room);}
     wss.handleUpgrade(req,socket,head,ws=>{
       const send=message=>{if(ws.readyState===1)ws.send(JSON.stringify(message));};
       const id=room.engine.join(url.searchParams.get('name'),send);
