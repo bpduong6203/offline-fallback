@@ -30,3 +30,13 @@ test('existing Mini Motorways route and fallback page remain available',async()=
   assert.equal(fallback.status,503);assert.match(await fallback.text(),/href="\/__game\/bomb-arena"/);
   assert.equal(renderOffline(new Request('https://example.test/api')).status,503);
 });
+test('Worker serves Bus Escape GET/HEAD and rejects writes',async()=>{
+  for(const route of ['/__game/bus-escape','/bus-escape']){
+    for(const method of ['GET','HEAD']){
+      const response=await worker.fetch(new Request('https://example.test'+route,{method}));
+      assert.equal(response.status,200);assert.match(response.headers.get('Content-Type'),/text\/html/);
+      const body=await response.text();if(method==='HEAD')assert.equal(body,'');else assert.match(body,/Bus Escape/);
+    }
+    const rejected=await worker.fetch(new Request('https://example.test'+route,{method:'POST'}));assert.equal(rejected.status,405);
+  }
+});

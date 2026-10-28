@@ -3,7 +3,8 @@
 // hay dấu gạch chéo ngược trong phần chuỗi này.
 export const clientMain = `    // ===================== CHUNG =====================
     var motorways = { w: 480, h: 270, hint: 'Kéo chuột hoặc ngón tay để vẽ đường nối nhà với điểm đến cùng màu.', update: function () {}, draw: function () {} };
-    var games = { flappy: flappy, pool: pool, caro: caro, sword: sword, wolf: wolf, motorways: motorways, played: played };
+    var busescape = { w: 380, h: 580, hint: 'Chạm vào xe buýt để đón khách cùng màu. Sắp xếp bến đỗ hợp lý để không bị kẹt!', update: function () {}, draw: function () {} };
+    var games = { flappy: flappy, pool: pool, caro: caro, sword: sword, wolf: wolf, motorways: motorways, busescape: busescape, played: played };
     var cur = flappy;
     var hint = document.getElementById('hint');
     var tabs = document.querySelectorAll('.tab[data-g]');
@@ -23,10 +24,17 @@ export const clientMain = `    // ===================== CHUNG ==================
       document.getElementById('swordui').hidden = (g !== 'sword');
       document.getElementById('wolfui').hidden = (g !== 'wolf');
       document.getElementById('gameBox').hidden = (g === 'wolf');
-      document.getElementById('g').hidden = (g === 'motorways');
+      document.getElementById('g').hidden = (g === 'motorways' || g === 'busescape');
       document.getElementById('motorwaysFrame').hidden = (g !== 'motorways');
+      var bf = document.getElementById('busEscapeFrame');
+      if (bf) {
+        bf.hidden = (g !== 'busescape');
+        if (g === 'busescape' && (!bf.src || bf.src === '' || bf.src.indexOf('/__game/bus-escape') === -1)) {
+          bf.src = bf.getAttribute('data-src');
+        }
+      }
       var cardEl = document.querySelector('.card');
-      if (cardEl) cardEl.setAttribute('data-w', g === 'wolf' ? 'menu' : (g === 'sword' ? 'arena' : (g === 'motorways' ? 'motorways' : (g === 'played' ? 'played' : ''))));
+      if (cardEl) cardEl.setAttribute('data-w', g === 'wolf' ? 'menu' : (g === 'sword' ? 'arena' : (g === 'motorways' ? 'motorways' : (g === 'busescape' ? 'busescape' : (g === 'played' ? 'played' : '')))));
       hint.textContent = cur.hint;
     }
     for (var t = 0; t < tabs.length; t++) {
