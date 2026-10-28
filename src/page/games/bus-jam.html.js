@@ -104,25 +104,6 @@ export function renderBusJamPage() {
       return true;
     }
 
-    function checkGameStatus(state) {
-      const maxBays = state.maxBays || MAX_BAYS;
-      const isWon = (state.queue.length === 0) &&
-                    (state.bays.length === 0) &&
-                    (!state.buses || state.buses.length === 0);
-
-      let isGameOver = false;
-      if (state.bays.length >= maxBays && state.queue.length > 0) {
-        const frontPassenger = state.queue[0];
-        const hasMatchingBay = state.bays.some(
-          b => b.color === frontPassenger && (b.seated || 0) < (b.capacity || DEFAULT_BUS_CAPACITY)
-        );
-        if (!hasMatchingBay) isGameOver = true;
-      }
-      state.isWon = isWon;
-      state.isGameOver = isGameOver;
-      return { isWon, isGameOver };
-    }
-
     function createGameState(level) {
       return {
         levelId: level.id,
@@ -154,6 +135,7 @@ export function renderBusJamPage() {
 
     let currentLevelIndex = 0;
     let state = createGameState(LEVELS[currentLevelIndex]);
+    let baySlots = new Array(state.maxBays || MAX_BAYS).fill(null);
 
     let soundEnabled = true;
     try {
@@ -179,65 +161,79 @@ export function renderBusJamPage() {
         const ac = getAudio();
         if (!ac) return;
         const t = ac.currentTime;
-        const osc = ac.createOscillator();
-        const gain = ac.createGain();
-        osc.connect(gain);
-        gain.connect(ac.destination);
 
         if (type === 'blocked') {
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(140, t);
-          osc.frequency.linearRampToValueAtTime(80, t + 0.14);
-          gain.gain.setValueAtTime(0.12, t);
-          gain.gain.linearRampToValueAtTime(0.01, t + 0.14);
-          osc.start(t);
-          osc.stop(t + 0.14);
+          [0, 0.08].forEach(delay => {
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+            osc.connect(gain);
+            gain.connect(ac.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(220, t + delay);
+            osc.frequency.linearRampToValueAtTime(140, t + delay + 0.06);
+            gain.gain.setValueAtTime(0.12, t + delay);
+            gain.gain.linearRampToValueAtTime(0.01, t + delay + 0.06);
+            osc.start(t + delay);
+            osc.stop(t + delay + 0.06);
+          });
         } else if (type === 'slide') {
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          osc.connect(gain);
+          gain.connect(ac.destination);
           osc.type = 'sine';
           osc.frequency.setValueAtTime(260, t);
-          osc.frequency.exponentialRampToValueAtTime(480, t + 0.22);
-          gain.gain.setValueAtTime(0.08, t);
-          gain.gain.linearRampToValueAtTime(0.01, t + 0.22);
+          osc.frequency.exponentialRampToValueAtTime(520, t + 0.2);
+          gain.gain.setValueAtTime(0.09, t);
+          gain.gain.linearRampToValueAtTime(0.01, t + 0.2);
           osc.start(t);
-          osc.stop(t + 0.22);
+          osc.stop(t + 0.2);
         } else if (type === 'board') {
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          osc.connect(gain);
+          gain.connect(ac.destination);
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(540, t);
-          osc.frequency.exponentialRampToValueAtTime(780, t + 0.15);
-          gain.gain.setValueAtTime(0.1, t);
-          gain.gain.linearRampToValueAtTime(0.01, t + 0.15);
-          osc.start(t);
-          osc.stop(t + 0.15);
-        } else if (type === 'depart') {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(380, t);
-          osc.frequency.exponentialRampToValueAtTime(720, t + 0.35);
+          osc.frequency.setValueAtTime(587.33, t);
+          osc.frequency.exponentialRampToValueAtTime(880, t + 0.16);
           gain.gain.setValueAtTime(0.12, t);
-          gain.gain.linearRampToValueAtTime(0.01, t + 0.35);
+          gain.gain.linearRampToValueAtTime(0.01, t + 0.16);
           osc.start(t);
-          osc.stop(t + 0.35);
+          osc.stop(t + 0.16);
+        } else if (type === 'depart') {
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(320, t);
+          osc.frequency.exponentialRampToValueAtTime(780, t + 0.32);
+          gain.gain.setValueAtTime(0.14, t);
+          gain.gain.linearRampToValueAtTime(0.01, t + 0.32);
+          osc.start(t);
+          osc.stop(t + 0.32);
         } else if (type === 'win') {
-          [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+          [523.25, 659.25, 783.99, 1046.5, 1318.51].forEach((freq, i) => {
             const o = ac.createOscillator();
             const g = ac.createGain();
             o.connect(g);
             g.connect(ac.destination);
             o.type = 'triangle';
-            o.frequency.setValueAtTime(freq, t + i * 0.1);
-            g.gain.setValueAtTime(0.1, t + i * 0.1);
-            g.gain.linearRampToValueAtTime(0.01, t + i * 0.1 + 0.2);
-            o.start(t + i * 0.1);
-            o.stop(t + i * 0.1 + 0.2);
+            o.frequency.setValueAtTime(freq, t + i * 0.09);
+            g.gain.setValueAtTime(0.13, t + i * 0.09);
+            g.gain.linearRampToValueAtTime(0.01, t + i * 0.09 + 0.24);
+            o.start(t + i * 0.09);
+            o.stop(t + i * 0.09 + 0.24);
           });
         } else if (type === 'lose') {
-          [440, 392, 349.23, 293.66].forEach((freq, i) => {
+          [440, 370, 311, 261.6].forEach((freq, i) => {
             const o = ac.createOscillator();
             const g = ac.createGain();
             o.connect(g);
             g.connect(ac.destination);
             o.type = 'sawtooth';
             o.frequency.setValueAtTime(freq, t + i * 0.12);
-            g.gain.setValueAtTime(0.08, t + i * 0.12);
+            g.gain.setValueAtTime(0.09, t + i * 0.12);
             g.gain.linearRampToValueAtTime(0.01, t + i * 0.12 + 0.2);
             o.start(t + i * 0.12);
             o.stop(t + i * 0.12 + 0.2);
@@ -251,18 +247,19 @@ export function renderBusJamPage() {
       shakingBuses: new Map(),
       boardingPassenger: null,
       departingBus: null,
-      particles: []
+      particles: [],
+      floatingAlerts: []
     };
 
     const W = 380;
     const H = 580;
-    const gridStartX = 18;
+    const gridStartX = 16;
     const gridStartY = 236;
-    const gridAreaWidth = 344;
+    const gridAreaWidth = 348;
     const gridAreaHeight = 328;
 
     const baysY = 126;
-    const bayW = 78;
+    const bayW = 79;
     const bayH = 88;
     const bayGap = 8;
     const baysStartX = (W - (4 * bayW + 3 * bayGap)) / 2;
@@ -283,7 +280,7 @@ export function renderBusJamPage() {
     }
 
     function getPassengerQueuePos(index) {
-      return { x: 32 + index * 48, y: 92 };
+      return { x: 34 + index * 46, y: 92 };
     }
 
     function loadLevel(index) {
@@ -291,117 +288,92 @@ export function renderBusJamPage() {
       if (index >= LEVELS.length) index = LEVELS.length - 1;
       currentLevelIndex = index;
       state = createGameState(LEVELS[currentLevelIndex]);
+      baySlots = new Array(state.maxBays || MAX_BAYS).fill(null);
       activeAnimations.slidingBus = null;
       activeAnimations.shakingBuses.clear();
       activeAnimations.boardingPassenger = null;
       activeAnimations.departingBus = null;
       activeAnimations.particles = [];
+      activeAnimations.floatingAlerts = [];
     }
 
+    loadLevel(currentLevelIndex);
+
     function spawnConfetti() {
-      for (let i = 0; i < 48; i++) {
+      for (let i = 0; i < 54; i++) {
         activeAnimations.particles.push({
-          x: W / 2 + (Math.random() - 0.5) * 160,
-          y: H / 2 - 40 + (Math.random() - 0.5) * 80,
-          vx: (Math.random() - 0.5) * 260,
-          vy: -180 - Math.random() * 220,
+          x: W / 2 + (Math.random() - 0.5) * 180,
+          y: H / 2 - 40 + (Math.random() - 0.5) * 90,
+          vx: (Math.random() - 0.5) * 280,
+          vy: -190 - Math.random() * 240,
           color: Object.values(COLORS)[Math.floor(Math.random() * 5)],
-          size: 4 + Math.random() * 5,
+          size: 5 + Math.random() * 6,
           rot: Math.random() * Math.PI,
-          vrot: (Math.random() - 0.5) * 8,
-          life: 1.0
+          vrot: (Math.random() - 0.5) * 10,
+          life: 1.2
         });
       }
     }
 
     function spawnExhaust(x, y) {
-      for (let i = 0; i < 14; i++) {
+      for (let i = 0; i < 16; i++) {
         activeAnimations.particles.push({
-          x: x + (Math.random() - 0.5) * 10,
-          y: y + (Math.random() - 0.5) * 10,
-          vx: -60 - Math.random() * 90,
-          vy: (Math.random() - 0.5) * 40,
-          color: '#A0AEC0',
-          size: 3 + Math.random() * 4,
+          x: x + (Math.random() - 0.5) * 12,
+          y: y + (Math.random() - 0.5) * 12,
+          vx: -60 - Math.random() * 110,
+          vy: (Math.random() - 0.5) * 45,
+          color: '#CBD5E0',
+          size: 4 + Math.random() * 4,
           rot: 0,
           vrot: 0,
-          life: 0.5
+          life: 0.45
         });
       }
     }
 
-    function triggerNextQueueAction() {
-      if (activeAnimations.slidingBus || activeAnimations.boardingPassenger || activeAnimations.departingBus) {
-        return;
-      }
-
-      if (state.queue.length === 0) {
-        checkGameStatus(state);
-        if (state.isWon) {
-          playSound('win');
-          spawnConfetti();
-        }
-        return;
-      }
-
-      const nextPassengerColor = state.queue[0];
-      const targetBayIndex = state.bays.findIndex(
-        b => b.color === nextPassengerColor && (b.seated || 0) < (b.capacity || DEFAULT_BUS_CAPACITY)
-      );
-
-      if (targetBayIndex === -1) {
-        checkGameStatus(state);
-        if (state.isGameOver) playSound('lose');
-        return;
-      }
-
-      const targetBus = state.bays[targetBayIndex];
-      const targetBayBox = getBayBox(targetBayIndex);
-      const seatIndex = targetBus.seated || 0;
-      const seatDotX = targetBayBox.x + targetBayBox.w / 2 - 20 + seatIndex * 20;
-      const seatDotY = targetBayBox.y + targetBayBox.h - 18;
-      const startPos = getPassengerQueuePos(0);
-
-      state.queue.shift();
-      playSound('board');
-
-      activeAnimations.boardingPassenger = {
-        color: nextPassengerColor,
-        fromX: startPos.x,
-        fromY: startPos.y,
-        toX: seatDotX,
-        toY: seatDotY,
-        targetBus,
-        targetBayIndex,
-        progress: 0,
-        duration: 0.28
-      };
-    }
-
     function handleBusClick(clickedBus) {
-      if (activeAnimations.slidingBus || state.isWon || state.isGameOver) return;
-
-      const maxBays = state.maxBays || MAX_BAYS;
-      if (state.bays.length >= maxBays) {
-        playSound('blocked');
-        activeAnimations.shakingBuses.set(clickedBus.id, 0.2);
-        return;
-      }
+      if (state.isWon || state.isGameOver) return;
+      if (clickedBus.isSliding || !state.buses.some(b => b.id === clickedBus.id)) return;
 
       const canExit = canBusExit(clickedBus, state.buses, state.gridWidth, state.gridHeight);
       if (!canExit) {
         playSound('blocked');
-        activeAnimations.shakingBuses.set(clickedBus.id, 0.2);
+        activeAnimations.shakingBuses.set(clickedBus.id, 0.22);
+        const box = getBusParkingBox(clickedBus, state.gridWidth, state.gridHeight);
+        activeAnimations.floatingAlerts.push({
+          x: box.x + box.w / 2,
+          y: box.y - 10,
+          text: '⛔ Bị chặn!',
+          life: 0.65
+        });
         return;
       }
 
+      const slotIndex = baySlots.findIndex(slot => slot === null);
+      if (slotIndex === -1) {
+        playSound('blocked');
+        activeAnimations.shakingBuses.set(clickedBus.id, 0.22);
+        const box = getBusParkingBox(clickedBus, state.gridWidth, state.gridHeight);
+        activeAnimations.floatingAlerts.push({
+          x: box.x + box.w / 2,
+          y: box.y - 10,
+          text: '⚠️ Hết bến!',
+          life: 0.65
+        });
+        return;
+      }
+
+      clickedBus.isSliding = true;
+      clickedBus.bayIndex = slotIndex;
+      baySlots[slotIndex] = clickedBus;
+      state.bays = baySlots.filter(Boolean);
+
+      const bIdx = state.buses.findIndex(b => b.id === clickedBus.id);
+      if (bIdx !== -1) state.buses.splice(bIdx, 1);
+
       playSound('slide');
       const startBox = getBusParkingBox(clickedBus, state.gridWidth, state.gridHeight);
-      const targetBayIndex = state.bays.length;
-      const targetBayBox = getBayBox(targetBayIndex);
-
-      const busIdx = state.buses.findIndex(b => b.id === clickedBus.id);
-      if (busIdx !== -1) state.buses.splice(busIdx, 1);
+      const targetBayBox = getBayBox(slotIndex);
 
       activeAnimations.slidingBus = {
         bus: clickedBus,
@@ -413,9 +385,9 @@ export function renderBusJamPage() {
         toY: targetBayBox.y + 4,
         toW: targetBayBox.w - 8,
         toH: targetBayBox.h - 8,
-        targetBayIndex,
+        targetSlot: slotIndex,
         progress: 0,
-        duration: 0.32
+        duration: 0.28
       };
     }
 
@@ -423,48 +395,50 @@ export function renderBusJamPage() {
       e.preventDefault();
       getAudio();
       const rect = canvas.getBoundingClientRect();
-      const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-      const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+      const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+      const clientY = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
       const scaleX = W / rect.width;
       const scaleY = H / rect.height;
       const px = (clientX - rect.left) * scaleX;
       const py = (clientY - rect.top) * scaleY;
 
-      // HUD buttons
-      if (px >= 336 && px <= 368 && py >= 10 && py <= 40) {
-        soundEnabled = !soundEnabled;
-        try { localStorage.setItem('bus_jam_sound', String(soundEnabled)); } catch (err) {}
-        return;
-      }
-      if (px >= 298 && px <= 330 && py >= 10 && py <= 40) {
-        loadLevel(currentLevelIndex);
-        return;
-      }
-      if (px >= 12 && px <= 36 && py >= 10 && py <= 40) {
-        if (currentLevelIndex > 0) loadLevel(currentLevelIndex - 1);
-        return;
-      }
-      if (px >= 240 && px <= 268 && py >= 10 && py <= 40) {
-        if (currentLevelIndex < LEVELS.length - 1) loadLevel(currentLevelIndex + 1);
-        return;
-      }
-
-      // Modals
+      // 1. Victory Modal Click
       if (state.isWon) {
-        if (px >= W / 2 - 80 && px <= W / 2 + 80 && py >= H / 2 + 30 && py <= H / 2 + 75) {
+        if (py >= H / 2 - 20 && py <= H / 2 + 120 && px >= W / 2 - 130 && px <= W / 2 + 130) {
           if (currentLevelIndex < LEVELS.length - 1) loadLevel(currentLevelIndex + 1);
           else loadLevel(0);
           return;
         }
       }
+
+      // 2. Game Over Modal Click
       if (state.isGameOver) {
-        if (px >= W / 2 - 80 && px <= W / 2 + 80 && py >= H / 2 + 30 && py <= H / 2 + 75) {
+        if (py >= H / 2 - 20 && py <= H / 2 + 120 && px >= W / 2 - 130 && px <= W / 2 + 130) {
           loadLevel(currentLevelIndex);
           return;
         }
       }
 
-      // Buses in parking lot
+      // 3. Header Controls
+      if (px >= 336 && px <= 376 && py >= 6 && py <= 44) {
+        soundEnabled = !soundEnabled;
+        try { localStorage.setItem('bus_jam_sound', String(soundEnabled)); } catch (err) {}
+        return;
+      }
+      if (px >= 294 && px <= 334 && py >= 6 && py <= 44) {
+        loadLevel(currentLevelIndex);
+        return;
+      }
+      if (px >= 6 && px <= 44 && py >= 6 && py <= 44) {
+        if (currentLevelIndex > 0) loadLevel(currentLevelIndex - 1);
+        return;
+      }
+      if (px >= 244 && px <= 286 && py >= 6 && py <= 44) {
+        if (currentLevelIndex < LEVELS.length - 1) loadLevel(currentLevelIndex + 1);
+        return;
+      }
+
+      // 4. Click Buses in Parking Lot
       if (py >= gridStartY && py <= gridStartY + gridAreaHeight && px >= gridStartX && px <= gridStartX + gridAreaWidth) {
         for (const bus of state.buses) {
           const box = getBusParkingBox(bus, state.gridWidth, state.gridHeight);
@@ -485,13 +459,19 @@ export function renderBusJamPage() {
         else activeAnimations.shakingBuses.set(busId, nextTimer);
       }
 
+      for (let i = activeAnimations.floatingAlerts.length - 1; i >= 0; i--) {
+        const a = activeAnimations.floatingAlerts[i];
+        a.y -= 26 * dt;
+        a.life -= dt;
+        if (a.life <= 0) activeAnimations.floatingAlerts.splice(i, 1);
+      }
+
       if (activeAnimations.slidingBus) {
         const anim = activeAnimations.slidingBus;
         anim.progress += dt / anim.duration;
         if (anim.progress >= 1) {
-          state.bays.push(anim.bus);
+          anim.bus.isSliding = false;
           activeAnimations.slidingBus = null;
-          triggerNextQueueAction();
         }
       }
 
@@ -499,28 +479,25 @@ export function renderBusJamPage() {
         const anim = activeAnimations.boardingPassenger;
         anim.progress += dt / anim.duration;
         if (anim.progress >= 1) {
-          const bus = anim.targetBus;
-          bus.seated = (bus.seated || 0) + 1;
+          anim.targetBus.seated = (anim.targetBus.seated || 0) + 1;
           activeAnimations.boardingPassenger = null;
 
-          if (bus.seated >= (bus.capacity || DEFAULT_BUS_CAPACITY)) {
+          if (anim.targetBus.seated >= (anim.targetBus.capacity || DEFAULT_BUS_CAPACITY)) {
             playSound('depart');
-            const bayIndex = state.bays.findIndex(b => b.id === bus.id);
-            const bayBox = getBayBox(bayIndex >= 0 ? bayIndex : 0);
-            spawnExhaust(bayBox.x + bayBox.w - 10, bayBox.y + bayBox.h / 2);
+            anim.targetBus.isDeparting = true;
+            const bayBox = getBayBox(anim.targetBus.bayIndex);
+            spawnExhaust(bayBox.x + bayBox.w - 6, bayBox.y + bayBox.h / 2);
 
             activeAnimations.departingBus = {
-              bus,
-              bayIndex,
+              bus: anim.targetBus,
+              slotIndex: anim.targetBus.bayIndex,
               fromX: bayBox.x + 4,
               fromY: bayBox.y + 4,
               w: bayBox.w - 8,
               h: bayBox.h - 8,
               progress: 0,
-              duration: 0.38
+              duration: 0.32
             };
-          } else {
-            triggerNextQueueAction();
           }
         }
       }
@@ -529,11 +506,62 @@ export function renderBusJamPage() {
         const anim = activeAnimations.departingBus;
         anim.progress += dt / anim.duration;
         if (anim.progress >= 1) {
-          const bIdx = state.bays.findIndex(b => b.id === anim.bus.id);
-          if (bIdx !== -1) state.bays.splice(bIdx, 1);
+          baySlots[anim.slotIndex] = null;
+          state.bays = baySlots.filter(Boolean);
           state.completedBuses.push(anim.bus);
           activeAnimations.departingBus = null;
-          triggerNextQueueAction();
+        }
+      }
+
+      // Continuous Robust Queue Processing
+      if (!activeAnimations.boardingPassenger && !activeAnimations.departingBus) {
+        if (state.queue.length > 0) {
+          const nextColor = state.queue[0];
+          const targetBus = baySlots.find(b =>
+            b &&
+            !b.isSliding &&
+            !b.isDeparting &&
+            b.color === nextColor &&
+            (b.seated || 0) < (b.capacity || DEFAULT_BUS_CAPACITY)
+          );
+
+          if (targetBus) {
+            const targetBayBox = getBayBox(targetBus.bayIndex);
+            const seatIndex = targetBus.seated || 0;
+            const seatDotX = targetBayBox.x + targetBayBox.w / 2 - 20 + seatIndex * 20;
+            const seatDotY = targetBayBox.y + targetBayBox.h - 16;
+            const startPos = getPassengerQueuePos(0);
+
+            state.queue.shift();
+            playSound('board');
+
+            activeAnimations.boardingPassenger = {
+              color: nextColor,
+              fromX: startPos.x,
+              fromY: startPos.y,
+              toX: seatDotX,
+              toY: seatDotY,
+              targetBus,
+              progress: 0,
+              duration: 0.22
+            };
+          } else {
+            const allOccupied = baySlots.every(b => b !== null && !b.isDeparting);
+            if (allOccupied && !state.isGameOver) {
+              state.isGameOver = true;
+              playSound('lose');
+            }
+          }
+        } else {
+          const allCleared = state.buses.length === 0 &&
+                             baySlots.every(b => b === null) &&
+                             !activeAnimations.slidingBus &&
+                             !activeAnimations.departingBus;
+          if (allCleared && !state.isWon) {
+            state.isWon = true;
+            playSound('win');
+            spawnConfetti();
+          }
         }
       }
 
@@ -557,7 +585,7 @@ export function renderBusJamPage() {
       const hex = COLORS[color] || color || '#FFF';
       const py = y + bob;
 
-      c.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      c.fillStyle = 'rgba(0, 0, 0, 0.4)';
       c.beginPath();
       c.ellipse(x, py + 16, 12, 4, 0, 0, Math.PI * 2);
       c.fill();
@@ -565,6 +593,11 @@ export function renderBusJamPage() {
       c.fillStyle = hex;
       c.beginPath();
       c.roundRect(x - 10, py - 4, 20, 20, [8, 8, 4, 4]);
+      c.fill();
+
+      c.fillStyle = 'rgba(255, 255, 255, 0.25)';
+      c.beginPath();
+      c.roundRect(x - 7, py - 2, 14, 6, 3);
       c.fill();
 
       c.fillStyle = '#FFE0BD';
@@ -580,24 +613,24 @@ export function renderBusJamPage() {
       c.roundRect(x - 8, py - 14, 16, 5, 2);
       c.fill();
 
-      c.fillStyle = '#222';
+      c.fillStyle = '#1A202C';
       c.beginPath();
-      c.arc(x - 3, py - 10, 1.3, 0, Math.PI * 2);
-      c.arc(x + 3, py - 10, 1.3, 0, Math.PI * 2);
+      c.arc(x - 3, py - 10, 1.4, 0, Math.PI * 2);
+      c.arc(x + 3, py - 10, 1.4, 0, Math.PI * 2);
       c.fill();
 
-      c.strokeStyle = '#666';
+      c.strokeStyle = '#4A5568';
       c.lineWidth = 1.2;
       c.beginPath();
-      c.arc(x, py - 9, 3, 0.2 * Math.PI, 0.8 * Math.PI);
+      c.arc(x, py - 9, 3, 0.15 * Math.PI, 0.85 * Math.PI);
       c.stroke();
 
       if (isFront) {
         c.fillStyle = '#FFD700';
         c.beginPath();
-        const pointerY = py - 27 + Math.sin(Date.now() / 150) * 3;
-        c.moveTo(x - 4, pointerY);
-        c.lineTo(x + 4, pointerY);
+        const pointerY = py - 20 + Math.sin(Date.now() / 150) * 2.5;
+        c.moveTo(x - 5, pointerY);
+        c.lineTo(x + 5, pointerY);
         c.lineTo(x, pointerY + 5);
         c.closePath();
         c.fill();
@@ -610,48 +643,61 @@ export function renderBusJamPage() {
       const by = y + shakeOffset.y;
       const dir = (inBay ? 'U' : (bus.direction || 'U')).toUpperCase();
 
-      c.fillStyle = 'rgba(0, 0, 0, 0.4)';
-      drawRoundedRect(c, bx + 2, by + 4, w, h, 10);
+      c.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      drawRoundedRect(c, bx + 2, by + 4, w, h, 11);
       c.fill();
 
       c.fillStyle = hex;
       drawRoundedRect(c, bx, by, w, h, 10);
       c.fill();
 
-      c.fillStyle = 'rgba(255, 255, 255, 0.22)';
-      drawRoundedRect(c, bx + 2, by + 2, w - 4, Math.max(4, h * 0.2), [8, 8, 2, 2]);
+      c.fillStyle = 'rgba(255, 255, 255, 0.26)';
+      drawRoundedRect(c, bx + 3, by + 2, w - 6, Math.max(5, h * 0.22), [8, 8, 2, 2]);
       c.fill();
+
+      c.fillStyle = '#1A202C';
+      if (dir === 'U' || dir === 'D') {
+        c.fillRect(bx - 2, by + 10, 2, 8);
+        c.fillRect(bx + w, by + 10, 2, 8);
+        c.fillRect(bx - 2, by + h - 18, 2, 8);
+        c.fillRect(bx + w, by + h - 18, 2, 8);
+      } else {
+        c.fillRect(bx + 10, by - 2, 8, 2);
+        c.fillRect(bx + 10, by + h, 8, 2);
+        c.fillRect(bx + w - 18, by - 2, 8, 2);
+        c.fillRect(bx + w - 18, by + h, 8, 2);
+      }
 
       c.fillStyle = '#1A202C';
       let arrowAngle = 0;
       if (dir === 'U') {
         arrowAngle = -Math.PI / 2;
-        drawRoundedRect(c, bx + 4, by + 3, w - 8, Math.min(12, h * 0.25), 4);
+        drawRoundedRect(c, bx + 4, by + 3, w - 8, Math.min(13, h * 0.26), 4);
         c.fill();
         c.fillStyle = '#FFF9D2';
-        c.fillRect(bx + 4, by + 1, 4, 2);
-        c.fillRect(bx + w - 8, by + 1, 4, 2);
+        c.fillRect(bx + 4, by + 1, 5, 2);
+        c.fillRect(bx + w - 9, by + 1, 5, 2);
       } else if (dir === 'D') {
         arrowAngle = Math.PI / 2;
-        drawRoundedRect(c, bx + 4, by + h - 15, w - 8, Math.min(12, h * 0.25), 4);
+        drawRoundedRect(c, bx + 4, by + h - 16, w - 8, Math.min(13, h * 0.26), 4);
         c.fill();
         c.fillStyle = '#FFF9D2';
-        c.fillRect(bx + 4, by + h - 3, 4, 2);
-        c.fillRect(bx + w - 8, by + h - 3, 4, 2);
+        c.fillRect(bx + 4, by + h - 3, 5, 2);
+        c.fillRect(bx + w - 9, by + h - 3, 5, 2);
       } else if (dir === 'L') {
         arrowAngle = Math.PI;
-        drawRoundedRect(c, bx + 3, by + 4, Math.min(12, w * 0.25), h - 8, 4);
+        drawRoundedRect(c, bx + 3, by + 4, Math.min(13, w * 0.26), h - 8, 4);
         c.fill();
         c.fillStyle = '#FFF9D2';
-        c.fillRect(bx + 1, by + 4, 2, 4);
-        c.fillRect(bx + 1, by + h - 8, 2, 4);
+        c.fillRect(bx + 1, by + 4, 2, 5);
+        c.fillRect(bx + 1, by + h - 9, 2, 5);
       } else if (dir === 'R') {
         arrowAngle = 0;
-        drawRoundedRect(c, bx + w - 15, by + 4, Math.min(12, w * 0.25), h - 8, 4);
+        drawRoundedRect(c, bx + w - 16, by + 4, Math.min(13, w * 0.26), h - 8, 4);
         c.fill();
         c.fillStyle = '#FFF9D2';
-        c.fillRect(bx + w - 3, by + 4, 2, 4);
-        c.fillRect(bx + w - 3, by + h - 8, 2, 4);
+        c.fillRect(bx + w - 3, by + 4, 2, 5);
+        c.fillRect(bx + w - 3, by + h - 9, 2, 5);
       }
 
       const centerX = bx + w / 2;
@@ -661,7 +707,7 @@ export function renderBusJamPage() {
         c.save();
         c.translate(centerX, centerY);
         c.rotate(arrowAngle);
-        c.fillStyle = 'rgba(255, 255, 255, 0.88)';
+        c.fillStyle = 'rgba(255, 255, 255, 0.92)';
         c.beginPath();
         c.moveTo(8, 0);
         c.lineTo(-4, -6);
@@ -674,8 +720,7 @@ export function renderBusJamPage() {
         c.fill();
         c.restore();
       } else {
-        // In bay: show seated / capacity counter
-        c.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        c.fillStyle = '#FFFFFF';
         c.font = 'bold 12px sans-serif';
         c.textAlign = 'center';
         c.fillText((bus.seated || 0) + '/' + (bus.capacity || DEFAULT_BUS_CAPACITY), centerX, centerY + 2);
@@ -707,33 +752,33 @@ export function renderBusJamPage() {
       ctx.clearRect(0, 0, W, H);
 
       const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-      bgGrad.addColorStop(0, '#10141D');
-      bgGrad.addColorStop(1, '#0B0D13');
+      bgGrad.addColorStop(0, '#0F1218');
+      bgGrad.addColorStop(1, '#090B0F');
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, W, H);
 
-      // HUD Header
+      // 1. HUD Header
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
       ctx.textAlign = 'left';
 
       ctx.fillStyle = currentLevelIndex > 0 ? '#CBD5E0' : '#4A5568';
-      ctx.fillText('‹', 18, 26);
+      ctx.fillText('‹', 18, 25);
 
       ctx.fillStyle = '#FFFFFF';
       const lvlName = state.levelName || ('Màn ' + (currentLevelIndex + 1));
-      ctx.fillText(('MÀN ' + (currentLevelIndex + 1) + ': ' + lvlName).toUpperCase(), 38, 26);
+      ctx.fillText(('MÀN ' + (currentLevelIndex + 1) + ': ' + lvlName).toUpperCase(), 38, 25);
 
       ctx.fillStyle = currentLevelIndex < LEVELS.length - 1 ? '#CBD5E0' : '#4A5568';
-      ctx.fillText('›', 250, 26);
+      ctx.fillText('›', 256, 25);
 
       ctx.fillStyle = '#E2E8F0';
       ctx.font = '16px -apple-system, sans-serif';
-      ctx.fillText('↺', 308, 26);
+      ctx.fillText('↺', 310, 26);
 
-      ctx.fillText(soundEnabled ? '🔊' : '🔇', 342, 26);
+      ctx.fillText(soundEnabled ? '🔊' : '🔇', 346, 26);
 
-      // Passenger Platform
+      // 2. Passenger Station Platform
       drawRoundedRect(ctx, 14, 44, W - 28, 74, 12);
       ctx.fillStyle = '#1A202C';
       ctx.fill();
@@ -774,7 +819,7 @@ export function renderBusJamPage() {
         ctx.fillText('+' + (state.queue.length - 6), pos.x + 1, pos.y + 4);
       }
 
-      // Waiting Bays
+      // 3. Waiting Bays
       for (let i = 0; i < (state.maxBays || MAX_BAYS); i++) {
         const box = getBayBox(i);
         drawRoundedRect(ctx, box.x, box.y, box.w, box.h, 10);
@@ -791,13 +836,13 @@ export function renderBusJamPage() {
         ctx.textAlign = 'center';
         ctx.fillText('BẾN ' + (i + 1), box.x + box.w / 2, box.y + 14);
 
-        const busInBay = state.bays[i];
-        if (busInBay && (!activeAnimations.departingBus || activeAnimations.departingBus.bus.id !== busInBay.id)) {
+        const busInBay = baySlots[i];
+        if (busInBay && !busInBay.isSliding && (!activeAnimations.departingBus || activeAnimations.departingBus.bus.id !== busInBay.id)) {
           drawBus(ctx, box.x + 4, box.y + 4, box.w - 8, box.h - 8, busInBay, { x: 0, y: 0 }, true);
         }
       }
 
-      // Parking Lot Grid
+      // 4. Parking Lot Grid
       drawRoundedRect(ctx, gridStartX - 4, gridStartY - 4, gridAreaWidth + 8, gridAreaHeight + 8, 14);
       ctx.fillStyle = '#141721';
       ctx.fill();
@@ -827,14 +872,14 @@ export function renderBusJamPage() {
         let shake = { x: 0, y: 0 };
         if (activeAnimations.shakingBuses.has(bus.id)) {
           const timer = activeAnimations.shakingBuses.get(bus.id);
-          const amount = Math.sin((0.2 - timer) * 45) * 5;
+          const amount = Math.sin((0.22 - timer) * 45) * 5;
           if (bus.direction === 'U' || bus.direction === 'D') shake.x = amount;
           else shake.y = amount;
         }
         drawBus(ctx, box.x, box.y, box.w, box.h, bus, shake, false);
       }
 
-      // Active Animations
+      // 5. Active Animations
       if (activeAnimations.slidingBus) {
         const anim = activeAnimations.slidingBus;
         const t = Math.min(1, anim.progress);
@@ -858,12 +903,25 @@ export function renderBusJamPage() {
       if (activeAnimations.departingBus) {
         const anim = activeAnimations.departingBus;
         const t = Math.min(1, anim.progress);
-        const speed = t * t * 380;
+        const speed = t * t * 400;
         const curX = anim.fromX + speed;
         const curY = anim.fromY;
         ctx.save();
         ctx.globalAlpha = Math.max(0, 1 - t * 1.2);
         drawBus(ctx, curX, curY, anim.w, anim.h, anim.bus, { x: 0, y: 0 }, true);
+        ctx.restore();
+      }
+
+      for (const a of activeAnimations.floatingAlerts) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, a.life / 0.65);
+        drawRoundedRect(ctx, a.x - 42, a.y - 12, 84, 22, 6);
+        ctx.fillStyle = '#E53E3E';
+        ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(a.text, a.x, a.y + 3);
         ctx.restore();
       }
 
@@ -877,53 +935,73 @@ export function renderBusJamPage() {
         ctx.restore();
       }
 
-      // Win / Lose dialogs
+      // 6. Modals
       if (state.isWon) {
-        ctx.fillStyle = 'rgba(10, 14, 22, 0.88)';
+        ctx.fillStyle = 'rgba(10, 14, 22, 0.9)';
         ctx.fillRect(0, 0, W, H);
 
-        ctx.fillStyle = '#48BB78';
-        ctx.font = 'bold 36px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('🏆', W / 2, H / 2 - 50);
-
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 22px -apple-system, sans-serif';
-        ctx.fillText('XUẤT SẮC!', W / 2, H / 2 - 10);
-
-        ctx.font = '14px -apple-system, sans-serif';
-        ctx.fillStyle = '#A0AEC0';
-        ctx.fillText('Bạn đã đón hết toàn bộ hành khách!', W / 2, H / 2 + 15);
-
-        drawRoundedRect(ctx, W / 2 - 80, H / 2 + 35, 160, 42, 10);
-        ctx.fillStyle = '#3182CE';
+        drawRoundedRect(ctx, 30, H / 2 - 120, W - 60, 240, 18);
+        ctx.fillStyle = '#1A202C';
         ctx.fill();
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillText(currentLevelIndex < LEVELS.length - 1 ? 'Màn tiếp theo →' : 'Chơi lại từ đầu ↺', W / 2, H / 2 + 61);
-      } else if (state.isGameOver) {
-        ctx.fillStyle = 'rgba(10, 14, 22, 0.88)';
-        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = '#3182CE';
+        ctx.lineWidth = 2;
+        ctx.stroke();
 
-        ctx.fillStyle = '#F56565';
-        ctx.font = 'bold 36px sans-serif';
+        ctx.font = '44px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('⚠️', W / 2, H / 2 - 50);
+        ctx.fillText('🏆', W / 2, H / 2 - 58);
+
+        ctx.font = '20px sans-serif';
+        ctx.fillText('⭐⭐⭐', W / 2, H / 2 - 24);
 
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 22px -apple-system, sans-serif';
-        ctx.fillText('HẾT CHỖ ĐỖ!', W / 2, H / 2 - 10);
+        ctx.font = 'bold 20px -apple-system, sans-serif';
+        ctx.fillText('CHIẾN THẮNG!', W / 2, H / 2 + 6);
 
         ctx.font = '13px -apple-system, sans-serif';
-        ctx.fillStyle = '#CBD5E0';
-        ctx.fillText('Bãi chờ đã kín mà khách không khớp màu.', W / 2, H / 2 + 15);
+        ctx.fillStyle = '#A0AEC0';
+        ctx.fillText('Đã đón hết hành khách và dọn sạch bến!', W / 2, H / 2 + 28);
 
-        drawRoundedRect(ctx, W / 2 - 80, H / 2 + 35, 160, 42, 10);
+        drawRoundedRect(ctx, W / 2 - 100, H / 2 + 48, 200, 46, 12);
+        const btnGrad = ctx.createLinearGradient(W / 2 - 100, 0, W / 2 + 100, 0);
+        btnGrad.addColorStop(0, '#3182CE');
+        btnGrad.addColorStop(1, '#63B3ED');
+        ctx.fillStyle = btnGrad;
+        ctx.fill();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 15px -apple-system, sans-serif';
+        ctx.fillText(currentLevelIndex < LEVELS.length - 1 ? 'MÀN TIẾP THEO →' : 'CHƠI LẠI TỪ ĐẦU ↺', W / 2, H / 2 + 76);
+      } else if (state.isGameOver) {
+        ctx.fillStyle = 'rgba(10, 14, 22, 0.9)';
+        ctx.fillRect(0, 0, W, H);
+
+        drawRoundedRect(ctx, 30, H / 2 - 110, W - 60, 220, 18);
+        ctx.fillStyle = '#1A202C';
+        ctx.fill();
+        ctx.strokeStyle = '#E53E3E';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.font = '40px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚠️', W / 2, H / 2 - 52);
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 20px -apple-system, sans-serif';
+        ctx.fillText('HẾT CHỖ ĐỖ!', W / 2, H / 2 - 10);
+
+        ctx.font = '12px -apple-system, sans-serif';
+        ctx.fillStyle = '#CBD5E0';
+        ctx.fillText('Bãi chờ đã kín mà khách không khớp màu.', W / 2, H / 2 + 14);
+
+        drawRoundedRect(ctx, W / 2 - 90, H / 2 + 36, 180, 44, 12);
         ctx.fillStyle = '#E53E3E';
         ctx.fill();
+
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillText('Thử lại màn này ↺', W / 2, H / 2 + 61);
+        ctx.font = 'bold 14px -apple-system, sans-serif';
+        ctx.fillText('THỬ LẠI MÀN NÀY ↺', W / 2, H / 2 + 63);
       }
     }
 
