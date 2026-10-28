@@ -8,6 +8,13 @@ const source=(await readFile(entry,'utf8'))
   .replace("import miniMotorways from './src/page/games/Mini_Motorways.html';",`const miniMotorways=${JSON.stringify(html)};`)
   .replace(/from '(\.\/[^']+)'/g,(_,relative)=>`from '${new URL(relative,entry).href}'`);
 const worker=(await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).default;
+test('Worker serves isolated Stickman routes and rejects writes',async()=>{
+  for(const route of ['/stickman-fight','/stickman-fight/','/__game/stickman-fight']){
+    const response=await worker.fetch(new Request('https://example.test'+route));assert.equal(response.status,200);assert.match(await response.text(),/Stickman Showdown/);
+    const head=await worker.fetch(new Request('https://example.test'+route,{method:'HEAD'}));assert.equal(head.status,200);assert.equal(await head.text(),'');
+    const post=await worker.fetch(new Request('https://example.test'+route,{method:'POST'}));assert.equal(post.status,405);
+  }
+});
 test('Worker serves Bomb Arena GET/HEAD and rejects writes independently of origin',async()=>{
   for(const method of ['GET','HEAD']){
     const response=await worker.fetch(new Request('https://example.test/__game/bomb-arena',{method}));

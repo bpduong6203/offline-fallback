@@ -6,7 +6,7 @@ export const clientMain = `    // ===================== CHUNG ==================
     var games = { flappy: flappy, pool: pool, caro: caro, sword: sword, wolf: wolf, motorways: motorways, played: played };
     var cur = flappy;
     var hint = document.getElementById('hint');
-    var tabs = document.querySelectorAll('.tab');
+    var tabs = document.querySelectorAll('.tab[data-g]');
     hint.textContent = flappy.hint;
 
     function switchTo(g) {

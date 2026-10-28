@@ -37,6 +37,7 @@ export const styleBase = `  <style>
     p.sub { color: #64748b; font-size: 0.9rem; line-height: 1.5; margin-bottom: 14px; }
     .tabs { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; }
     .tab {
+      text-decoration: none;
       padding: 8px 16px; border-radius: 9999px; border: none;
       font-weight: 600; font-size: 0.85rem; cursor: pointer;
       background: #fff7ed; color: #9a3412;

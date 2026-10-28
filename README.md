@@ -17,6 +17,8 @@ Trang chờ kiểm tra lại kết nối bằng request `HEAD` mỗi 10 giây kh
 
 ## Các game trong repo
 
+**Stickman Showdown**: game đối kháng người que 2 người cùng bàn phím ở `/stickman-fight`. Chạy `npm.cmd run dev`, mở `http://localhost:5173/stickman-fight`. Hướng dẫn, kiến trúc, điều khiển và kiểm tra: [stickman-fight/README.md](stickman-fight/README.md). Build bằng `npm.cmd run build`; kiểm tra Chrome bằng `npm.cmd run test:stickman:browser`. Không tự deploy.
+
 | Game | Cách truy cập | Ghi chú |
 | --- | --- | --- |
 | Flappy Bug | Tab Flappy trên trang chờ | Mini game Canvas |

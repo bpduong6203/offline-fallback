@@ -1,10 +1,12 @@
 import {createServer} from 'node:http';
 import {WebSocketServer} from 'ws';
 import {BombRoomEngine} from '../src/bomb-room-engine.js';
+import {buildStickman} from './build-stickman.mjs';
 
 export function localServer(getHtml){
   const rooms=new Map(),wss=new WebSocketServer({noServer:true,maxPayload:512});
   const server=createServer(async(req,res)=>{
+    if(['/stickman-fight','/stickman-fight/','/__game/stickman-fight'].includes(req.url?.split('?')[0])){try{const html=await buildStickman();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}return;}
     if(!['/','/__game/bomb-arena'].includes(req.url?.split('?')[0])){res.writeHead(404);res.end('Not found');return;}
     try{const html=await getHtml();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}
   });
