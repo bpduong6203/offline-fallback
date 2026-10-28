@@ -22,8 +22,15 @@
             <span>🃏</span> TIẾN LÊN MIỀN NAM
           </div>
         </div>
-        <div class="room-badge" id="roomBadge">
-          <span>👥</span> Tạo / Vào Phòng
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="egg-balance-badge" title="Số dư Hộp trứng Mebi Farm Pinky Egg">
+            <span id="headerEggIconWrap"></span>
+            <span id="userEggBalance">100</span>
+            <span class="egg-label">Hộp trứng</span>
+          </div>
+          <div class="room-badge" id="roomBadge">
+            <span>👥</span> Tạo / Vào Phòng
+          </div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="btn-icon" id="btnMute" title="Bật/Tắt âm thanh">🔊</button>
@@ -202,7 +209,8 @@
           <p>• <b>Chặt Đôi Heo:</b> Tứ quý hoặc 4 đôi thông.</p>
           <p>• <b>4 Đôi Thông:</b> Chặt được 1 heo, đôi heo, 3 đôi thông, tứ quý và <i>không cần đến vòng</i>.</p>
           <p>• <b>Tới trắng:</b> Sảnh rồng, Tứ quý 2, 5 đôi thông, 6 đôi bất kỳ, bài đồng chất.</p>
-          <p>• <b>Cóng & Thối:</b> Không đánh được lá nào bị Cóng (x2 tiền). Thối Heo/Tứ quý bị phạt khi ván kết thúc.</p>
+          <p>• <b>Đơn vị tính cược:</b> Hộp trứng (Mebi Farm Pinky Egg). Thắng ván, chặt heo và thối bài đều được cộng/trừ số lượng Hộp trứng!</p>
+          <p>• <b>Cóng & Thối:</b> Không đánh được lá nào bị Cóng (phạt x2 Hộp trứng). Thối Heo/Tứ quý bị phạt khi ván kết thúc.</p>
         </div>
         <div class="modal-actions">
           <button class="btn-action btn-play btn-close-modal">Đã Hiểu</button>

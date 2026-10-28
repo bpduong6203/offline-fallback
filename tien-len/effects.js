@@ -1,5 +1,4 @@
-// Visual Effects (VFX) Manager for Tiến Lên Miền Nam
-// Screen shake, explosive banner popups, floating money, confetti particles
+import { EGG_ICON_DATA_URL } from './egg-asset.js';
 
 export class EffectsManager {
   constructor(container) {
@@ -49,13 +48,13 @@ export class EffectsManager {
     }, 1600);
   }
 
-  // Floating Coin / Penalty text
+  // Floating Egg / Penalty text
   showFloatingScore(element, amount, isGain = true) {
     if (!element) return;
     const rect = element.getBoundingClientRect();
     const floater = document.createElement('div');
     floater.className = `vfx-floater ${isGain ? 'gain' : 'loss'}`;
-    floater.textContent = `${isGain ? '+' : '-'}${Math.abs(amount).toLocaleString('vi-VN')} Xu`;
+    floater.innerHTML = `${isGain ? '+' : '-'}${Math.abs(amount).toLocaleString('vi-VN')} <img src="${EGG_ICON_DATA_URL}" class="egg-currency-img" alt="Hộp trứng"> Hộp`;
 
     floater.style.left = `${rect.left + rect.width / 2}px`;
     floater.style.top = `${rect.top}px`;

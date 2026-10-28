@@ -94,6 +94,38 @@ body, html {
   background: rgba(212, 175, 55, 0.2);
 }
 
+.egg-currency-img {
+  width: 22px;
+  height: 22px;
+  vertical-align: middle;
+  object-fit: contain;
+  display: inline-block;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+
+.egg-balance-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--gold-accent);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.egg-balance-badge span#userEggBalance {
+  color: #f39c12;
+  font-weight: 900;
+  font-size: 0.95rem;
+}
+.egg-label {
+  color: #dfe6e9;
+  font-size: 0.78rem;
+}
+
 .btn-icon {
   background: rgba(0,0,0,0.5);
   border: 1px solid rgba(255,255,255,0.2);
