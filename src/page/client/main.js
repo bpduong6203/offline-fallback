@@ -3,7 +3,7 @@
 // hay dấu gạch chéo ngược trong phần chuỗi này.
 export const clientMain = `    // ===================== CHUNG =====================
     var motorways = { w: 480, h: 270, hint: 'Kéo chuột hoặc ngón tay để vẽ đường nối nhà với điểm đến cùng màu.', update: function () {}, draw: function () {} };
-    var bangbang = { w: 1280, h: 800, hint: 'Chọn xe tăng, nhấn Sẵn sàng và chờ đủ sáu người để ghép trận 3v3.', busy: function () { var f = document.getElementById('bangBangFrame'); return !!(f && f.contentWindow && f.contentWindow.bangBangBusy); }, update: function () {}, draw: function () {} };
+    var bangbang = { w: 1280, h: 800, hint: 'Chọn chế độ 1v1, 2v2 hoặc 3v3, chọn xe tăng rồi sẵn sàng tìm trận.', busy: function () { var f = document.getElementById('bangBangFrame'); return !!(f && f.contentWindow && f.contentWindow.bangBangBusy); }, update: function () {}, draw: function () {} };
     var games = { flappy: flappy, pool: pool, caro: caro, sword: sword, wolf: wolf, motorways: motorways, bangbang: bangbang, played: played };
     var cur = flappy;
     var hint = document.getElementById('hint');

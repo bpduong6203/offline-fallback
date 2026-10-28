@@ -24,21 +24,22 @@ export class BangBangEngine{
   constructor(){this.peers=new Map();this.players=new Map();this.map=arena();this.match=null;this.nextId=1;this.sequence=0;this.mapDirty=false;}
   join(name,send){
     if(this.peers.size>=MAX_PLAYERS)throw new Error('Hàng chờ đã đầy.');
-    const id=this.nextId++,peer={id,name:typeof name==='string'?name.trim().slice(0,18):'',send,ready:false,tank:'pegasus',matchId:null,lastSeq:0};peer.name||='Người chơi '+id;this.peers.set(id,peer);
+    const id=this.nextId++,peer={id,name:typeof name==='string'?name.trim().slice(0,18):'',send,ready:false,tank:'pegasus',mode:3,matchId:null,lastSeq:0};peer.name||='Người chơi '+id;this.peers.set(id,peer);
     send({t:'hello',id});this.lobby();return id;
   }
   broadcast(message,ids=null){for(const p of this.peers.values())if(!ids||ids.includes(p.id))try{p.send(message);}catch{}}
-  lobby(){const queued=[...this.peers.values()].filter(p=>!p.matchId);this.broadcast({t:'lobby',players:queued.map(({id,name,tank,ready})=>({id,name,tank,ready})),readyCount:queued.filter(p=>p.ready).length,needed:6});}
+  lobby(){const queued=[...this.peers.values()].filter(p=>!p.matchId);for(const peer of queued){const players=queued.filter(p=>p.mode===peer.mode);peer.send({t:'lobby',mode:peer.mode,players:players.map(({id,name,tank,ready,mode})=>({id,name,tank,ready,mode})),readyCount:players.filter(p=>p.ready).length,needed:peer.mode*2});}}
   handle(id,m){const p=this.peers.get(id);if(!p||!m||typeof m!=='object')return;
     if(m.t==='select'&&!p.matchId&&Object.hasOwn(TANKS,m.tank)){p.tank=m.tank;if(typeof m.name==='string')p.name=m.name.trim().slice(0,18)||'Người chơi '+id;this.lobby();}
+    if(m.t==='mode'&&!p.matchId&&!p.ready&&[1,2,3].includes(m.mode)){p.mode=m.mode;this.lobby();}
     if(m.t==='ready'&&!p.matchId){p.ready=m.ready===true;this.lobby();if(p.ready)this.tryMatch();}
     if(m.t==='input'&&p.matchId&&this.match?.id===p.matchId){if(!Number.isInteger(m.seq)||m.seq<=p.lastSeq)return;p.lastSeq=m.seq;const q=this.players.get(id);if(!q)return;const i=m.input||{};q.input={dx:clamp(Number(i.dx)||0,-1,1),dy:clamp(Number(i.dy)||0,-1,1),angle:Number.isFinite(i.angle)?i.angle:q.turretAngle,fire:i.fire===true,skill:['Q','W','R'].includes(i.skill)?i.skill:''};}
   }
   tryMatch(){
-    if(this.match)return;const selected=[...this.peers.values()].filter(p=>p.ready&&!p.matchId).slice(0,6);if(selected.length<6)return;
-    selected.sort(()=>Math.random()-.5);this.map=arena();this.mapDirty=true;this.sequence=0;const matchId='m'+Date.now().toString(36);this.match={id:matchId,time:0,score:[0,0],result:null,events:[],map:this.map,bullets:[]};this.players.clear();
-    selected.forEach((p,index)=>{p.matchId=matchId;p.ready=false;const team=index<3?0:1;const player=playerFor(p.id,p.name,p.tank,team);player.x=team===0?130:W-130;player.y=260+(index%3)*240;this.players.set(p.id,player);});
-    this.broadcast({t:'matched',matchId,players:[...this.players.values()].map(this.publicPlayer)},selected.map(p=>p.id));this.lobby();this.snapshot();
+    if(this.match)return;const mode=[1,2,3].find(size=>[...this.peers.values()].filter(p=>p.ready&&!p.matchId&&p.mode===size).length>=size*2);if(!mode)return;const selected=[...this.peers.values()].filter(p=>p.ready&&!p.matchId&&p.mode===mode).slice(0,mode*2);
+    selected.sort(()=>Math.random()-.5);this.map=arena();this.mapDirty=true;this.sequence=0;const matchId='m'+Date.now().toString(36);this.match={id:matchId,mode,time:0,score:[0,0],result:null,events:[],map:this.map,bullets:[]};this.players.clear();
+    selected.forEach((p,index)=>{p.matchId=matchId;p.ready=false;const team=index<mode?0:1,slot=index%mode;const player=playerFor(p.id,p.name,p.tank,team);player.x=team===0?130:W-130;player.y=500+(slot-(mode-1)/2)*180;this.players.set(p.id,player);});
+    this.broadcast({t:'matched',matchId,mode,players:[...this.players.values()].map(this.publicPlayer)},selected.map(p=>p.id));this.lobby();this.snapshot();
   }
   publicPlayer(p){return {id:p.id,name:p.name,tank:p.tank,team:p.team,x:p.x,y:p.y,bodyAngle:p.bodyAngle,turretAngle:p.turretAngle,hp:p.hp,maxHp:p.maxHp,energy:p.energy,maxEnergy:p.maxEnergy,shield:p.shield,kills:p.kills,deaths:p.deaths,alive:p.alive,respawn:p.respawn,buffs:p.buffs,skillCd:p.skillCd};}
   damage(target,amount,source,magic=false,reflect=true){if(!target.alive)return;target.revealed=2.5;let armor=target.tankDef.armor;if(target.tank==='tiger'&&target.hp/target.maxHp<.3)armor+=50;let taken=amount*(magic?1:100/(100+armor));if(target.shield>0){const before=target.shield,soak=Math.min(target.shield,taken);target.shield-=soak;taken-=soak;if(before>0&&target.shield===0){for(const q of this.players.values())if(q.team!==target.team&&dist(q,target)<100){q.stun=1;this.damage(q,85,target,true);}}}target.hp-=taken;if(reflect&&target.tank==='aegis'&&source&&source.team!==target.team)this.damage(source,amount*.15,target,true,false);if(target.hp<=0){target.hp=0;target.alive=false;target.respawn=3;target.deaths++;this.match.score[source?.team===0?0:1]++;if(source&&source.team!==target.team)source.kills++;this.match.events.push({type:'TANK_DIED',victim:target.id,killer:source?.id||null,x:target.x,y:target.y});}}
@@ -79,5 +80,5 @@ export class BangBangEngine{
     if(m.score[0]>=MAX_SCORE||m.score[1]>=MAX_SCORE){m.result=m.score[0]>=MAX_SCORE?0:1;const matchIds=[...this.players.keys()];this.broadcast({t:'result',winner:m.result,score:m.score},matchIds);for(const peer of this.peers.values())if(peer.matchId===m.id){peer.matchId=null;peer.ready=false;}this.match=null;this.players.clear();this.lobby();this.tryMatch();}
   }
   snapshot(){if(!this.match)return;const m=this.match,events=m.events.splice(0),sequence=++this.sequence,sendMap=sequence===1||this.mapDirty;for(const peer of this.peers.values())if(peer.matchId===m.id){const own=this.players.get(peer.id);const visible=[...this.players.values()].filter(p=>p.team===own?.team||!p.inBush||p.revealed>0).map(this.publicPlayer);const state={id:m.id,time:m.time,score:m.score,players:visible,bullets:m.bullets||[],events};if(sendMap)state.map=this.map;peer.send({t:'state',sequence,state});}this.mapDirty=false;}
-  leave(id){const p=this.peers.get(id);if(!p)return;this.peers.delete(id);if(p.matchId){this.players.delete(id);if(this.players.size<6){for(const peer of this.peers.values())if(peer.matchId===p.matchId){peer.matchId=null;peer.ready=false;this.players.delete(peer.id);peer.send({t:'match-ended',reason:'Người chơi đã thoát. Hãy sẵn sàng để ghép trận mới.'});}this.match=null;this.players.clear();}}this.lobby();this.tryMatch();}
+  leave(id){const p=this.peers.get(id);if(!p)return;this.peers.delete(id);if(p.matchId){this.players.delete(id);if(this.players.size<(this.match?.mode||3)*2){for(const peer of this.peers.values())if(peer.matchId===p.matchId){peer.matchId=null;peer.ready=false;this.players.delete(peer.id);peer.send({t:'match-ended',reason:'Người chơi đã thoát. Hãy sẵn sàng để ghép trận mới.'});}this.match=null;this.players.clear();}}this.lobby();this.tryMatch();}
 }

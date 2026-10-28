@@ -7,7 +7,7 @@
       content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
     />
     <meta name="theme-color" content="#101722" />
-    <title>Bang Bang Web · 3v3</title>
+    <title>Bang Bang Web · Đấu trường xe tăng</title>
     <style>
       :root {
         color-scheme: dark;
@@ -331,6 +331,10 @@
         grid-template-columns: repeat(3, 1fr);
         gap: 9px;
       }
+      .mode-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin:0 0 14px; }
+      .mode-choice { padding:10px 8px; border:1px solid #344253; border-radius:11px; background:#1a2735; color:var(--text); font-weight:800; }
+      .mode-choice small { display:block; margin-top:3px; color:var(--muted); font-size:10px; font-weight:500; }
+      .mode-choice.selected { border-color:var(--blue); box-shadow:inset 0 0 0 1px var(--blue); background:#1c3342; }
       .tank {
         min-height: 132px;
         padding: 12px;
@@ -527,7 +531,7 @@
           <div class="mark">✦</div>
           <div>
             <h1>BANG BANG WEB</h1>
-            <p>Chiến trường xe tăng 3v3 · phối hợp cùng đồng đội</p>
+            <p>Đấu trường xe tăng · chọn đội hình 1v1, 2v2 hoặc 3v3</p>
           </div>
         </div>
         <div class="connection">
@@ -538,7 +542,7 @@
       <main class="layout">
         <section class="board-wrap">
           <div class="board-head">
-            <span>ARENA · <b>3 vs 3</b></span
+            <span>ARENA · <b id="arenaMode">3 vs 3</b></span
             ><span id="matchStatus">CHỜ VÀO HÀNG</span>
           </div>
           <canvas
@@ -562,12 +566,12 @@
           </div>
           <section>
             <div class="team-title blue">
-              <span>ĐỘI XANH</span><span>3</span>
+              <span>ĐỘI XANH</span><span class="team-size">3</span>
             </div>
             <div class="team-list" id="teamBlue"></div>
           </section>
           <section>
-            <div class="team-title red"><span>ĐỘI ĐỎ</span><span>3</span></div>
+            <div class="team-title red"><span>ĐỘI ĐỎ</span><span class="team-size">3</span></div>
             <div class="team-list" id="teamRed"></div>
           </section>
           <div class="skills">
@@ -589,8 +593,7 @@
         <div class="queue-copy">
           <strong id="queueTitle">Chưa vào hàng ghép trận</strong
           ><span id="queueText"
-            >Chọn xe tăng rồi sẵn sàng. Khi đủ 6 người, hệ thống tự chia hai đội
-            3v3.</span
+            >Chọn chế độ và xe tăng rồi sẵn sàng. Trận bắt đầu khi đủ người.</span
           >
         </div>
         <div class="queue-count">
@@ -612,6 +615,11 @@
             placeholder="Tên người chơi"
             autocomplete="nickname"
           />
+        </div>
+        <div class="mode-grid" aria-label="Chọn chế độ đối chiến">
+          <button class="mode-choice" data-mode="1">1 vs 1<small>Đấu tay đôi</small></button>
+          <button class="mode-choice" data-mode="2">2 vs 2<small>Phối hợp đôi</small></button>
+          <button class="mode-choice selected" data-mode="3">3 vs 3<small>Đội hình đầy đủ</small></button>
         </div>
         <div class="tank-grid">
           <button class="tank selected" data-tank="pegasus">
@@ -650,6 +658,7 @@
           bullets = [],
           score = [0, 0],
           tank = "pegasus",
+          mode = 3,
           ready = false,
           matched = false,
           seq = 0,
@@ -700,7 +709,7 @@
         function receive(m) {
         if (m.t === "hello") {
           me = m.id;
-          send({ t: "select", tank, name: $("name").value });
+          send({ t: "select", tank, name: $("name").value }); send({ t: "mode", mode });
             return;
           }
           if (m.t === "lobby") {
@@ -708,6 +717,9 @@
             return;
           }
           if (m.t === "matched") {
+            mode = m.mode || mode;
+            $("arenaMode").textContent = mode + " vs " + mode;
+            document.querySelectorAll(".team-size").forEach(el => el.textContent = mode);
             seq = 0;
             ready = false;
             bullets = [];
@@ -718,7 +730,7 @@
             matched = true;
             $("overlay").hidden = true;
             $("matchStatus").textContent = "ĐANG GIAO TRANH";
-            $("queueTitle").textContent = "Đã ghép trận 3v3";
+            $("queueTitle").textContent = "Đã ghép trận " + mode + "v" + mode;
             $("queueText").textContent =
               "Đội xanh và đội đỏ · tiêu diệt đối thủ để ghi điểm.";
             players = m.players || [];
@@ -763,7 +775,8 @@
         function renderQueue(m) {
           if (matched) return;
           const list = m.players || [];
-          $("readyCount").textContent = (m.readyCount || 0) + "/6";
+          mode = m.mode || mode;
+          $("readyCount").textContent = (m.readyCount || 0) + "/" + (m.needed || mode * 2);
           const own = list.find((p) => p.id === me);
           if (own) ready = own.ready;
           $("queueTitle").textContent = ready
@@ -771,7 +784,7 @@
             : "Chọn xe tăng và sẵn sàng";
           $("queueText").textContent =
             (m.readyCount || 0) +
-            " người đã sẵn sàng · cần đủ 6 người để bắt đầu trận 3v3.";
+            " người đã sẵn sàng · cần đủ " + (m.needed || mode * 2) + " người cho trận " + mode + "v" + mode + ".";
           $("readyMain").textContent = ready
             ? "Hủy sẵn sàng"
             : "Sẵn sàng tìm trận";
@@ -784,8 +797,16 @@
                 .join("   ·   ")
             : "Đang chờ người chơi vào hàng.";
           $("matchStatus").textContent =
-            "ĐANG CHỜ " + (m.readyCount || 0) + "/6";
+            "ĐANG CHỜ " + (m.readyCount || 0) + "/" + (m.needed || mode * 2);
         }
+        document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => {
+          if (ready || matched) return;
+          mode = Number(b.dataset.mode);
+          document.querySelectorAll("[data-mode]").forEach(q => q.classList.toggle("selected", q === b));
+          $("arenaMode").textContent = mode + " vs " + mode;
+          document.querySelectorAll(".team-size").forEach(el => el.textContent = mode);
+          send({ t: "mode", mode });
+        });
         document.querySelectorAll("[data-tank]").forEach(
           (b) =>
             (b.onclick = () => {
