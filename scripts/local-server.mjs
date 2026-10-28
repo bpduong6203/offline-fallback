@@ -3,26 +3,32 @@ import {WebSocketServer} from 'ws';
 import {BombRoomEngine} from '../src/bomb-room-engine.js';
 import {buildStickman} from './build-stickman.mjs';
 import {StickmanRoomEngine} from '../src/stickman-room-engine.js';
+import {buildTienLen} from './build-tienlen.mjs';
+import {TienLenRoomEngine} from '../src/tienlen-room-engine.js';
 
 export function localServer(getHtml){
   const rooms=new Map(),wss=new WebSocketServer({noServer:true,maxPayload:512});
   const server=createServer(async(req,res)=>{
-    if(['/stickman-fight','/stickman-fight/','/__game/stickman-fight'].includes(req.url?.split('?')[0])){try{const html=await buildStickman();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}return;}
-    if(!['/','/__game/bomb-arena'].includes(req.url?.split('?')[0])){res.writeHead(404);res.end('Not found');return;}
+    const path=req.url?.split('?')[0];
+    if(['/tien-len','/tien-len/','/__game/tien-len'].includes(path)){
+      try{const html=await buildTienLen();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}return;
+    }
+    if(['/stickman-fight','/stickman-fight/','/__game/stickman-fight'].includes(path)){try{const html=await buildStickman();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}return;}
+    if(!['/','/__game/bomb-arena'].includes(path)){res.writeHead(404);res.end('Not found');return;}
     try{const html=await getHtml();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}
   });
   server.on('upgrade',(req,socket,head)=>{
     const url=new URL(req.url,'http://'+req.headers.host),code=(url.searchParams.get('room')||'').toUpperCase(),create=url.searchParams.get('action')==='create';
     const reject=(status,text)=>{socket.end(`HTTP/1.1 ${status} ${text}\r\nConnection: close\r\n\r\n`);};
     if(req.headers.origin){try{if(new URL(req.headers.origin).host!==req.headers.host)return reject(403,'Forbidden');}catch{return reject(403,'Forbidden');}}
-    const game=url.searchParams.get('g'),stickman=game==='stickman',key=game+':'+code;
-    if(url.pathname!=='/__game/ws'||!['bomb','stickman'].includes(game)||!/^[A-Z0-9]{4}$/.test(code))return reject(400,'Bad Request');
+    const game=url.searchParams.get('g'),stickman=game==='stickman',tienlen=game==='tienlen',key=game+':'+code;
+    if(url.pathname!=='/__game/ws'||!['bomb','stickman','tienlen'].includes(game)||!/^[A-Z0-9]{4}$/.test(code))return reject(400,'Bad Request');
     let room=rooms.get(key);
     if(create&&room)return reject(409,'Room exists');
     if(!create&&!room)return reject(404,'Room not found');
-    const playing=()=>!!room.engine.game&&(stickman?room.engine.playing():!room.engine.game.result);
+    const playing=()=>tienlen?(!!room.engine.game&&!room.engine.game.ended):!!room.engine.game&&(stickman?room.engine.playing():!room.engine.game.result);
     if(room&&(room.engine.peers.size>=(stickman?2:4)||playing()))return reject(409,'Room unavailable');
-    if(!room){room={engine:stickman?new StickmanRoomEngine():new BombRoomEngine(),timer:null};rooms.set(key,room);}
+    if(!room){room={engine:tienlen?new TienLenRoomEngine():(stickman?new StickmanRoomEngine():new BombRoomEngine()),timer:null};rooms.set(key,room);}
     wss.handleUpgrade(req,socket,head,ws=>{
       const send=message=>{if(ws.readyState===1)ws.send(JSON.stringify(message));};
       const id=room.engine.join(url.searchParams.get('name'),send);

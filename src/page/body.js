@@ -8,6 +8,7 @@ export const body = (hostname) => `  </style>
     <h1>Máy chủ local chưa bật 🐞</h1>
     <p class="sub">Giúp con bug bay qua các tủ máy chủ, thử Ma sói hoặc YOU GOT PLAYED, hoặc rủ bạn bè chơi các mini game trong lúc chờ nhé. Khi có kết nối trang sẽ tự tải lại.</p>
     <div class="tabs">
+      <a class="tab" href="/tien-len" style="display:inline-flex;align-items:center;padding:9px 15px;border-radius:12px;background:#2ecc71;color:#052e16;font-weight:800;text-decoration:none">🃏 Tiến Lên</a>
       <a class="tab" href="/stickman-fight">Stickman Showdown</a>
       <a href="/__game/bomb-arena" style="display:inline-flex;align-items:center;padding:9px 15px;border-radius:12px;background:#ff9c45;color:#302015;font-weight:800;text-decoration:none">✹ Bomb Arena</a>
       <button class="tab on" data-g="flappy">Flappy</button>

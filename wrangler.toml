@@ -46,3 +46,12 @@ class_name = "StickmanRoom"
 [[migrations]]
 tag = "v4"
 new_sqlite_classes = ["StickmanRoom"]
+
+# Tiến Lên Miền Nam: server-authoritative room cho tối đa 4 người
+[[durable_objects.bindings]]
+name = "TIENLEN"
+class_name = "TienLenRoom"
+
+[[migrations]]
+tag = "v5"
+new_sqlite_classes = ["TienLenRoom"]

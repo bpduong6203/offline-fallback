@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tiến Lên Miền Nam - Casino Edition</title>
+  <style>
+/* STYLE */
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="poker-table" id="pokerTable">
+      <!-- TOP BAR -->
+      <header class="top-bar">
+        <div class="brand">
+          <span>🃏</span> TIẾN LÊN MIỀN NAM
+        </div>
+        <div class="room-badge" id="roomBadge">
+          <span>👥</span> Chơi Cùng Bạn
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-icon" id="btnMute" title="Bật/Tắt âm thanh">🔊</button>
+          <button class="btn-icon" id="btnRules" title="Luật chơi">📖</button>
+        </div>
+      </header>
+
+      <!-- OPPONENT POD 2 (TOP) -->
+      <div class="player-pod player-top" id="pod2">
+        <div class="avatar-wrapper">
+          🤖
+          <span class="card-count-badge">13</span>
+        </div>
+        <div class="player-name">Sài Gòn</div>
+        <div class="status-tag" style="display:none"></div>
+        <div class="timer-bar-wrap"><div class="timer-bar"></div></div>
+      </div>
+
+      <!-- OPPONENT POD 1 (LEFT) -->
+      <div class="player-pod player-left" id="pod1">
+        <div class="avatar-wrapper">
+          🤖
+          <span class="card-count-badge">13</span>
+        </div>
+        <div class="player-name">Hải Phòng</div>
+        <div class="status-tag" style="display:none"></div>
+        <div class="timer-bar-wrap"><div class="timer-bar"></div></div>
+      </div>
+
+      <!-- OPPONENT POD 3 (RIGHT) -->
+      <div class="player-pod player-right" id="pod3">
+        <div class="avatar-wrapper">
+          🤖
+          <span class="card-count-badge">13</span>
+        </div>
+        <div class="player-name">Đà Nẵng</div>
+        <div class="status-tag" style="display:none"></div>
+        <div class="timer-bar-wrap"><div class="timer-bar"></div></div>
+      </div>
+
+      <!-- CENTER ARENA (DISCARD AREA) -->
+      <main class="arena-board">
+        <div class="arena-msg" id="arenaMsg">Vòng mới - Hãy ra bài mở đầu</div>
+        <div class="arena-cards-row" id="arenaCards"></div>
+      </main>
+
+      <!-- USER POD 0 (BOTTOM) -->
+      <div class="player-pod" id="pod0" style="bottom: 120px; left: 30px;">
+        <div class="avatar-wrapper">
+          🤠
+          <span class="card-count-badge">13</span>
+        </div>
+        <div class="player-name">Bạn</div>
+        <div class="status-tag" style="display:none"></div>
+      </div>
+
+      <!-- USER HAND CARDS -->
+      <section class="user-hand-area">
+        <div class="user-cards-row" id="userCards"></div>
+      </section>
+
+      <!-- ACTION CONTROLS DOCK -->
+      <footer class="action-controls">
+        <button class="btn-action btn-pass" id="btnPass" disabled>Bỏ Lượt</button>
+        <button class="btn-action btn-sub" id="btnHint">Gợi Ý</button>
+        <button class="btn-action btn-play" id="btnPlay" disabled>ĐÁNH</button>
+        <button class="btn-action btn-sub" id="btnSort">Xếp: Số</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- MODAL: LUẬT CHƠI (RULES) -->
+  <div class="modal-backdrop" id="rulesModal" style="display:none">
+    <div class="modal-card">
+      <div class="modal-title">📖 Luật Tiến Lên Miền Nam Chuẩn</div>
+      <div class="modal-body">
+        <p>• <b>Thứ tự bài:</b> 3 &lt; 4 &lt; 5 &lt; ... &lt; K &lt; A &lt; <b>2 (Heo)</b>.</p>
+        <p>• <b>Thứ tự chất:</b> Bích (♠) &lt; Chuồn (♣) &lt; Rô (♦) &lt; Cơ (♥).</p>
+        <p>• <b>Sảnh:</b> Từ 3 lá liên tiếp trở lên (3..A). <i>Lưu ý: 2 không bao giờ nằm trong sảnh!</i></p>
+        <p>• <b>Chặt 1 Heo:</b> 3 đôi thông, Tứ quý hoặc 4 đôi thông.</p>
+        <p>• <b>Chặt Đôi Heo:</b> Tứ quý hoặc 4 đôi thông.</p>
+        <p>• <b>4 Đôi Thông:</b> Chặt được 1 heo, đôi heo, 3 đôi thông, tứ quý và <i>không cần đến vòng</i>.</p>
+        <p>• <b>Cóng & Thối:</b> Không đánh được lá nào bị Cóng (x2 tiền). Thối Heo/Tứ quý bị phạt khi ván kết thúc.</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-action btn-play btn-close-modal">Đã Hiểu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: TẠO PHÒNG / VÀO PHÒNG MULTIPLAYER -->
+  <div class="modal-backdrop" id="multiplayerModal" style="display:none">
+    <div class="modal-card">
+      <div class="modal-title">🌐 Chơi Cùng Bạn Bè</div>
+      <div class="modal-body">
+        <label style="display:block;margin-bottom:6px;font-size:0.85rem;color:#f1c40f">Tên hiển thị của bạn:</label>
+        <input type="text" class="input-field" id="inputPlayerName" maxlength="12" value="Người chơi" placeholder="Nhập tên của bạn">
+
+        <label style="display:block;margin-bottom:6px;font-size:0.85rem;color:#f1c40f">Mã phòng (để vào phòng bạn bè):</label>
+        <input type="text" class="input-field" id="inputRoomCode" maxlength="4" placeholder="VD: 8899" style="text-transform:uppercase">
+      </div>
+      <div class="modal-actions" style="flex-direction:column;gap:10px">
+        <button class="btn-action btn-play" id="btnJoinRoom">Vào Phòng Bằng Mã</button>
+        <button class="btn-action btn-sub" id="btnCreateRoom">Tạo Phòng Mới</button>
+        <button class="btn-action btn-pass btn-close-modal" style="margin-top:6px">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: KẾT THÚC VÁN (GAME OVER) -->
+  <div class="modal-backdrop" id="gameOverModal" style="display:none">
+    <div class="modal-card">
+      <div class="modal-title">🏆 Kết Quả Ván Đấu</div>
+      <div class="modal-body" id="scoreboardList"></div>
+      <div class="modal-actions">
+        <button class="btn-action btn-play" id="btnPlayAgain">Ván Tiếp Theo</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+/* SCRIPT */
+  </script>
+</body>
+</html>
