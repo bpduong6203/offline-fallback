@@ -34,10 +34,12 @@ Mỗi người dùng một trong hai bộ phím sau trên máy của mình; cả
 | --- | --- | --- |
 | Di chuyển | A / D | ← / → |
 | Nhảy | W | ↑ |
-| Đấm | F | J |
+| Đấm / dùng vũ khí cận chiến | F | J |
 | Đá | G | K |
 | Giữ đỡ | H | L |
-| Đặc biệt | R | U |
+| Ngồi / trượt khi đang di chuyển | S | ↓ |
+| Nhặt vũ khí gần bên | E | E |
+| Súng lục 3 viên | R | U |
 
 Esc: tạm dừng / tiếp tục cho cả hai người. M: bật / tắt âm thanh trên máy của bạn. F2: vùng đánh, vùng nhận đòn, thân, state và FPS. Khi mất focus, ẩn tab hoặc mở hướng dẫn/cài đặt, game xóa phím và yêu cầu máy chủ tạm dừng trận chung; một trong hai người bấm Tiếp tục khi cả hai sẵn sàng. Thiết bị cảm ứng cần bàn phím vật lý.
 
@@ -46,12 +48,16 @@ Chỉ chủ phòng đổi thiết lập, bắt đầu hoặc chơi lại. Rời 
 ## Luật và tính năng
 
 - Mỗi hiệp 100 máu / 100 năng lượng, chọn 60 hoặc 90 giây. Thắng hai hiệp trước sẽ thắng trận. Hết giờ so máu; bằng máu hoặc knockout đồng thời thì đấu lại hiệp, không cộng điểm.
-- Đấm 7 sát thương (90/80/180 ms), đá 12 (170/100/300 ms), đặc biệt 22 (320/140/500 ms), lần lượt là startup/active/recovery. Đặc biệt tốn 50 năng lượng và hồi 3 giây.
+- Mỗi người tự chọn một trong ba ngoại hình: Võ sĩ (băng đô, găng tay), Ronin (nón, khăn choàng), Đặc nhiệm (mũ, kính, giáp). Ngoại hình không thay đổi chỉ số; màu xanh/cam vẫn phân biệt hai người. Có thể đổi lựa chọn trong phòng chờ và sau trận, khóa khi đang đấu.
+- Chọn vũ khí khởi đầu: tay không (F: 7 sát thương, tầm 83), dùi cui (10, tầm 105), katana (13, tầm 131). F dùng vũ khí đang cầm, nếu rơi vũ khí thì đấm tay không. Cả hai người đều tự chọn vũ khí, không phụ thuộc quyền host.
+- Đấm/vũ khí có startup/active/recovery 90/80/180 ms; đá 12 sát thương, 170/100/300 ms. Súng lục R/U thay chiêu sóng lực: rút súng 320 ms, bắn 3 viên cách nhau 140 ms, mỗi viên 8 sát thương, recovery 500 ms. Tốn 50 năng lượng và hồi 3 giây một lần cho cả loạt. Bị trúng đòn sẽ ngắt những viên chưa bắn; đạn đã bắn tiếp tục bay. Đạn không có hitbox cận chiến, bay ở độ cao đầu, có kiểm tra quét để không xuyên mục tiêu giữa hai bước cập nhật.
+- Đòn trúng vùng đầu không bị đỡ có 35% khả năng làm rơi vũ khí cận chiến của đối thủ, áp dụng cho cả đấm/vũ khí/đạn. Có tia sáng, vòng choáng và chữ TRÚNG ĐẦU / RƠI VŨ KHÍ riêng. Không cộng thêm sát thương đầu. Vũ khí rơi có trọng lực, tồn tại 12 giây, khóa nhặt 0,8 giây. Khi tay không, đứng gần trong 65 đơn vị và nhấn E để nhặt; không thể nhặt trong lúc tấn công, trượt hoặc choáng. Mỗi hiệp mới cấp lại trang bị đã chọn. Súng lục là chiêu riêng, không mất theo vũ khí cận chiến.
+- Giữ S/↓ để ngồi; nhấn cùng hướng di chuyển sẽ trượt 350 ms, tốn 15 năng lượng, hồi 1,2 giây. Giữ tiếp sau trượt chuyển sang ngồi. Ngồi/trượt hạ hurtbox và vùng đầu, né được đòn cao và đạn; đòn đá thấp vẫn trúng. Khi ngồi/trượt không đánh, đỡ hoặc nhảy; trượt không xuyên người hay biên sân.
 - Chỉ đánh hoặc đỡ khi chạm đất, hướng đánh khóa suốt đòn, một hit mỗi đòn. Có một ô buffer trong 100 ms cuối recovery. Hai đòn hợp lệ được thu thập trước khi áp dụng để trao đổi sát thương công bằng.
-- Đỡ phía trước giảm 80% sát thương (Math.round), tốn 10/15/30 năng lượng; thiếu năng lượng chịu toàn bộ sát thương và choáng 600 ms. Hồi 8 năng lượng/giây sau 1 giây không dùng, còn 3/giây khi đỡ.
+- Đỡ phía trước giảm 80% sát thương (Math.round), tốn 10 cho đấm/vũ khí, 15 cho đá, 10 mỗi viên đạn; thiếu năng lượng chịu toàn bộ sát thương và choáng 600 ms. Hồi 8 năng lượng/giây sau 1 giây không dùng, còn 3/giây khi đỡ.
 - Nhảy qua đầu để đổi bên; thân tách ổn định sát tường; không có sát thương va chạm hoặc rơi. Các đấu trường dùng cùng sàn và giới hạn.
 - Ba nền Canvas: sân thượng đêm, võ đài, rừng tre hoàng hôn. Người que dùng chuỗi khớp với nội suy góc; có vệt đòn, sparks, guard, chớp sáng, hitstop 50 ms và rung nhẹ. Tùy chọn giảm hiệu ứng tắt rung, giảm chớp và số hạt.
-- Web Audio tổng hợp âm thanh sau tương tác; âm lượng, giảm hiệu ứng, tên, đấu trường và thời gian được lưu localStorage. Lỗi audio/storage không chặn game.
+- Web Audio tổng hợp âm thanh sau tương tác; âm lượng, giảm hiệu ứng, tên, ngoại hình, vũ khí, đấu trường và thời gian được lưu localStorage. Lỗi audio/storage không chặn game.
 
 ## Module
 
@@ -62,6 +68,8 @@ Chỉ chủ phòng đổi thiết lập, bắt đầu hoặc chơi lại. Rời 
 ## Kiểm tra và giới hạn
 
 Logic test bao phủ phase đòn, một hit mỗi đòn, recovery/buffer, hitstun, guard đúng hướng, phá đỡ, năng lượng/cooldown, đòn đồng thời, knockout hòa, hết giờ, hai hiệp thắng, pause/hitstop, mép sân và khóa hướng.
+
+Test `stickman-gear.test.mjs` bao phủ preset/chỉ số bằng nhau, quyền chọn trang bị từng người, kiểm tra dữ liệu loadout, tầm/sát thương vũ khí, vùng đầu, ngưỡng rơi 35%, khóa nhặt/hết hạn, crouch/slide và né đạn, đúng 3 viên, quét va chạm, chi phí đỡ mỗi viên, ngắt loạt bắn, knockout đồng thời cận chiến + đạn, freeze khi pause và cấp lại trang bị mỗi hiệp. `projectiles.js`, `weapons.js`, `appearance.js` lần lượt quản lý đạn, vũ khí rơi và ngoại hình Canvas.
 
 Room test bao phủ giới hạn 2 người, quyền host, đầu vào thuộc đúng kết nối, chống sửa state từ client, input hết hạn, pause/resume chung, snapshot và sự kiện đồng bộ, chuyển hiệp, xử thua khi ngắt kết nối, chuyển host, người thay thế và dọn phòng. Có test WebSocket thật với dev server.
 

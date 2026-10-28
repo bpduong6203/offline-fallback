@@ -1,6 +1,6 @@
 export class Effects{
- constructor(){this.items=[];this.shake=0;}
- hit(h,reduced){if(h.kind==='end')return;const x=h.q.x-h.dir*22,y=h.q.y-90;const color=h.broken?'#ff4e88':h.blocked?'#e9faff':'#ffe5a6';for(let i=0;i<(reduced?5:15);i++){const a=Math.random()*Math.PI*2,s=70+Math.random()*190;this.items.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.28,max:.28,color});}this.items=this.items.slice(-160);this.shake=reduced?0:h.kind==='Special'?7:h.kind==='Kick'?3:0;}
- step(dt){this.shake=Math.max(0,this.shake-dt*35);for(const p of this.items){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;}this.items=this.items.filter(p=>p.life>0);}
- draw(c){for(const p of this.items){c.globalAlpha=p.life/p.max;c.strokeStyle=p.color;c.lineWidth=3;c.beginPath();c.moveTo(p.x,p.y);c.lineTo(p.x-p.vx*.025,p.y-p.vy*.025);c.stroke();}c.globalAlpha=1;}
+ constructor(){this.items=[];this.labels=[];this.shake=0;}
+ hit(h,reduced){if(h.kind==='end')return;const x=h.x??h.q.x-h.dir*22,y=h.y??h.q.y-90;const color=h.broken?'#ff4e88':h.blocked?'#e9faff':h.head?'#ffc46c':'#ffe5a6';for(let i=0;i<(reduced?4:h.kind==='shot'?5:15);i++){const a=Math.random()*Math.PI*2,s=70+Math.random()*190;this.items.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.28,max:.28,color});}this.items=this.items.slice(-160);if(h.dropped||h.head&&!h.blocked||h.kind==='pickup')this.labels.push({x,y:y-20,life:.65,text:h.dropped?'RƠI VŨ KHÍ!':h.kind==='pickup'?'ĐÃ NHẶT':'TRÚNG ĐẦU',color});this.labels=this.labels.slice(-12);this.shake=reduced?0:h.head?3:h.kind==='Kick'?3:0;}
+ step(dt){this.shake=Math.max(0,this.shake-dt*35);for(const p of this.items){p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;}this.items=this.items.filter(p=>p.life>0);for(const p of this.labels){p.life-=dt;p.y-=dt*30;}this.labels=this.labels.filter(p=>p.life>0);}
+ draw(c){for(const p of this.items){c.globalAlpha=p.life/p.max;c.strokeStyle=p.color;c.lineWidth=3;c.beginPath();c.moveTo(p.x,p.y);c.lineTo(p.x-p.vx*.025,p.y-p.vy*.025);c.stroke();}for(const p of this.labels){c.globalAlpha=Math.min(1,p.life*4);c.fillStyle=p.color;c.font='bold 12px Segoe UI';c.textAlign='center';c.fillText(p.text,p.x,p.y);}c.textAlign='left';c.globalAlpha=1;}
 }

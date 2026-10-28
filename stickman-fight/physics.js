@@ -1,5 +1,7 @@
 import {FLOOR,W} from './config.js';
-export function hurtbox(p){return {x:p.x-25,y:p.y-134,w:50,h:134};}
+export function low(p){return p.state==='Crouch'||p.state==='Slide';}
+export function headbox(p){return {x:p.x-18,y:p.y-(low(p)?76:140),w:36,h:36};}
+export function hurtbox(p){const h=low(p)?76:140;return {x:p.x-25,y:p.y-h,w:50,h};}
 export function overlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
 export function physics(players,dt){
  for(const p of players){p.x+=p.vx*dt;p.vy+=1750*dt;p.y=Math.min(FLOOR,p.y+p.vy*dt);if(p.y===FLOOR)p.vy=0;p.x=Math.max(35,Math.min(W-35,p.x));if(p.stun>0)p.vx*=Math.exp(-7*dt);}
