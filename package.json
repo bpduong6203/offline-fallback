@@ -7,8 +7,7 @@
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.mjs",
     "test:browser": "node scripts/browser-check.mjs",
-    "test:stickman:browser": "node scripts/stickman-browser-check.mjs",
-    "test:bus-jam:browser": "node scripts/bus-jam-browser-check.mjs"
+    "test:stickman:browser": "node scripts/stickman-browser-check.mjs"
   },
   "devDependencies": {
     "ws": "^8.22.0"

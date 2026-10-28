@@ -10,17 +10,15 @@ export const body = (hostname) => `  </style>
     <div class="tabs">
       <a class="tab" href="/stickman-fight">Stickman Showdown</a>
       <a href="/__game/bomb-arena" style="display:inline-flex;align-items:center;padding:9px 15px;border-radius:12px;background:#ff9c45;color:#302015;font-weight:800;text-decoration:none">✹ Bomb Arena</a>
-      <a href="/__game/bus-escape" style="display:inline-flex;align-items:center;padding:9px 15px;border-radius:12px;background:#2563eb;color:#ffffff;font-weight:800;text-decoration:none">🚌 Bus Escape</a>
       <button class="tab on" data-g="flappy">Flappy</button>
       <!-- <button class="tab" data-g="pool">🎱 Bi-a</button> -->
       <button class="tab" data-g="caro">Caro</button>
       <button class="tab" data-g="motorways">Mini Motorways</button>
-      <button class="tab" data-g="busescape">Bus Escape</button>
       <!-- <button class="tab" data-g="sword">⚔️ Đấu kiếm</button>  -->
       <button class="tab" data-g="wolf">Ma sói</button>
       <button class="tab" data-g="played">YOU GOT PLAYED</button>
     </div>
-    <div class="game" id="gameBox"><canvas id="g"></canvas><div class="pg-touch" id="playedControls" hidden><div class="pg-touch-group"><button type="button" aria-label="Đi sang trái" data-played-control="left">←</button><button type="button" aria-label="Đi sang phải" data-played-control="right">→</button><button type="button" aria-label="Tạm dừng hoặc tiếp tục" data-played-control="pause">Ⅱ</button></div><button type="button" class="jump" aria-label="Nhảy" data-played-control="jump">NHẢY</button></div><iframe id="motorwaysFrame" title="Mini Motorways" src="/__game/mini-motorways" hidden></iframe><iframe id="busEscapeFrame" title="Bus Escape" data-src="/__game/bus-escape" hidden style="width:100%;height:620px;border:none;border-radius:12px;background:#0F1218"></iframe></div>
+    <div class="game" id="gameBox"><canvas id="g"></canvas><div class="pg-touch" id="playedControls" hidden><div class="pg-touch-group"><button type="button" aria-label="Đi sang trái" data-played-control="left">←</button><button type="button" aria-label="Đi sang phải" data-played-control="right">→</button><button type="button" aria-label="Tạm dừng hoặc tiếp tục" data-played-control="pause">Ⅱ</button></div><button type="button" class="jump" aria-label="Nhảy" data-played-control="jump">NHẢY</button></div><iframe id="motorwaysFrame" title="Mini Motorways" src="/__game/mini-motorways" hidden></iframe></div>
     <div class="poolui" id="poolui" hidden>
       <div id="pMenu">
         <div class="row">

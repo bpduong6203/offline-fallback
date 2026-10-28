@@ -4,7 +4,6 @@ import { handleGameSocket } from './src/game-socket.js';
 import miniMotorways from './src/page/games/Mini_Motorways.html';
 import bombArena from './src/page/games/bomb-arena.generated.js';
 import stickmanFight from './src/page/games/stickman-fight.generated.js';
-import { renderBusJamPage } from './src/page/games/bus-jam.html.js';
 
 // Durable Object phải được export từ file entry
 export { PoolRoom } from './src/pool-room.js';
@@ -17,17 +16,6 @@ const OFFLINE_STATUS = new Set([502, 503, 504, 521, 522, 523, 524, 530]);
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (['/__game/bus-escape', '/bus-escape'].includes(url.pathname)) {
-      if (request.method !== 'GET' && request.method !== 'HEAD') {
-        return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
-      }
-      return new Response(request.method === 'HEAD' ? null : renderBusJamPage(), {
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'no-cache'
-        }
-      });
-    }
     if (['/stickman-fight', '/stickman-fight/', '/__game/stickman-fight'].includes(url.pathname)) {
       if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
       return new Response(request.method === 'HEAD' ? null : stickmanFight, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
