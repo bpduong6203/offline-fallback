@@ -734,6 +734,9 @@
             $("queueText").textContent =
               "Đội xanh và đội đỏ · tiêu diệt đối thủ để ghi điểm.";
             players = m.players || [];
+            // Paint the matched roster immediately; do not wait for the first
+            // simulation snapshot before the arena HUD becomes interactive.
+            drawHud();
             return;
           }
           if (m.t === "match-ended") {
