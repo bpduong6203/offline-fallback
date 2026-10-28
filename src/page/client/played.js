@@ -107,7 +107,9 @@ export const clientPlayed = `    // ===================== YOU GOT PLAYED =======
         }
         updateTraps(dt);
         if (player.y > H + 100) { die(); return; }
-        if (player.x >= 1050 && checkpoint < 1050) { checkpoint = 1080; note = 'Checkpoint đã lưu.'; noteTimer = 2; }
+        // Keep the respawn box clear of the spike row at x=1042..1082.
+        // Spawning at 1080 overlapped it by 2px, causing an instant death loop.
+        if (player.x >= 1050 && checkpoint < 1050) { checkpoint = 1090; note = 'Checkpoint đã lưu.'; noteTimer = 2; }
         if (player.x > 2410) {
           state = 'won';
           var score = Math.max(0, Math.round(1000 - time * 8 - deaths * 90));
