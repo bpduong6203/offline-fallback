@@ -10,12 +10,20 @@ import { sounds } from './audio.js';
 import { EffectsManager } from './effects.js';
 import { NetworkClient } from './network.js';
 import { UIManager } from './ui.js';
+import { EGG_ICON_DATA_URL } from './egg-asset.js';
 
 class TienLenGameApp {
   constructor() {
     this.mode = 'solo'; // 'solo' or 'online'
     this.effects = new EffectsManager(document.getElementById('pokerTable'));
     this.network = new NetworkClient();
+
+    // Egg currency balance (Hộp trứng Mebi Farm Pinky Egg)
+    this.userEggs = 100;
+    try {
+      const savedEggs = parseInt(localStorage.getItem('tlmn_user_eggs'), 10);
+      if (!isNaN(savedEggs) && savedEggs >= 0) this.userEggs = savedEggs;
+    } catch (e) {}
 
     // Solo game state
     this.players = [
@@ -124,6 +132,25 @@ class TienLenGameApp {
           this.network.startGame();
         }
       });
+    }
+
+    // Render Egg Currency Icon & Balance
+    const iconWrap = document.getElementById('headerEggIconWrap');
+    if (iconWrap) {
+      iconWrap.innerHTML = `<img src="${EGG_ICON_DATA_URL}" class="egg-currency-img" alt="Hộp trứng">`;
+    }
+    const eggBalEl = document.getElementById('userEggBalance');
+    if (eggBalEl) {
+      eggBalEl.textContent = this.userEggs.toLocaleString('vi-VN');
+    }
+  }
+
+  updateEggBalance(delta) {
+    this.userEggs = Math.max(0, this.userEggs + delta);
+    try { localStorage.setItem('tlmn_user_eggs', String(this.userEggs)); } catch (e) {}
+    const eggBalEl = document.getElementById('userEggBalance');
+    if (eggBalEl) {
+      eggBalEl.textContent = this.userEggs.toLocaleString('vi-VN');
     }
   }
 
@@ -582,8 +609,11 @@ class TienLenGameApp {
 
       const lastPod = this.ui.playerPods[this.lastPlayerId];
       const winPod = this.ui.playerPods[playerId];
-      this.effects.showFloatingScore(lastPod, 10000, false);
-      this.effects.showFloatingScore(winPod, 10000, true);
+      this.effects.showFloatingScore(lastPod, 5, false);
+      this.effects.showFloatingScore(winPod, 5, true);
+
+      if (playerId === 0) this.updateEggBalance(5);
+      if (this.lastPlayerId === 0) this.updateEggBalance(-5);
     } else {
       sounds.playCard();
     }
@@ -667,16 +697,25 @@ class TienLenGameApp {
 
     let scoreSummaryHtml = '';
     this.players.forEach(p => {
-      const { details } = calculatePenalties(p.hand);
+      const { details } = calculatePenalties(p.hand, 1);
       const isCong = p.hand.length === 13;
       let badge = `Hạng ${p.rank}`;
       if (isCong) badge += ' (CÓNG!)';
 
+      const changeAmount = p.rank === 1 ? 15 : -(p.hand.length);
+      if (p.id === 0) {
+        this.updateEggBalance(changeAmount);
+      }
+
+      const changeText = p.rank === 1
+        ? `+15 <img src="${EGG_ICON_DATA_URL}" class="egg-currency-img" alt="Hộp trứng"> Hộp trứng`
+        : `${changeAmount} <img src="${EGG_ICON_DATA_URL}" class="egg-currency-img" alt="Hộp trứng"> Hộp trứng`;
+
       scoreSummaryHtml += `
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;padding:6px;background:rgba(255,255,255,0.05);border-radius:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:8px 12px;background:rgba(255,255,255,0.05);border-radius:10px">
           <div><b>${p.name}</b> (${badge})</div>
-          <div style="color:${p.rank === 1 ? '#2ecc71' : '#e74c3c'}">
-            ${details.length > 0 ? details.join(', ') : (p.rank === 1 ? '+15,000 Xu' : `-${p.hand.length * 1000} Xu`)}
+          <div style="display:flex;align-items:center;gap:4px;color:${p.rank === 1 ? '#2ecc71' : '#e74c3c'};font-weight:800">
+            ${details.length > 0 ? details.join(', ') : changeText}
           </div>
         </div>
       `;

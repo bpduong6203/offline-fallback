@@ -127,6 +127,12 @@ try {
   const selectedCards = await evaluate('document.querySelectorAll("#userCards .playing-card.selected").length');
   assert.equal(selectedCards, 1, 'Clicked card should have .selected class');
 
+  // Verify Egg currency badge and icon are rendered
+  const eggBalance = await evaluate('document.getElementById("userEggBalance").textContent');
+  assert.equal(parseInt(eggBalance, 10) >= 0, true, 'Egg balance should be numeric');
+  const hasEggIcon = await evaluate('!!document.querySelector(".egg-currency-img")');
+  assert.equal(hasEggIcon, true, 'Egg currency icon should be rendered');
+
   // 3. Click "Về Menu" button
   await evaluate('document.getElementById("btnMenu").click()');
   await wait(200);
