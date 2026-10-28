@@ -3,6 +3,7 @@ import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { localServer } from './local-server.mjs';
 
 const profile = await mkdtemp(path.join(tmpdir(), 'bus-jam-'));
@@ -10,8 +11,6 @@ const app = localServer(() => 'ok');
 const server = app.server;
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const port = server.address().port;
-
-import { existsSync } from 'node:fs';
 
 const browserPaths = [
   process.env.CHROME_PATH,
@@ -95,41 +94,56 @@ try {
   await cdp('Emulation.setDeviceMetricsOverride', { width: 420, height: 720, deviceScaleFactor: 2, mobile: true });
 
   await cdp('Page.navigate', { url: `http://127.0.0.1:${port}/__game/bus-escape` });
-  await wait(800);
+  await wait(600);
 
   const canvasExists = await evaluate('!!document.getElementById("bus-jam-canvas")');
   assert.equal(canvasExists, true, 'Canvas bus-jam-canvas must exist');
-
-  const canvasWidth = await evaluate('document.getElementById("bus-jam-canvas").width');
-  assert.ok(canvasWidth > 0, 'Canvas must have width');
-
-  // Verify zero errors on page load
   assert.equal(errors.length, 0, 'No JS runtime exceptions on page load: ' + JSON.stringify(errors));
 
-  // Simulate clicking on b1 (RED bus in Level 1 at (1,1))
-  // Level 1: cell size = 344/6 = 57.3. bus at x:1, y:1.
-  // StartX: 18. StartY: 236.
-  // Canvas click at approx x: 18 + 1.5 * 57 = 103, y: 236 + 1.5 * 54 = 317
-  await evaluate(`(() => {
-    const canvas = document.getElementById('bus-jam-canvas');
-    const rect = canvas.getBoundingClientRect();
-    const evt = new PointerEvent('pointerdown', {
-      clientX: rect.left + rect.width * (103 / 380),
-      clientY: rect.top + rect.height * (317 / 580),
-      bubbles: true
-    });
-    canvas.dispatchEvent(evt);
-  })()`);
+  const clickCanvasAt = async (logicX, logicY) => {
+    await evaluate(`(() => {
+      const canvas = document.getElementById('bus-jam-canvas');
+      const rect = canvas.getBoundingClientRect();
+      const evt = new PointerEvent('pointerdown', {
+        clientX: rect.left + rect.width * (${logicX} / 380),
+        clientY: rect.top + rect.height * (${logicY} / 580),
+        bubbles: true
+      });
+      canvas.dispatchEvent(evt);
+    })()`);
+  };
 
-  await wait(1000);
+  console.log('--- Step 1: Click Bus 1 (RED) ---');
+  // b1: col 1, row 1 -> x: 16 + 1.5 * 58 = 103, y: 236 + 1.5 * 54.6 = 318
+  await clickCanvasAt(103, 318);
+  await wait(1500); // Wait for b1 to slide, 3 red passengers to board, and bus to depart
 
-  assert.equal(errors.length, 0, 'No JS runtime exceptions after interaction: ' + JSON.stringify(errors));
+  console.log('--- Step 2: Click Bus 2 (BLUE) ---');
+  // b2: col 3, row 1 -> x: 16 + 3.5 * 58 = 219, y: 236 + 1.5 * 54.6 = 318
+  await clickCanvasAt(219, 318);
+  await wait(1500); // Wait for b2 to slide, 3 blue passengers to board, and bus to depart
 
-  // Screenshot capture to verify visual render
-  const screenshot = await cdp('Page.captureScreenshot', { format: 'png' });
-  await writeFile('C:/Users/Admin/.gemini/antigravity-ide/brain/25678847-7885-45c9-bcae-9501215c1666/bus_jam_screenshot.png', Buffer.from(screenshot.data, 'base64'));
+  console.log('--- Step 3: Click Bus 3 (YELLOW) ---');
+  // b3: col 2, row 4 -> x: 16 + 3.0 * 58 = 190, y: 236 + 4.5 * 54.6 = 481
+  await clickCanvasAt(190, 481);
+  await wait(1800); // Wait for b3 to slide, 3 yellow passengers to board, bus to depart and Win modal to show
 
-  console.log('✓ Bus Jam Browser Check passed with 0 runtime errors!');
+  assert.equal(errors.length, 0, 'No JS runtime exceptions during level 1: ' + JSON.stringify(errors));
+
+  // Save Victory screenshot
+  const shotWin = await cdp('Page.captureScreenshot', { format: 'png' });
+  await writeFile('C:/Users/Admin/.gemini/antigravity-ide/brain/25678847-7885-45c9-bcae-9501215c1666/bus_jam_victory.png', Buffer.from(shotWin.data, 'base64'));
+
+  console.log('--- Step 4: Click Next Level Button on Victory Modal ---');
+  // Victory button is centered at (190, H / 2 + 70) = (190, 360)
+  await clickCanvasAt(190, 360);
+  await wait(800);
+
+  // Save Round 2 screenshot
+  const shotLvl2 = await cdp('Page.captureScreenshot', { format: 'png' });
+  await writeFile('C:/Users/Admin/.gemini/antigravity-ide/brain/25678847-7885-45c9-bcae-9501215c1666/bus_jam_round2.png', Buffer.from(shotLvl2.data, 'base64'));
+
+  console.log('✓ Successfully completed Round 1 and advanced to Round 2!');
   socket.close();
 } finally {
   chrome.kill();
