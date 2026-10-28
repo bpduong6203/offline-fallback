@@ -37,3 +37,12 @@ class_name = "BombRoom"
 [[migrations]]
 tag = "v3"
 new_sqlite_classes = ["BombRoom"]
+
+# Stickman Showdown: server-authoritative room for two players.
+[[durable_objects.bindings]]
+name = "STICKMAN"
+class_name = "StickmanRoom"
+
+[[migrations]]
+tag = "v4"
+new_sqlite_classes = ["StickmanRoom"]

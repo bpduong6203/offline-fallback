@@ -17,7 +17,7 @@ Trang chờ kiểm tra lại kết nối bằng request `HEAD` mỗi 10 giây kh
 
 ## Các game trong repo
 
-**Stickman Showdown**: game đối kháng người que 2 người cùng bàn phím ở `/stickman-fight`. Chạy `npm.cmd run dev`, mở `http://localhost:5173/stickman-fight`. Hướng dẫn, kiến trúc, điều khiển và kiểm tra: [stickman-fight/README.md](stickman-fight/README.md). Build bằng `npm.cmd run build`; kiểm tra Chrome bằng `npm.cmd run test:stickman:browser`. Không tự deploy.
+**Stickman Showdown**: game đối kháng người que online 2 người ở `/stickman-fight`. Nhập tên, tạo phòng và gửi mã 4 ký tự để người kia vào từ máy riêng. Chủ phòng chọn thiết lập và bắt đầu. Chạy `npm.cmd run dev`, mở `http://localhost:5173/stickman-fight`; máy khác trong LAN truy cập IP của máy chạy server với cổng 5173. Hướng dẫn: [stickman-fight/README.md](stickman-fight/README.md). Build bằng `npm.cmd run build`; kiểm tra Chrome bằng `npm.cmd run test:stickman:browser`. Không tự deploy.
 
 | Game | Cách truy cập | Ghi chú |
 | --- | --- | --- |

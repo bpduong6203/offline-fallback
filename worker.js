@@ -9,6 +9,7 @@ import stickmanFight from './src/page/games/stickman-fight.generated.js';
 export { PoolRoom } from './src/pool-room.js';
 export { WolfRoom } from './src/wolf/room.js';
 export { BombRoom } from './src/bomb-room.js';
+export { StickmanRoom } from './src/stickman-room.js';
 
 const OFFLINE_STATUS = new Set([502, 503, 504, 521, 522, 523, 524, 530]);
 

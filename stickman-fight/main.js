@@ -1,33 +1,92 @@
-import {createMatch,step} from './match.js';
+﻿import {createMatch} from './match.js';
 import {Input} from './input.js';
 import {Renderer} from './renderer.js';
 import {Effects} from './effects.js';
 import {Audio} from './audio.js';
+import {Network} from './network.js';
 import {load,save} from './storage.js';
 import {$,hud,overlay} from './ui.js';
 import {loop} from './loop.js';
 const saved=load(),settings={sound:typeof saved.sound==='boolean'?saved.sound:true,volume:Number.isFinite(saved.volume)?Math.max(0,Math.min(1,saved.volume)):.5,reduced:!!saved.reduced};
-let arena=['city','dojo','bamboo'].includes(saved.arena)?saved.arena:'city',seconds=saved.seconds===90?90:60,mode='menu',debug=false;
-if(Array.isArray(saved.names))saved.names.slice(0,2).forEach((name,i)=>{if(typeof name==='string')$('p'+(i+1)).value=name.slice(0,20);});
-function options(){return {arena,seconds,names:[$('p1').value.trim()||'Người chơi 1',$('p2').value.trim()||'Người chơi 2']};}
-let state=createMatch(options()),fx=new Effects();const renderer=new Renderer($('board')),audio=new Audio(settings);
-function persist(){save({...settings,...options()});}
+let arena=['city','dojo','bamboo'].includes(saved.arena)?saved.arena:'city',seconds=saved.seconds===90?90:60,mode='menu',debug=false,state,fx=new Effects(),previous=null,receivedAt=0,sequence=0,sendTime=0,lastStateAt=0;
+$('player-name').value=typeof saved.name==='string'?saved.name.slice(0,20):'Người chơi';
+function options(){const names=['Người chơi 1','Người chơi 2'];if(net.lobby)for(const p of net.lobby.players)names[p.id]=p.name;return {arena,seconds,names};}
+const renderer=new Renderer($('board')),audio=new Audio(settings),net=new Network(receive,message=>{showMenu();$('room-message').textContent=message;});
+state=createMatch(options());
+function persist(){save({...settings,arena,seconds,name:$('player-name').value.trim()||'Người chơi'});}
 function soundUi(){$('sound').checked=settings.sound;$('settings').textContent=settings.sound?'♫':'♪';$('settings').setAttribute('aria-label','Cài đặt âm thanh'+(settings.sound?' (đang bật)':' (đang tắt)'));}
 function selections(){document.querySelectorAll('[data-arena]').forEach(b=>{b.classList.toggle('selected',b.dataset.arena===arena);b.setAttribute('aria-pressed',String(b.dataset.arena===arena));});document.querySelectorAll('[data-seconds]').forEach(b=>{b.classList.toggle('selected',Number(b.dataset.seconds)===seconds);b.setAttribute('aria-pressed',String(Number(b.dataset.seconds)===seconds));});}
-function preview(){if(mode==='menu'){state=createMatch(options());hud(state);}persist();selections();}
-function start(){audio.unlock();persist();state=createMatch(options());fx=new Effects();input.clear();mode='match';$('overlay').hidden=true;$('setup').disabled=true;$('pause').disabled=false;$('announcement').hidden=false;hud(state);$('pause').focus();}
-function pause(force=false){if(mode!=='match'||state.phase==='result')return;if(force&&state.paused)return;state.paused=force||!state.paused;input.clear();if(state.paused){$('announcement').hidden=true;overlay('NGHỈ MỘT NHỊP','Đã tạm dừng','Đồng hồ và đấu trường sẽ chờ bạn.','Tiếp tục',true);$('primary').focus();}else{$('overlay').hidden=true;$('pause').focus();}}
-const input=new Input(()=>mode==='match',()=>pause(true),code=>{if(code==='Escape'&&!document.querySelector('dialog[open]'))pause();if(code==='KeyM'){audio.unlock();settings.sound=!settings.sound;soundUi();persist();}if(code==='F2')debug=!debug;});
-$('primary').onclick=()=>state.paused&&mode==='match'?pause():start();$('pause').onclick=()=>pause();
-$('menu').onclick=()=>{mode='menu';input.clear();$('setup').disabled=false;$('announcement').hidden=true;$('pause').disabled=true;overlay('SẴN SÀNG ĐỐI ĐẦU?','Kỹ năng quyết định. Tình bạn thử thách.','Thắng 2 hiệp để làm chủ đấu trường.','Chơi 2 người');preview();};
+function roomUi(){
+ const lobby=net.lobby,connected=!!lobby,host=connected&&lobby.host===net.id;
+ $('room-entry').hidden=connected;$('room-lobby').hidden=!connected;$('room-id').textContent=net.room;
+ $('player-name').disabled=connected||mode==='connecting';$('create-room').disabled=$('join-room').disabled=mode==='connecting';
+ $('setup').disabled=mode==='connecting'||connected&&(!host||lobby.playing);
+ $('room-role').textContent=connected?`Bạn là P${net.id+1} · ${net.id===0?'Xanh':'Cam'}${host?' · Chủ phòng':''}`:'';
+ $('room-players').replaceChildren(...(lobby?.players||[]).map(p=>{const row=document.createElement('li');const name=document.createElement('b');name.textContent=p.name;const tag=document.createElement('small');tag.textContent=`P${p.id+1}${p.id===net.id?' · Bạn':''}${p.id===lobby.host?' · Chủ phòng':''}`;row.append(name,tag);row.className=p.id?'orange':'blue';return row;}));
+ $('primary').disabled=mode==='connecting'||connected&&(!state.paused&&(!host||lobby.players.length!==2));
+ $('pause').disabled=mode!=='match'||state.phase==='result';
+ $('menu').textContent=connected?'Rời phòng':'Về menu';
+ if(mode==='lobby')overlay('PHÒNG '+net.room,lobby.players.length===2?'Đối thủ đã sẵn sàng.':'Đang chờ đối thủ…',host?'Gửi mã phòng cho bạn bè. Bạn chọn đấu trường và bắt đầu khi đủ 2 người.':'Chủ phòng sẽ chọn đấu trường và bắt đầu trận.',host?'Bắt đầu trận':'Chờ chủ phòng',true);
+}
+function preview(){if(mode==='menu'||mode==='lobby'){state=createMatch(options());previous=null;hud(state);}persist();selections();}
+function showMenu(){mode='menu';input.clear();previous=null;fx=new Effects();state=createMatch(options());$('announcement').hidden=true;overlay('ĐỐI ĐẦU QUA MẠNG','Kỹ năng quyết định. Tình bạn thử thách.','Tạo phòng hoặc nhập mã để kết nối với bạn bè.','Tạo phòng');roomUi();preview();}
+function connect(create){
+ const room=create?Array.from(crypto.getRandomValues(new Uint8Array(4)),n=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[n%32]).join(''):$('room-code').value.trim().toUpperCase();
+ if(!/^[A-Z0-9]{4}$/.test(room)){$('room-message').textContent='Mã phòng gồm 4 chữ cái hoặc chữ số.';return;}
+ audio.unlock();input.clear();persist();mode='connecting';overlay('KẾT NỐI PHÒNG','Đang kết nối…','Đang mở phòng đấu cho bạn.','Đang kết nối');roomUi();
+ try{net.connect(room,$('player-name').value.trim()||'Người chơi',create);}catch{net.leave();showMenu();$('room-message').textContent='Không mở được kết nối. Hãy thử lại.';}
+}
+function pause(force=false){if(mode!=='match'||state.phase==='result')return;input.clear();if(force&&state.paused)return;net.send({t:state.paused&&!force?'resume':'pause'});}
+const input=new Input(()=>mode==='match'&&!state.paused&&!document.querySelector('dialog[open]'),()=>pause(true),code=>{if(code==='Escape'&&!document.querySelector('dialog[open]'))pause();if(code==='KeyM'){audio.unlock();settings.sound=!settings.sound;soundUi();persist();}if(code==='F2')debug=!debug;});
+function receive(m){
+ if(m.t==='error'){$('room-message').textContent=m.message;return;}
+ if(m.t==='hello'){$('room-message').textContent='Đã kết nối. Chia sẻ mã phòng để mời bạn bè.';sequence=0;if(net.creating)net.send({t:'config',arena,seconds});}
+ if(m.t==='lobby'){
+  arena=m.arena;seconds=m.seconds;
+  if(!m.hasMatch){mode='lobby';preview();}
+  selections();roomUi();
+ }
+ if(m.t==='started'){input.clear();mode='match';previous=null;fx=new Effects();sequence=0;lastStateAt=performance.now();$('overlay').hidden=true;$('room-message').textContent='Mỗi người điều khiển nhân vật của mình. Esc tạm dừng cho cả hai.';}
+ if(m.t==='state'){
+  if(m.sequence<=sequence)return;sequence=m.sequence;
+  const old=state;state=m.state;receivedAt=lastStateAt=performance.now();previous=old&&old.round===state.round&&old.phase===state.phase&&!state.paused&&!old.paused?old:null;
+  for(const e of state.events){fx.hit(e,settings.reduced);audio.play(e.kind==='end'?'end':e.broken?'break':e.blocked?'block':e.kind);}state.events=[];
+  if(old?.phase!==state.phase||old?.paused!==state.paused)input.clear();
+  mode='match';
+  if(state.phase==='result'){
+   const winner=state.wins[0]>=2?0:1;
+   overlay('KẾT THÚC TRẬN ĐẤU',state.options.names[winner]+' chiến thắng!',state.result||`Tỉ số ${state.wins[0]} — ${state.wins[1]}. Thêm một trận phục thù?`,'Chơi lại',true);
+  }else if(state.paused){overlay('TẠM DỪNG CHO CẢ HAI','Đã tạm dừng','Một người đã tạm dừng hoặc chuyển tab. Bấm Tiếp tục khi cả hai sẵn sàng.','Tiếp tục',true);}
+  else $('overlay').hidden=true;
+  roomUi();hud(state);
+ }
+}
+$('primary').onclick=()=>{audio.unlock();if(mode==='menu')connect(true);else if(mode==='match'&&state.paused)net.send({t:'resume'});else net.send({t:'start'});};
+$('create-room').onclick=()=>connect(true);$('join-room').onclick=()=>connect(false);$('pause').onclick=()=>pause();
+function leave(){net.leave();showMenu();$('room-message').textContent='Đã rời phòng. Bạn có thể tạo hoặc vào phòng khác.';}
+$('menu').onclick=$('leave-room').onclick=leave;
+$('copy-room').onclick=async()=>{try{await navigator.clipboard.writeText(net.room);$('room-message').textContent='Đã sao chép mã phòng.';}catch{$('room-message').textContent='Mã phòng: '+net.room;}};
+$('room-code').oninput=()=>{$('room-code').value=$('room-code').value.toUpperCase();};$('room-code').onkeydown=e=>{if(e.code==='Enter'&&mode!=='connecting')connect(false);};
 function dialog(id){pause(true);audio.unlock();$(id).showModal();}
 $('help').onclick=$('help-bottom').onclick=()=>dialog('instructions');$('settings').onclick=()=>dialog('preferences');
-for(const b of document.querySelectorAll('[data-arena]'))b.onclick=()=>{arena=b.dataset.arena;preview();};
-for(const b of document.querySelectorAll('[data-seconds]'))b.onclick=()=>{seconds=Number(b.dataset.seconds);preview();};
-for(const id of ['p1','p2'])$(id).oninput=preview;
+function config(){persist();selections();if(net.lobby)net.send({t:'config',arena,seconds});else preview();}
+for(const b of document.querySelectorAll('[data-arena]'))b.onclick=()=>{arena=b.dataset.arena;config();};for(const b of document.querySelectorAll('[data-seconds]'))b.onclick=()=>{seconds=Number(b.dataset.seconds);config();};
+$('player-name').oninput=persist;
 $('sound').onchange=()=>{audio.unlock();settings.sound=$('sound').checked;soundUi();persist();};$('volume').value=settings.volume;$('volume').oninput=()=>{audio.unlock();settings.volume=Number($('volume').value);persist();audio.play('block');};$('reduced').checked=settings.reduced;$('reduced').onchange=()=>{settings.reduced=$('reduced').checked;persist();};
-function update(dt){if(mode==='menu'){state.clock+=dt;return;}if(state.paused)return;const oldPhase=state.phase;step(state,input.read(),dt);if(state.phase!=='result')fx.step(dt);for(const event of state.events){fx.hit(event,settings.reduced);audio.play(event.kind==='end'?'end':event.broken?'break':event.blocked?'block':event.kind);}state.events=[];if(oldPhase!==state.phase)input.clear();if(state.phase==='result'&&oldPhase!=='result'){const winner=state.wins[0]>=2?0:1;overlay('NHÀ VÔ ĐỊCH ĐẤU TRƯỜNG',state.options.names[winner]+' chiến thắng!',`Tỉ số ${state.wins[0]} — ${state.wins[1]}. Thêm một trận phục thù?`,'Chơi lại',true);$('primary').focus();}}
-function draw(fps){hud(state);renderer.draw(state,fx,debug,fps,settings.reduced);const announce=mode==='match'&&!state.paused&&(state.phase==='countdown'||state.phase==='roundEnd');$('announcement').hidden=!announce;if(announce)$('announcement').textContent=state.phase==='countdown'?String(Math.max(1,Math.ceil(state.phaseTime))):state.result;$('game-status').textContent=mode==='menu'?'ĐANG CHỜ NGƯỜI CHƠI':state.paused?'ĐÃ TẠM DỪNG':state.phase==='fight'?'ĐANG GIAO ĐẤU':state.phase==='result'?'TRẬN ĐẤU KẾT THÚC':'CHUẨN BỊ HIỆP ĐẤU';}
-// Read-only snapshot for diagnostics; no mutable game internals are exposed.
-Object.defineProperty(window,'stickmanSnapshot',{get:()=>JSON.parse(JSON.stringify({mode,phase:state.phase,paused:state.paused,time:state.time,players:state.players,wins:state.wins,arena:state.options.arena,round:state.round}))});
-$('pause').disabled=true;soundUi();selections();hud(state);loop(update,draw);
+function update(dt){
+ if(mode==='menu'||mode==='lobby'){state.clock+=dt;return;}
+ if(mode!=='match'||state.phase==='result')return;
+ if(lastStateAt&&performance.now()-lastStateAt>10000){net.leave();showMenu();$('room-message').textContent='Mất tín hiệu máy chủ. Hãy vào lại phòng.';return;}
+ if(!state.paused){fx.step(dt);sendTime+=dt;if(sendTime>=1/30){sendTime=0;const [a,b]=input.read();net.send({t:'input',left:a.left||b.left,right:a.right||b.right,block:a.block||b.block,jump:a.jump||b.jump,action:a.action||b.action});}}
+}
+function draw(fps){
+ hud(state);let drawing=state;
+ if(previous){const alpha=Math.min(1,(performance.now()-receivedAt)/50);drawing={...state,players:state.players.map((p,i)=>({...p,x:previous.players[i].x+(p.x-previous.players[i].x)*alpha,y:previous.players[i].y+(p.y-previous.players[i].y)*alpha}))};}
+ renderer.draw(drawing,fx,debug,fps,settings.reduced);
+ const announce=mode==='match'&&!state.paused&&(state.phase==='countdown'||state.phase==='roundEnd');$('announcement').hidden=!announce;if(announce)$('announcement').textContent=state.phase==='countdown'?String(Math.max(1,Math.ceil(state.phaseTime))):state.result;
+ $('game-status').textContent=mode==='menu'?'CHƯA VÀO PHÒNG':mode==='connecting'?'ĐANG KẾT NỐI':mode==='lobby'?`PHÒNG ${net.room} · ${net.lobby?.players.length||0}/2 NGƯỜI`:state.paused?'ĐÃ TẠM DỪNG':state.phase==='fight'?`BẠN LÀ P${net.id+1} · ĐANG GIAO ĐẤU`:state.phase==='result'?'TRẬN ĐẤU KẾT THÚC':'CHUẨN BỊ HIỆP ĐẤU';
+}
+window.addEventListener('pagehide',()=>{input.clear();net.leave();});
+window.addEventListener('pageshow',e=>{if(e.persisted){showMenu();$('room-message').textContent='Hãy tạo hoặc vào phòng lại để kết nối.';}});
+Object.defineProperty(window,'stickmanSnapshot',{get:()=>JSON.parse(JSON.stringify({mode,room:net.room,id:net.id,lobby:net.lobby,sequence,phase:state.phase,paused:state.paused,time:state.time,players:state.players,wins:state.wins,arena:state.options.arena,round:state.round}))});
+soundUi();showMenu();loop(update,draw);
