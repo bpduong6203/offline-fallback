@@ -9,7 +9,8 @@ import {buildTienLen} from './build-tienlen.mjs';
 import {TienLenRoomEngine} from '../src/tienlen-room-engine.js';
 
 export function localServer(getHtml){
-  const rooms=new Map(),wss=new WebSocketServer({noServer:true,maxPayload:512}),bangEngine=new BangBangEngine();let bangTimer=null;
+  const rooms=new Map(),wss=new WebSocketServer({noServer:true,maxPayload:512}),bangQueues=new Map();
+  const getBangQueue=mode=>{let q=bangQueues.get(mode);if(!q){q={engine:new BangBangEngine(),timer:null};bangQueues.set(mode,q);}return q;};
   const server=createServer(async(req,res)=>{
     const path=req.url?.split('?')[0];
     if(path==='/__game/bang-bang'){try{const html=await readFile(new URL('../src/page/games/Bang_Bang.html',import.meta.url),'utf8');res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Bang Bang render failed');}return;}
@@ -25,12 +26,13 @@ export function localServer(getHtml){
     const reject=(status,text)=>{socket.end(`HTTP/1.1 ${status} ${text}\r\nConnection: close\r\n\r\n`);};
     if(req.headers.origin){try{if(new URL(req.headers.origin).host!==req.headers.host)return reject(403,'Forbidden');}catch{return reject(403,'Forbidden');}}
     if(url.pathname==='/__game/bang-bang-ws'){
+      const requestedMode=Number(url.searchParams.get('mode')),mode=[1,2,3].includes(requestedMode)?requestedMode:3,bangQueue=getBangQueue(mode),bangEngine=bangQueue.engine;
       if(bangEngine.peers.size>=30)return reject(409,'Queue Full');
       wss.handleUpgrade(req,socket,head,ws=>{
         const send=message=>{if(ws.readyState===1)ws.send(JSON.stringify(message));};let id,closed=false,count=0,windowStart=Date.now();
-        const leave=()=>{if(closed)return;closed=true;if(id!=null)bangEngine.leave(id);if(!bangEngine.match){clearInterval(bangTimer);bangTimer=null;}};
-        id=bangEngine.join(url.searchParams.get('name'),send);ws.on('close',leave);ws.on('error',leave);
-        ws.on('message',(data,binary)=>{if(binary)return;const now=Date.now();if(now-windowStart>1000){windowStart=now;count=0;}if(++count>45){ws.close(1008,'Too many messages');leave();return;}let message;try{message=JSON.parse(data.toString());}catch{return;}bangEngine.handle(id,message);if(bangEngine.match&&!bangTimer){let last=Date.now(),acc=0,frames=0;bangTimer=setInterval(()=>{const t=Date.now();acc+=Math.min(.1,(t-last)/1000);last=t;while(acc>=1/30){bangEngine.tick(1/30);acc-=1/30;}if(++frames%3!==0)bangEngine.snapshot();if(!bangEngine.match){clearInterval(bangTimer);bangTimer=null;}},1000/30);}});
+        const leave=()=>{if(closed)return;closed=true;if(id!=null)bangEngine.leave(id);if(!bangEngine.match){clearInterval(bangQueue.timer);bangQueue.timer=null;}};
+        id=bangEngine.join(url.searchParams.get('name'),send,mode);ws.on('close',leave);ws.on('error',leave);
+        ws.on('message',(data,binary)=>{if(binary)return;const now=Date.now();if(now-windowStart>1000){windowStart=now;count=0;}if(++count>45){ws.close(1008,'Too many messages');leave();return;}let message;try{message=JSON.parse(data.toString());}catch{return;}bangEngine.handle(id,message);if(bangEngine.match&&!bangQueue.timer){let last=Date.now(),acc=0,frames=0;bangQueue.timer=setInterval(()=>{const t=Date.now();acc+=Math.min(.1,(t-last)/1000);last=t;while(acc>=1/30){bangEngine.tick(1/30);acc-=1/30;}if(++frames%3!==0)bangEngine.snapshot();if(!bangEngine.match){clearInterval(bangQueue.timer);bangQueue.timer=null;}},1000/30);}});
       });return;
     }
     const game=url.searchParams.get('g'),stickman=game==='stickman',tienlen=game==='tienlen',key=game+':'+code;
@@ -63,5 +65,5 @@ export function localServer(getHtml){
       });
     });
   });
-  return {server,close:async()=>{clearInterval(bangTimer);for(const room of rooms.values())clearInterval(room.timer);for(const ws of wss.clients)ws.terminate();wss.close();await new Promise(resolve=>server.close(resolve));}};
+  return {server,close:async()=>{for(const queue of bangQueues.values())clearInterval(queue.timer);for(const room of rooms.values())clearInterval(room.timer);for(const ws of wss.clients)ws.terminate();wss.close();await new Promise(resolve=>server.close(resolve));}};
 }

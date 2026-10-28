@@ -22,9 +22,9 @@ function playerFor(id,name,tank,team){const s=TANKS[tank]||TANKS.pegasus;return 
 
 export class BangBangEngine{
   constructor(){this.peers=new Map();this.players=new Map();this.map=arena();this.match=null;this.nextId=1;this.sequence=0;this.mapDirty=false;}
-  join(name,send){
+  join(name,send,mode=3){
     if(this.peers.size>=MAX_PLAYERS)throw new Error('Hàng chờ đã đầy.');
-    const id=this.nextId++,peer={id,name:typeof name==='string'?name.trim().slice(0,18):'',send,ready:false,tank:'pegasus',mode:3,matchId:null,lastSeq:0};peer.name||='Người chơi '+id;this.peers.set(id,peer);
+    const id=this.nextId++,peer={id,name:typeof name==='string'?name.trim().slice(0,18):'',send,ready:false,tank:'pegasus',mode:[1,2,3].includes(mode)?mode:3,matchId:null,lastSeq:0};peer.name||='Người chơi '+id;this.peers.set(id,peer);
     send({t:'hello',id});this.lobby();return id;
   }
   broadcast(message,ids=null){for(const p of this.peers.values())if(!ids||ids.includes(p.id))try{p.send(message);}catch{}}

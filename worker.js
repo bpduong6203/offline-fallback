@@ -26,7 +26,10 @@ export default {
         try { if (new URL(origin).host !== url.host) return new Response('Forbidden', { status: 403 }); }
         catch { return new Response('Forbidden', { status: 403 }); }
       }
-      const id = env.BANGBANG.idFromName('global-matchmaking');
+      const requestedMode = Number(url.searchParams.get('mode'));
+      const mode = [1, 2, 3].includes(requestedMode) ? requestedMode : 3;
+      const queueName = mode === 3 ? 'global-matchmaking' : `global-matchmaking-${mode}v${mode}`;
+      const id = env.BANGBANG.idFromName(queueName);
       return env.BANGBANG.get(id).fetch(request);
     }
     if (url.pathname === '/__game/bang-bang') {

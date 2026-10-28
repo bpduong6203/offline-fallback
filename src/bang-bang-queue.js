@@ -9,7 +9,8 @@ export class BangBangQueue{
     const send=message=>{try{server.send(JSON.stringify(message));}catch{}};
     let id=null,closed=false,count=0,start=Date.now();
     const leave=()=>{if(closed)return;closed=true;if(id!==null)this.engine.leave(id);if(!this.engine.peers.size){clearInterval(this.timer);this.timer=null;this.created=false;}try{server.close(1000,'bye');}catch{}};
-    id=this.engine.join(new URL(request.url).searchParams.get('name'),send);
+    const params=new URL(request.url).searchParams,requestedMode=Number(params.get('mode'));
+    id=this.engine.join(params.get('name'),send,requestedMode);
     server.addEventListener('message',event=>{
       if(typeof event.data!=='string'||event.data.length>2048)return;
       const now=Date.now();if(now-start>1000){count=0;start=now;}if(++count>45){server.close(1008,'Too many messages');leave();return;}

@@ -605,8 +605,8 @@
       <section class="dialog">
         <h2 id="dialogTitle">Tìm đồng đội</h2>
         <p id="dialogLead">
-          Chọn xe tăng, nhập tên hiển thị rồi bấm Sẵn sàng. Trận bắt đầu khi có
-          đủ sáu người chơi.
+          Chọn chế độ đối chiến, xe tăng, rồi sẵn sàng. Trận bắt đầu khi đủ người
+          chơi trong hàng ghép cùng chế độ.
         </p>
         <div class="name-row">
           <input
@@ -687,16 +687,18 @@
             protocol +
               "//" +
               location.host +
-              "/__game/bang-bang-ws?name=" +
+              "/__game/bang-bang-ws?mode=" + mode + "&name=" +
               encodeURIComponent($("name").value.trim() || "Người chơi"),
           );
-          socket.onopen = () => setConn(true, "Đã kết nối hàng ghép trận");
-          socket.onclose = () => {
+          const connection = socket;
+          connection.onopen = () => { if (socket === connection) setConn(true, "Đã kết nối hàng ghép trận " + mode + "v" + mode); };
+          connection.onclose = () => {
+            if (socket !== connection) return;
             setConn(false, "Mất kết nối · tải lại để thử lại");
             $("queueNote").textContent = "Kết nối đã đóng.";
           };
-          socket.onerror = () => setConn(false, "Không kết nối được máy chủ");
-          socket.onmessage = (e) => {
+          connection.onerror = () => { if (socket === connection) setConn(false, "Không kết nối được máy chủ"); };
+          connection.onmessage = (e) => {
             let m;
             try {
               m = JSON.parse(e.data);
@@ -788,6 +790,11 @@
           $("queueText").textContent =
             (m.readyCount || 0) +
             " người đã sẵn sàng · cần đủ " + (m.needed || mode * 2) + " người cho trận " + mode + "v" + mode + ".";
+          $("dialogLead").textContent = ready
+            ? (m.readyCount || 0) >= (m.needed || mode * 2)
+              ? "Đã đủ người cho trận " + mode + "v" + mode + " · đang mở đấu trường..."
+              : "Đang chờ đối thủ · " + (m.readyCount || 0) + "/" + (m.needed || mode * 2) + " người sẵn sàng cho trận " + mode + "v" + mode + "."
+            : "Chọn chế độ đối chiến, xe tăng và sẵn sàng. Cần " + (m.needed || mode * 2) + " người để bắt đầu trận " + mode + "v" + mode + ".";
           $("readyMain").textContent = ready
             ? "Hủy sẵn sàng"
             : "Sẵn sàng tìm trận";
@@ -808,7 +815,10 @@
           document.querySelectorAll("[data-mode]").forEach(q => q.classList.toggle("selected", q === b));
           $("arenaMode").textContent = mode + " vs " + mode;
           document.querySelectorAll(".team-size").forEach(el => el.textContent = mode);
-          send({ t: "mode", mode });
+          if (socket) {
+            socket.close(1000, "Đổi chế độ");
+            connect();
+          } else send({ t: "mode", mode });
         });
         document.querySelectorAll("[data-tank]").forEach(
           (b) =>
