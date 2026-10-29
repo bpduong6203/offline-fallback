@@ -109,7 +109,7 @@ export function requiresGameLogin(url) {
   if (url.searchParams.has('game')) return true;
   const path = url.pathname;
   return path.startsWith('/__game/') || path.startsWith('/api/monopoly/') || [
-    '/ty-phu', '/ty-phu/', '/chibi-rush', '/chibi-rush/',
+    '/ty-phu', '/ty-phu/', '/chibi-rush', '/chibi-rush/', '/party-cats', '/party-cats/',
     '/tien-len', '/tien-len/', '/uno', '/uno/', '/stickman-fight', '/stickman-fight/'
   ].includes(path);
 }

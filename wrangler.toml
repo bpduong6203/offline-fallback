@@ -94,3 +94,11 @@ new_sqlite_classes = ["ChibiRushRoom"]
 [[migrations]]
 tag = "v9"
 new_sqlite_classes = ["UnoRoom"]
+
+[[durable_objects.bindings]]
+name = "PARTYCATS"
+class_name = "PartyCatsRoom"
+
+[[migrations]]
+tag = "v10"
+new_sqlite_classes = ["PartyCatsRoom"]
