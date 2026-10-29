@@ -3,8 +3,12 @@ import {
   UnoGame,
   getCardColor,
   getCardType,
+  getCardValue,
   getCardDetails,
-  isValidPlay
+  isValidPlay,
+  sortCards,
+  canPlayCardsAsPair,
+  areCardsPairCompatible
 } from './engine.js';
 import { UnoAI, AI_DIFFICULTY } from './ai.js';
 import { unoAudio } from './audio.js';
@@ -25,9 +29,12 @@ class UnoController {
     this.botCatchTimer = null;
     this.turnTimer = null;
     this.pendingDrawCard = null;
+    this.selectedCards = new Set();
+    this.sortMode = 'color'; // 'color' | 'value'
 
     this.eggBalance = this.loadEggBalance();
     this.ui.setEggBalance(this.eggBalance);
+    this.ui.setSortButton(this.sortMode);
 
     this.initEvents();
   }
@@ -74,6 +81,16 @@ class UnoController {
       });
     }
 
+    // Sort Hand Button
+    this.ui.dom.btnSortCards?.addEventListener('click', () => {
+      this.toggleSortCards();
+    });
+
+    // Play Selected Button (for single card or pair/set play)
+    this.ui.dom.btnPlaySelected?.addEventListener('click', () => {
+      this.handlePlaySelectedCards();
+    });
+
     // Draw Pile Click
     this.ui.dom.drawPile?.addEventListener('click', () => {
       if (this.isMyTurn()) {
@@ -108,7 +125,7 @@ class UnoController {
     this.initLobbyEvents();
 
     // Start default PvE match
-    this.startPvE(3, AI_DIFFICULTY.MEDIUM);
+    this.startPvE(1, AI_DIFFICULTY.MEDIUM);
   }
 
   initLobbyEvents() {
@@ -172,15 +189,35 @@ class UnoController {
     });
   }
 
+  toggleSortCards() {
+    this.sortMode = this.sortMode === 'color' ? 'value' : 'color';
+    this.ui.setSortButton(this.sortMode);
+    unoAudio.playCardSlide();
+
+    if (this.mode === 'pve' && this.pveGame) {
+      const myPlayer = this.pveGame.players[this.myId];
+      if (myPlayer) {
+        myPlayer.hand = sortCards(myPlayer.hand, this.sortMode);
+      }
+    }
+
+    UnoEffects.showToast(
+      this.sortMode === 'color' ? '🎨 Đã xếp bài theo Màu sắc' : '🔢 Đã xếp bài theo Số (Dễ ghép đôi)',
+      'info'
+    );
+    this.updateUI();
+  }
+
   // ==========================================
   // PVE (CHƠI VỚI BOT) IMPLEMENTATION
   // ==========================================
 
-  startPvE(botCount = 3, difficulty = AI_DIFFICULTY.MEDIUM) {
+  startPvE(botCount = 1, difficulty = AI_DIFFICULTY.MEDIUM) {
     this.mode = 'pve';
     this.myId = 0;
     this.calledUno = false;
     this.pendingDrawCard = null;
+    this.selectedCards.clear();
     this.clearTimers();
 
     this.ui.setRoomBadge(`PVE • ${botCount + 1} NGƯỜI`);
@@ -197,6 +234,10 @@ class UnoController {
     ];
 
     this.pveGame = new UnoGame({ players });
+    if (this.pveGame.players[this.myId]) {
+      this.pveGame.players[this.myId].hand = sortCards(this.pveGame.players[this.myId].hand, this.sortMode);
+    }
+
     unoAudio.playCardSlide();
     UnoEffects.showToast('Ván mới bắt đầu! Hãy đánh lá bài hợp lệ.', 'info');
 
@@ -233,51 +274,77 @@ class UnoController {
 
     const delay = Math.floor(900 + Math.random() * 800);
     this.botTimer = setTimeout(() => {
-      if (!this.pveGame || this.pveGame.ended || this.pveGame.currentTurn !== currId) return;
+      try {
+        if (!this.pveGame || this.pveGame.ended || this.pveGame.currentTurn !== currId) return;
 
-      const topCard = this.pveGame.discardPile[this.pveGame.discardPile.length - 1];
-      const activeColor = this.pveGame.activeColor;
-      const move = UnoAI.decideMove(bot.hand, topCard, activeColor, this.pveGame, bot.difficulty || AI_DIFFICULTY.MEDIUM);
+        const topCard = this.pveGame.discardPile[this.pveGame.discardPile.length - 1];
+        const activeColor = this.pveGame.activeColor;
+        const move = UnoAI.decideMove(bot.hand, topCard, activeColor, this.pveGame, bot.difficulty || AI_DIFFICULTY.MEDIUM);
 
-      if (move.action === 'play') {
-        // Check if bot calls UNO
-        if (bot.hand.length === 2 && UnoAI.shouldCallUno(bot.difficulty)) {
-          this.pveGame.callUno(currId);
-          unoAudio.playUnoHorn();
-          UnoEffects.showToast(`🔥 ${bot.name} HÔ NÓI UNO!`, 'warning');
-        }
+        if (move.action === 'play') {
+          const cardsToPlay = Array.isArray(move.cards) && move.cards.length > 0 ? move.cards : [move.cardId];
+          const cardsLeftAfter = bot.hand.length - cardsToPlay.length;
 
-        const res = this.pveGame.playCard(currId, move.cardId, move.chosenColor);
-        if (res.success) {
-          unoAudio.playCardSnap();
-          if (res.actionEffect) {
-            UnoEffects.showToast(`${bot.name} dùng lá ${res.actionEffect.toUpperCase()}!`, 'info');
+          // Check if bot calls UNO
+          if (cardsLeftAfter === 1 && UnoAI.shouldCallUno(bot.difficulty)) {
+            this.pveGame.callUno(currId);
+            unoAudio.playUnoHorn();
+            UnoEffects.showToast(`🔥 ${bot.name} HÔ NÓI UNO!`, 'warning');
           }
-        }
-      } else {
-        // Bot draws
-        const drawRes = this.pveGame.drawCard(currId);
-        unoAudio.playCardSlide();
 
-        if (drawRes.success && drawRes.cardDrawn != null) {
-          const drawnPlay = UnoAI.decideDrawnPlay(
-            drawRes.cardDrawn,
-            topCard,
-            activeColor,
-            bot.hand,
-            bot.difficulty
-          );
-          if (drawnPlay.play) {
-            this.pveGame.playCard(currId, drawRes.cardDrawn, drawnPlay.chosenColor);
+          let res;
+          if (cardsToPlay.length > 1) {
+            res = this.pveGame.playCards(currId, cardsToPlay, move.chosenColor);
+          } else {
+            res = this.pveGame.playCard(currId, move.cardId, move.chosenColor);
+          }
+
+          if (res.success) {
             unoAudio.playCardSnap();
+            if (cardsToPlay.length > 1) {
+              UnoEffects.showToast(`${bot.name} đánh đôi ${cardsToPlay.length} lá!`, 'info');
+            } else if (res.actionEffect) {
+              UnoEffects.showToast(`${bot.name} dùng lá ${res.actionEffect.toUpperCase()}!`, 'info');
+            }
+          } else {
+            this.pveGame.drawCard(currId);
+            this.pveGame.passTurn(currId);
+          }
+        } else {
+          // Bot draws
+          const drawRes = this.pveGame.drawCard(currId);
+          unoAudio.playCardSlide();
+          const drawnCard = drawRes.cardId ?? drawRes.cardDrawn;
+
+          if (drawRes.success && drawnCard != null) {
+            const drawnPlay = UnoAI.decideDrawnPlay(
+              drawnCard,
+              topCard,
+              activeColor,
+              bot.hand,
+              bot.difficulty
+            );
+            if (drawnPlay.play) {
+              this.pveGame.playCard(currId, drawnCard, drawnPlay.chosenColor);
+              unoAudio.playCardSnap();
+            } else {
+              this.pveGame.passTurn(currId);
+            }
           } else {
             this.pveGame.passTurn(currId);
           }
         }
+      } catch (err) {
+        console.error('Bot turn error:', err);
+        try {
+          if (this.pveGame && this.pveGame.currentTurn === currId) {
+            this.pveGame.passTurn(currId);
+          }
+        } catch (e) {}
       }
 
       this.updateUI();
-      if (this.pveGame.ended) {
+      if (this.pveGame?.ended) {
         this.handleGameOver(this.pveGame.winner, this.pveGame.roundScore);
       } else {
         this.checkTurn();
@@ -288,7 +355,7 @@ class UnoController {
   checkOpponentUnoPenalty() {
     if (!this.pveGame || !this.pveGame.unoPenaltyWindow) return;
     const targetId = this.pveGame.unoPenaltyWindow.playerId;
-    if (targetId === this.myId) return; // Player is the one in trouble
+    if (targetId === this.myId) return;
 
     // Bot reaction to catch opponent
     for (const p of this.pveGame.players) {
@@ -314,31 +381,97 @@ class UnoController {
   handleCardClick(cardId) {
     if (!this.isMyTurn()) return;
 
-    const details = getCardDetails(cardId);
-    if (details.type === 'wild' || details.type === 'draw4') {
-      this.ui.openColorPicker(chosenColor => {
-        unoAudio.playColorPop();
-        this.executePlayCard(cardId, chosenColor);
-      });
+    if (this.selectedCards.has(cardId)) {
+      if (this.selectedCards.size === 1) {
+        // Bấm lại chính lá bài duy nhất đã chọn -> Đánh ngay lập tức
+        this.handlePlaySelectedCards();
+        return;
+      }
+      // Đã chọn nhiều lá -> Bỏ chọn lá này
+      this.selectedCards.delete(cardId);
+      unoAudio.playCardSlide();
+      this.updateUI();
+      return;
+    }
+
+    // Lá này chưa được chọn
+    if (this.selectedCards.size > 0) {
+      // Kiểm tra có ghép đôi được với lá đã chọn trước đó không
+      const firstSelected = [...this.selectedCards][0];
+      const firstVal = getCardValue(firstSelected);
+      const firstType = getCardType(firstSelected);
+      const cardVal = getCardValue(cardId);
+      const cardType = getCardType(cardId);
+
+      const canPair = (firstType === 'number' && cardType === 'number' && cardVal === firstVal)
+        || (firstType !== 'number' && cardType === firstType);
+
+      if (canPair) {
+        this.selectedCards.add(cardId);
+        unoAudio.playCardSlide();
+        this.updateUI();
+        return;
+      }
+    }
+
+    // Chọn mới 1 lá hợp lệ
+    const topCard = this.mode === 'pve' ? this.pveGame.getTopCard() : this.pvpState?.topCard;
+    const activeColor = this.mode === 'pve' ? this.pveGame.activeColor : this.pvpState?.activeColor;
+
+    if (isValidPlay(cardId, topCard, activeColor)) {
+      this.selectedCards.clear();
+      this.selectedCards.add(cardId);
+      unoAudio.playCardSlide();
+      this.updateUI();
     } else {
-      this.executePlayCard(cardId, null);
+      UnoEffects.showToast('Lá bài không hợp lệ hoặc không cùng giá trị để ghép đôi!', 'warning');
     }
   }
 
-  executePlayCard(cardId, chosenColor) {
+  handlePlaySelectedCards() {
+    if (!this.isMyTurn() || this.selectedCards.size === 0) return;
+
+    const cardIds = [...this.selectedCards];
+    const requiresColor = cardIds.some(id => {
+      const type = getCardType(id);
+      return type === 'wild' || type === 'draw4';
+    });
+
+    if (requiresColor) {
+      this.ui.openColorPicker(chosenColor => {
+        unoAudio.playColorPop();
+        this.executePlayCards(cardIds, chosenColor);
+      });
+    } else {
+      this.executePlayCards(cardIds, null);
+    }
+  }
+
+  executePlayCards(cardIds, chosenColor) {
+    if (!cardIds || cardIds.length === 0) return;
+
     if (this.mode === 'pve') {
       const myHand = this.pveGame.players[this.myId].hand;
-      if (myHand.length === 2 && this.calledUno) {
+      if (myHand.length - cardIds.length === 1 && this.calledUno) {
         this.pveGame.callUno(this.myId);
       }
 
-      const res = this.pveGame.playCard(this.myId, cardId, chosenColor);
+      let res;
+      if (cardIds.length === 1) {
+        res = this.pveGame.playCard(this.myId, cardIds[0], chosenColor);
+      } else {
+        res = this.pveGame.playCards(this.myId, cardIds, chosenColor);
+      }
+
       if (res.success) {
         unoAudio.playCardSnap();
         this.calledUno = false;
         this.pendingDrawCard = null;
+        this.selectedCards.clear();
 
-        if (res.actionEffect) {
+        if (cardIds.length > 1) {
+          UnoEffects.showToast(`Bạn đã đánh đôi ${cardIds.length} lá thành công! 🔥`, 'success');
+        } else if (res.actionEffect) {
           UnoEffects.showToast(`Bạn kích hoạt ${res.actionEffect.toUpperCase()}!`, 'success');
         }
 
@@ -349,11 +482,19 @@ class UnoController {
         } else {
           this.checkTurn();
         }
+      } else {
+        UnoEffects.showToast(res.reason || 'Nước đi không hợp lệ!', 'warning');
       }
     } else if (this.mode === 'pvp') {
-      this.network.playCard(cardId, chosenColor, this.calledUno);
+      if (cardIds.length === 1) {
+        this.network.playCard(cardIds[0], chosenColor, this.calledUno);
+      } else {
+        this.network.playCards(cardIds, chosenColor, this.calledUno);
+      }
       this.calledUno = false;
       this.pendingDrawCard = null;
+      this.selectedCards.clear();
+      this.updateUI();
     }
   }
 
@@ -535,6 +676,18 @@ class UnoController {
     const topCard = state.topCard;
     const isMyTurn = state.currentTurn === this.myId;
 
+    let displayHand = myHand;
+    if (this.sortMode && this.mode === 'pvp') {
+      displayHand = sortCards(myHand, this.sortMode);
+    }
+
+    // Lọc các lá bài đã chọn không còn tồn tại trên tay
+    for (const id of [...this.selectedCards]) {
+      if (!displayHand.includes(id)) {
+        this.selectedCards.delete(id);
+      }
+    }
+
     // Discard & Active Color
     this.ui.renderDiscardPile(topCard);
     this.ui.renderActiveColor(state.activeColor);
@@ -544,9 +697,23 @@ class UnoController {
     this.ui.renderOpponents(state.players, this.myId, state.currentTurn, state.unoPenaltyWindow);
 
     // Player Hand Fan
-    this.ui.renderHand(myHand, topCard, state.activeColor, isMyTurn, cardId => {
+    this.ui.renderHand(displayHand, topCard, state.activeColor, isMyTurn, cardId => {
       this.handleCardClick(cardId);
-    });
+    }, this.selectedCards);
+
+    // Nút đánh bài / đánh đôi được chọn
+    if (isMyTurn && this.selectedCards.size > 0) {
+      const count = this.selectedCards.size;
+      const isPair = count >= 2;
+      const label = count === 1
+        ? '▶ ĐÁNH 1 LÁ'
+        : count === 2
+        ? '⚡ ĐÁNH ĐÔI (2 LÁ) 🔥'
+        : `⚡ ĐÁNH BỘ (${count} LÁ) 🔥`;
+      this.ui.updatePlaySelectedButton({ visible: true, label, isPair });
+    } else {
+      this.ui.updatePlaySelectedButton({ visible: false });
+    }
 
     // Action Controls
     const canCallUno = myHand.length === 2 && !this.calledUno && isMyTurn;

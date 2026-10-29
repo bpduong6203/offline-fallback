@@ -122,6 +122,16 @@ export class UnoNetworkClient {
     });
   }
 
+  playCards(cardIds, chosenColor = null, calledUno = false) {
+    this.send({
+      t: 'play',
+      cardIds,
+      cardId: Array.isArray(cardIds) ? cardIds[0] : cardIds,
+      chosenColor,
+      calledUno
+    });
+  }
+
   drawCard() {
     this.send({ t: 'draw' });
   }

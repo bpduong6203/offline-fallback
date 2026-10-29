@@ -3,6 +3,7 @@ import {
   isValidPlay,
   getCardColor,
   getCardType,
+  getCardValue,
   getCardScore
 } from './engine.js';
 
@@ -111,24 +112,20 @@ export class UnoAI {
         });
 
         if (attackCards.length > 0) {
-          // Ưu tiên theo thứ tự độ sát thương: Draw 4 > Draw 2 > Skip > Reverse
           attackCards.sort((a, b) => getCardScore(b) - getCardScore(a));
           chosenCard = attackCards[0];
         }
       }
 
       if (!chosenCard) {
-        // Tối ưu điểm số: Xả lá có điểm số cao trước nếu ván đấu đã muộn (có ai đó ít bài)
         const minCardsAnyOpponent = gameState.players
           ? Math.min(...gameState.players.map((p, i) => (i === myIdx ? 99 : (p.cardCount ?? p.hand?.length ?? 7))))
           : 7;
 
         if (minCardsAnyOpponent <= 3) {
-          // Xả bài điểm cao
           const sortedByScore = [...validCards].sort((a, b) => getCardScore(b) - getCardScore(a));
           chosenCard = sortedByScore[0];
         } else {
-          // Giữ màu chủ lực
           const dominant = this.getDominantColor(hand);
           const dominantCards = validCards.filter(c => getCardColor(c) === dominant);
           const nonWild = (dominantCards.length > 0 ? dominantCards : validCards).filter(
@@ -139,15 +136,36 @@ export class UnoAI {
       }
     }
 
-    const cardType = getCardType(chosenCard);
+    // Kiểm tra khả năng đánh đôi / đánh bộ: nếu bot có lá cùng số hoặc cùng loại chức năng
+    let cardsToPlay = [chosenCard];
+    if (difficulty !== AI_DIFFICULTY.EASY || Math.random() < 0.6) {
+      const chosenVal = getCardValue(chosenCard);
+      const chosenType = getCardType(chosenCard);
+      const matchingPartners = hand.filter(id => {
+        if (id === chosenCard) return false;
+        if (chosenType === 'number') {
+          return getCardType(id) === 'number' && getCardValue(id) === chosenVal;
+        }
+        return getCardType(id) === chosenType;
+      });
+
+      if (matchingPartners.length > 0) {
+        cardsToPlay = [chosenCard, matchingPartners[0]];
+      }
+    }
+
+    const lastCard = cardsToPlay[cardsToPlay.length - 1];
+    const cardType = getCardType(lastCard);
     let chosenColor = null;
     if (cardType === 'wild' || cardType === 'draw4') {
-      chosenColor = this.chooseColor(hand.filter(c => c !== chosenCard), difficulty);
+      const remainingHand = hand.filter(c => !cardsToPlay.includes(c));
+      chosenColor = this.chooseColor(remainingHand, difficulty);
     }
 
     return {
       action: 'play',
       cardId: chosenCard,
+      cards: cardsToPlay,
       chosenColor
     };
   }

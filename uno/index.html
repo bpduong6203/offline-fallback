@@ -70,6 +70,7 @@
 
         <!-- ACTION BUTTONS ROW -->
         <div class="action-controls-row" id="actionControls">
+          <button class="btn-play-selected" id="btnPlaySelected" style="display:none">⚡ ĐÁNH BÀI</button>
           <button class="btn-uno-call" id="btnUnoCall" style="display:none">🔥 NÓI UNO!</button>
           <button class="btn-uno-catch" id="btnUnoCatch" style="display:none">⚡ BẮT UNO!</button>
           <button class="btn-pass-turn" id="btnPassTurn" style="display:none">Bỏ lượt (Pass)</button>
@@ -77,7 +78,12 @@
 
         <!-- PLAYER HAND AREA -->
         <div class="player-hand-container">
-          <div class="hand-label" id="handLabel">BÀI CỦA BẠN (7 LÁ)</div>
+          <div class="hand-header-bar">
+            <div class="hand-label" id="handLabel">BÀI CỦA BẠN (7 LÁ)</div>
+            <button class="btn-sort-cards" id="btnSortCards" title="Đổi cách xếp bài: Theo màu hoặc theo số">
+              <span id="sortIcon">🎨</span> <span id="sortText">Xếp bài (Màu)</span>
+            </button>
+          </div>
           <div class="cards-fan-track" id="handFanTrack"></div>
         </div>
       </div>

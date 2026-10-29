@@ -494,6 +494,41 @@ body, html {
   background: rgba(255, 255, 255, 0.2);
 }
 
+.btn-play-selected {
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+  color: #FFF;
+  border: 2px solid #93C5FD;
+  border-radius: 30px;
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.55);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  animation: pulsePlaySelected 1.5s infinite alternate;
+}
+
+.btn-play-selected.is-pair {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  border-color: #FDE68A;
+  color: #000;
+  box-shadow: 0 8px 26px rgba(245, 158, 11, 0.6);
+}
+
+.btn-play-selected:hover {
+  transform: scale(1.08) translateY(-2px);
+  filter: brightness(1.15);
+}
+
+@keyframes pulsePlaySelected {
+  from { transform: scale(1); }
+  to { transform: scale(1.06); }
+}
+
 /* PLAYER HAND AREA */
 .player-hand-container {
   width: 100%;
@@ -505,11 +540,41 @@ body, html {
   padding-bottom: 8px;
 }
 
+.hand-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
 .hand-label {
   font-size: 0.8rem;
   color: #94A3B8;
   font-weight: 600;
-  margin-bottom: 6px;
+}
+
+.btn-sort-cards {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  color: #E2E8F0;
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.btn-sort-cards:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+  color: #FFF;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .cards-fan-track {
@@ -569,6 +634,33 @@ body, html {
   filter: brightness(0.55) grayscale(25%);
   opacity: 0.82;
   cursor: not-allowed;
+}
+
+/* CARD SELECTION FOR SINGLE OR PAIR PLAY */
+.uno-card.is-selected {
+  transform: translateY(-38px) scale(1.18) rotate(0deg) !important;
+  z-index: 350 !important;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.95), 0 0 45px rgba(245, 158, 11, 0.5), 0 16px 30px rgba(0, 0, 0, 0.7) !important;
+  outline: 3px solid #FDE68A;
+  animation: none !important;
+}
+
+.uno-card.is-selected::after {
+  content: '✓';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #F59E0B;
+  color: #000;
+  font-size: 0.7rem;
+  font-weight: 900;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
 
 /* MODALS */

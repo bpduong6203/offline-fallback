@@ -145,6 +145,71 @@ export function isValidPlay(cardId, topCardId, activeColor) {
 }
 
 /**
+ * Kiểm tra xem 2 hoặc nhiều lá bài có cùng số hoặc cùng loại chức năng để đánh đôi / đánh bộ hay không
+ */
+export function areCardsPairCompatible(cardIds) {
+  if (!Array.isArray(cardIds) || cardIds.length < 2) return false;
+  const first = cardIds[0];
+  const firstType = getCardType(first);
+  const firstVal = getCardValue(first);
+
+  if (firstType === 'number') {
+    return cardIds.every(id => getCardType(id) === 'number' && getCardValue(id) === firstVal);
+  }
+  return cardIds.every(id => getCardType(id) === firstType);
+}
+
+/**
+ * Kiểm tra xem một bộ bài (đôi / nhiều lá) có hợp lệ để đánh lên bàn hay không
+ * Điều kiện: Các lá bài phải tương thích với nhau (cùng số hoặc cùng loại chức năng)
+ * VÀ ít nhất một lá trong bộ bài phải hợp lệ với cọc đánh hiện tại
+ */
+export function canPlayCardsAsPair(cardIds, topCardId, activeColor) {
+  if (!areCardsPairCompatible(cardIds)) return { valid: false };
+  const validStarter = cardIds.find(id => isValidPlay(id, topCardId, activeColor));
+  if (validStarter == null) return { valid: false };
+  return { valid: true, starterId: validStarter };
+}
+
+/**
+ * Xếp bài trên tay người chơi theo màu hoặc theo số
+ * @param {number[]} hand - Mảng ID các lá bài
+ * @param {'color'|'value'} mode - Chế độ sắp xếp ('color' | 'value')
+ */
+export function sortCards(hand, mode = 'color') {
+  if (!Array.isArray(hand)) return [];
+  const colorOrder = { red: 0, yellow: 1, green: 2, blue: 3, black: 4 };
+  const typeOrder = { number: 0, skip: 1, reverse: 2, draw2: 3, wild: 4, draw4: 5 };
+
+  return [...hand].sort((a, b) => {
+    const colorA = getCardColor(a);
+    const colorB = getCardColor(b);
+    const typeA = getCardType(a);
+    const typeB = getCardType(b);
+    const valA = getCardValue(a) ?? 99;
+    const valB = getCardValue(b) ?? 99;
+
+    if (mode === 'value') {
+      if (typeA !== typeB) {
+        return (typeOrder[typeA] ?? 99) - (typeOrder[typeB] ?? 99);
+      }
+      if (typeA === 'number' && valA !== valB) {
+        return valA - valB;
+      }
+      return (colorOrder[colorA] ?? 99) - (colorOrder[colorB] ?? 99);
+    } else {
+      if (colorA !== colorB) {
+        return (colorOrder[colorA] ?? 99) - (colorOrder[colorB] ?? 99);
+      }
+      if (typeA !== typeB) {
+        return (typeOrder[typeA] ?? 99) - (typeOrder[typeB] ?? 99);
+      }
+      return valA - valB;
+    }
+  });
+}
+
+/**
  * Lớp điều khiển logic ván đấu UNO hoàn chỉnh
  */
 export class UnoGame {
@@ -270,6 +335,14 @@ export class UnoGame {
    * Người chơi thực hiện hành động đánh bài
    */
   playCard(playerId, cardId, chosenColor = null, calledUno = false) {
+    if (Array.isArray(cardId)) {
+      if (cardId.length === 1) {
+        cardId = cardId[0];
+      } else {
+        return this.playCards(playerId, cardId, chosenColor, calledUno);
+      }
+    }
+
     if (this.ended) return { success: false, reason: 'Ván đấu đã kết thúc' };
 
     const playerIdx = this.players.findIndex(p => p.id === playerId);
@@ -394,6 +467,171 @@ export class UnoGame {
   }
 
   /**
+   * Đánh đồng thời 2 hoặc nhiều lá bài (đánh đôi / đánh bộ)
+   */
+  playCards(playerId, cardIds, chosenColor = null, calledUno = false) {
+    if (this.ended) return { success: false, reason: 'Ván đấu đã kết thúc' };
+
+    const playerIdx = this.players.findIndex(p => p.id === playerId);
+    if (playerIdx === -1) return { success: false, reason: 'Người chơi không tồn tại' };
+    if (playerIdx !== this.currentTurn) return { success: false, reason: 'Chưa tới lượt của bạn' };
+
+    const player = this.players[playerIdx];
+    const handCopy = [...player.hand];
+    for (const id of cardIds) {
+      const idx = handCopy.indexOf(id);
+      if (idx === -1) return { success: false, reason: 'Lá bài không có trên tay' };
+      handCopy.splice(idx, 1);
+    }
+
+    const topCard = this.getTopCard();
+    const pairCheck = canPlayCardsAsPair(cardIds, topCard, this.activeColor);
+    if (!pairCheck.valid) {
+      return { success: false, reason: 'Bộ bài không hợp lệ hoặc không khớp cọc đánh' };
+    }
+
+    const starterId = pairCheck.starterId;
+    const ordered = [starterId, ...cardIds.filter(id => id !== starterId)];
+    const lastCard = ordered[ordered.length - 1];
+    const lastType = getCardType(lastCard);
+    const lastColor = getCardColor(lastCard);
+
+    if ((lastType === 'wild' || lastType === 'draw4') && !['red', 'yellow', 'green', 'blue'].includes(chosenColor)) {
+      return { success: false, reason: 'Phải chọn màu mới khi đánh lá đổi màu' };
+    }
+
+    // Xóa các lá bài khỏi tay người chơi
+    for (const id of cardIds) {
+      const idx = player.hand.indexOf(id);
+      if (idx !== -1) player.hand.splice(idx, 1);
+    }
+
+    // Đặt vào cọc đánh
+    for (const id of ordered) {
+      this.discardPile.push(id);
+    }
+    this.pendingDraw = null;
+
+    if (lastType === 'wild' || lastType === 'draw4') {
+      this.activeColor = chosenColor;
+    } else {
+      this.activeColor = lastColor;
+    }
+
+    this.log(`${player.name} đánh đôi/bộ ${cardIds.length} lá: ${ordered.map(id => `${getCardType(id)} ${getCardColor(id)}`).join(', ')}`);
+
+    // Xử lý cơ chế Nói UNO
+    if (player.hand.length === 1) {
+      if (calledUno) {
+        this.calledUnoPlayers.add(player.id);
+        this.unoPenaltyWindow = null;
+        this.log(`🔥 ${player.name} đã hô "UNO!" thành công!`);
+      } else {
+        this.calledUnoPlayers.delete(player.id);
+        this.unoPenaltyWindow = {
+          playerId: player.id,
+          expiresAt: Date.now() + 2500
+        };
+        this.log(`⚠️ ${player.name} còn 1 lá nhưng CHƯA hô UNO! Cửa sổ bắt phạt mở ra.`);
+      }
+    } else {
+      this.calledUnoPlayers.delete(player.id);
+      this.unoPenaltyWindow = null;
+    }
+
+    // Kiểm tra chiến thắng
+    if (player.hand.length === 0) {
+      this.ended = true;
+      this.winner = player;
+      this.roundScore = this.calculateWinnerScore(player.id);
+      this.log(`🏆 ${player.name} đã đánh hết bài và CHIẾN THẮNG! Tổng điểm thưởng: +${this.roundScore}`);
+      return {
+        success: true,
+        gameOver: true,
+        winner: player,
+        roundScore: this.roundScore,
+        cardId: lastCard,
+        cardIds,
+        activeColor: this.activeColor
+      };
+    }
+
+    let step = 1;
+    let nextPlayerIdx = (this.currentTurn + this.direction + this.players.length) % this.players.length;
+
+    if (lastType === 'skip') {
+      if (this.players.length === 2) {
+        step = 2;
+      } else {
+        step = 1 + cardIds.length;
+      }
+      this.log(`Cấm lượt nhân x${cardIds.length}!`);
+    } else if (lastType === 'reverse') {
+      if (this.players.length === 2) {
+        step = 2;
+      } else {
+        if (cardIds.length % 2 === 1) {
+          this.direction *= -1;
+        }
+        step = 1;
+      }
+      this.log(`Đổi chiều x${cardIds.length}!`);
+    } else if (lastType === 'draw2') {
+      const target = this.players[nextPlayerIdx];
+      const count = 2 * cardIds.length;
+      const penalty = [];
+      for (let k = 0; k < count; k++) penalty.push(this.drawCardFromPile());
+      target.hand.push(...penalty);
+      this.calledUnoPlayers.delete(target.id);
+      step = 2;
+      this.log(`Draw 2 dồn x${cardIds.length}! ${target.name} bị phạt rút ${count} lá và mất lượt.`);
+    } else if (lastType === 'draw4') {
+      const target = this.players[nextPlayerIdx];
+      const count = 4 * cardIds.length;
+      const penalty = [];
+      for (let k = 0; k < count; k++) penalty.push(this.drawCardFromPile());
+      target.hand.push(...penalty);
+      this.calledUnoPlayers.delete(target.id);
+      step = 2;
+      this.log(`Wild Draw 4 dồn x${cardIds.length}! ${target.name} bị phạt rút ${count} lá và mất lượt.`);
+    }
+
+    this.currentTurn = (this.currentTurn + step * this.direction + 100 * this.players.length) % this.players.length;
+
+    return {
+      success: true,
+      gameOver: false,
+      cardId: lastCard,
+      cardIds,
+      activeColor: this.activeColor,
+      nextTurn: this.currentTurn,
+      unoPenaltyWindow: !!this.unoPenaltyWindow
+    };
+  }
+
+  /**
+   * Đăng ký hô UNO
+   */
+  callUno(playerId) {
+    if (this.ended) return { success: false, reason: 'Ván đấu đã kết thúc' };
+    const player = this.players.find(p => p.id === playerId);
+    if (!player) return { success: false, reason: 'Người chơi không tồn tại' };
+    this.calledUnoPlayers.add(playerId);
+    this.log(`🔥 ${player.name} đã hô "UNO!"`);
+    return { success: true };
+  }
+
+  /**
+   * Bắt phạt người quên hô UNO đang trong cửa sổ phạt
+   */
+  catchUnoPenalty(catcherId) {
+    if (!this.unoPenaltyWindow) return { success: false, caught: false, reason: 'Không có cửa sổ bắt phạt' };
+    const targetId = this.unoPenaltyWindow.playerId;
+    const res = this.catchUno(catcherId, targetId);
+    return { success: res.caught, ...res };
+  }
+
+  /**
    * Rút 1 lá bài từ cọc rút khi đến lượt
    */
   drawCard(playerId) {
@@ -417,7 +655,9 @@ export class UnoGame {
     return {
       success: true,
       cardId,
-      canPlay
+      cardDrawn: cardId,
+      canPlay,
+      canPlayDrawn: canPlay
     };
   }
 

@@ -248,7 +248,12 @@ export class UnoRoomEngine {
           if (packet.calledUno) {
             this.game.callUno(playerId);
           }
-          const res = this.game.playCard(playerId, packet.cardId, packet.chosenColor);
+          const cardsToPlay = Array.isArray(packet.cardIds) && packet.cardIds.length > 1
+            ? packet.cardIds
+            : packet.cardId;
+          const res = Array.isArray(cardsToPlay)
+            ? this.game.playCards(playerId, cardsToPlay, packet.chosenColor)
+            : this.game.playCard(playerId, cardsToPlay, packet.chosenColor);
           if (res.success) {
             if (res.gameOver) {
               this.onGameOver();

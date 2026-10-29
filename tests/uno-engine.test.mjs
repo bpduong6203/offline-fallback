@@ -9,6 +9,9 @@ import {
   getCardScore,
   getCardDetails,
   isValidPlay,
+  areCardsPairCompatible,
+  canPlayCardsAsPair,
+  sortCards,
   UnoGame
 } from '../uno/engine.js';
 
@@ -256,3 +259,97 @@ test('UnoGame recycles discard pile when draw pile is exhausted', () => {
   assert.equal(game.discardPile[0], 10);
   assert.equal(game.drawPile.length > 0, true);
 });
+
+test('sortCards sorts cards by color or by value correctly', () => {
+  // Red 4 (id 4), Blue 1 (id 14*3 + 1 = 43), Red 1 (id 1), Yellow 9 (id 14*1 + 9 = 23)
+  const hand = [43, 4, 1, 23];
+
+  // Sort by color: Red (1, 4) -> Yellow (23) -> Blue (43)
+  const sortedColor = sortCards(hand, 'color');
+  assert.deepEqual(sortedColor, [1, 4, 23, 43]);
+
+  // Sort by value: 1s together (Red 1, Blue 1) -> 4 (Red 4) -> 9 (Yellow 9)
+  const sortedValue = sortCards(hand, 'value');
+  assert.equal(getCardValue(sortedValue[0]), 1);
+  assert.equal(getCardValue(sortedValue[1]), 1);
+  assert.equal(getCardValue(sortedValue[2]), 4);
+  assert.equal(getCardValue(sortedValue[3]), 9);
+});
+
+test('areCardsPairCompatible and canPlayCardsAsPair detect valid pairs', () => {
+  const red1 = 1;
+  const blue1 = 14 * 3 + 1; // 43
+  const green1 = 14 * 2 + 1; // 29
+  const red4 = 4;
+  const redSkip = 10;
+  const blueSkip = 14 * 3 + 10;
+
+  // Matching number pairs
+  assert.equal(areCardsPairCompatible([red1, blue1]), true);
+  assert.equal(areCardsPairCompatible([red1, blue1, green1]), true);
+  assert.equal(areCardsPairCompatible([red1, red4]), false);
+
+  // Matching action pairs
+  assert.equal(areCardsPairCompatible([redSkip, blueSkip]), true);
+
+  // Top card Red 7, activeColor 'red'
+  const red7 = 7;
+  // Red 1 + Blue 1: Red 1 is playable on Red 7, so the pair is valid!
+  const pairCheck = canPlayCardsAsPair([blue1, red1], red7, 'red');
+  assert.equal(pairCheck.valid, true);
+  assert.equal(pairCheck.starterId, red1);
+
+  // Non-matching card pair (e.g. Blue 9 + Green 9) onto Red 7: neither is Red or 7
+  const blue9 = 14 * 3 + 9;
+  const green9 = 14 * 2 + 9;
+  const invalidPairCheck = canPlayCardsAsPair([blue9, green9], red7, 'red');
+  assert.equal(invalidPairCheck.valid, false);
+});
+
+test('UnoGame.playCards allows playing pairs of numbers and action cards', () => {
+  const game = new UnoGame({
+    players: [{ id: 0, name: 'P1' }, { id: 1, name: 'P2' }, { id: 2, name: 'P3' }]
+  });
+
+  game.currentTurn = 0;
+  game.activeColor = 'red';
+  game.discardPile = [7]; // Red 7 on table
+
+  const red1 = 1;
+  const blue1 = 43; // 14*3 + 1
+  game.players[0].hand = [red1, blue1, 4, 23];
+
+  // Play pair of 1s
+  const res = game.playCards(0, [red1, blue1]);
+  assert.equal(res.success, true);
+  // Hand reduced by 2 cards
+  assert.equal(game.players[0].hand.length, 2);
+  // Discard pile has top card blue1
+  assert.equal(game.getTopCard(), blue1);
+  assert.equal(game.activeColor, 'blue');
+  // Next turn is P2 (index 1)
+  assert.equal(game.currentTurn, 1);
+});
+
+test('UnoGame.playCards handles pair of Draw 2s (cumulative penalty)', () => {
+  const game = new UnoGame({
+    players: [{ id: 0, name: 'P1' }, { id: 1, name: 'P2' }, { id: 2, name: 'P3' }]
+  });
+
+  game.currentTurn = 0;
+  game.activeColor = 'red';
+  game.discardPile = [0]; // Red 0
+
+  const redDraw2 = 12;
+  const blueDraw2 = 14 * 3 + 12;
+  game.players[0].hand = [redDraw2, blueDraw2, 5];
+  const p2InitCount = game.players[1].hand.length;
+
+  // Play pair of Draw 2s
+  const res = game.playCards(0, [redDraw2, blueDraw2]);
+  assert.equal(res.success, true);
+  // P2 should receive 4 penalty cards (2 * 2) and be skipped
+  assert.equal(game.players[1].hand.length, p2InitCount + 4);
+  assert.equal(game.currentTurn, 2);
+});
+
