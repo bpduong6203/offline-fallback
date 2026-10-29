@@ -182,3 +182,17 @@ offline-fallback/
 ```
 
 Nhiều module trong `src/page/` chứa HTML/CSS/JavaScript bên trong template literal để ghép response. Khi chỉnh các module này, chú ý escape backtick và nội suy `${...}` để tránh thay đổi hoặc làm hỏng script được gửi xuống trình duyệt.
+
+## MebiMonopoly
+
+Game Cờ Tỷ Phú online 2–4 người tại `/ty-phu`, với nút mở game cùng kiểu các nút hiện có. Chạy `npm.cmd run build` rồi `npm.cmd run dev`, mở `http://localhost:5173/ty-phu`; thiết bị cùng LAN mở IP máy chạy server, cổng 5173. Worker dùng Durable Object `MONOPOLY` với migration `v7`; server Node local lưu snapshot trong `.monopoly-local/`. Không tự deploy.
+
+Hướng dẫn và giới hạn: [mebi-monopoly/README.md](mebi-monopoly/README.md). Bộ luật: [mebi-monopoly/RULES.md](mebi-monopoly/RULES.md). Nguồn tham khảo và giấy phép: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+Kiểm tra riêng: `npm.cmd run check:monopoly`, `npm.cmd test`, `npm.cmd run test:monopoly:browser`.
+
+## Ảnh Cloudflare R2
+
+Binding `IMAGES` dùng bucket hiện có `offline-fallback-images`. Icon trứng Tiến Lên chuyển sang `/__assets/images/tien-len/egg-icon.e56a156104e0.webp`; upload đúng object trước khi deploy source mới. Route chỉ đọc ảnh, có cache/ETag và kiểm tra đường dẫn; server Node local đọc cùng file nguồn qua manifest cố định.
+
+Kiểm kê ảnh, lệnh upload và các bước Cloudflare thủ công: [R2_ASSETS.md](R2_ASSETS.md). Không có upload hoặc deploy tự động.

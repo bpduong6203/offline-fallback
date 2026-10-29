@@ -71,9 +71,18 @@ name = "UNO"
 class_name = "UnoRoom"
 
 [[migrations]]
-tag = "v7"
+tag = "v8"
 new_sqlite_classes = ["UnoRoom"]
 
 [[r2_buckets]]
+# Existing bucket: public image reads are served through /__assets/images/ only.
 binding = "IMAGES"
 bucket_name = "offline-fallback-images"
+
+[[durable_objects.bindings]]
+name = "MONOPOLY"
+class_name = "MonopolyRoom"
+
+[[migrations]]
+tag = "v7"
+new_sqlite_classes = ["MonopolyRoom"]

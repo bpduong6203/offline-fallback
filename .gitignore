@@ -1,3 +1,5 @@
 node_modules/
 dist/
 .npm-cache/
+.reference-monopoly/
+.monopoly-local/

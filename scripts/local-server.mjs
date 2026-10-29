@@ -9,13 +9,18 @@ import {buildTienLen} from './build-tienlen.mjs';
 import {TienLenRoomEngine} from '../src/tienlen-room-engine.js';
 import {buildUno} from './build-uno.mjs';
 import {UnoRoomEngine} from '../src/uno-room-engine.js';
+import {localMonopoly} from './local-monopoly.mjs';
+import {buildMonopoly} from './build-monopoly.mjs';
+import {localAssets} from './local-assets.mjs';
 import {getMimeType, isValidAssetKey} from '../src/asset-handler.js';
 
-export function localServer(getHtml){
+export function localServer(getHtml,monopolyOptions={}){
   const rooms=new Map(),wss=new WebSocketServer({noServer:true,maxPayload:512}),bangQueues=new Map();
   const getBangQueue=mode=>{let q=bangQueues.get(mode);if(!q){q={engine:new BangBangEngine(),timer:null};bangQueues.set(mode,q);}return q;};
   const server=createServer(async(req,res)=>{
     const path=req.url?.split('?')[0];
+    if(await localAssets(req,res))return;
+    if(await monopoly.http(req,res))return;
     if(path.startsWith('/__assets/')){
       if(req.method!=='GET'&&req.method!=='HEAD'){res.writeHead(405,{Allow:'GET, HEAD'});res.end();return;}
       let key;try{key=decodeURIComponent(path.slice('/__assets/'.length));}catch{res.writeHead(400);res.end('Bad Request');return;}
@@ -26,6 +31,9 @@ export function localServer(getHtml){
       res.writeHead(200,{'Content-Type':getMimeType(key),'Cache-Control':'public, max-age=31536000, immutable'});
       res.end(req.method==='HEAD'?null:data);
       return;
+    }
+    if(['/ty-phu','/ty-phu/','/__game/mebi-monopoly'].includes(path)){
+      try{const html=await buildMonopoly();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}return;
     }
     if(path==='/__game/bang-bang'){try{const html=await readFile(new URL('../src/page/games/Bang_Bang.html',import.meta.url),'utf8');res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Bang Bang render failed');}return;}
     if(['/tien-len','/tien-len/','/__game/tien-len'].includes(path)){
@@ -39,6 +47,7 @@ export function localServer(getHtml){
     try{const html=await getHtml();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}
   });
   server.on('upgrade',(req,socket,head)=>{
+    if(monopoly.upgrade(req,socket,head))return;
     const url=new URL(req.url,'http://'+req.headers.host),code=(url.searchParams.get('room')||'').toUpperCase(),create=url.searchParams.get('action')==='create';
     const reject=(status,text)=>{socket.end(`HTTP/1.1 ${status} ${text}\r\nConnection: close\r\n\r\n`);};
     if(req.headers.origin){try{if(new URL(req.headers.origin).host!==req.headers.host)return reject(403,'Forbidden');}catch{return reject(403,'Forbidden');}}
@@ -82,5 +91,6 @@ export function localServer(getHtml){
       });
     });
   });
-  return {server,close:async()=>{for(const queue of bangQueues.values())clearInterval(queue.timer);for(const room of rooms.values())clearInterval(room.timer);for(const ws of wss.clients)ws.terminate();wss.close();await new Promise(resolve=>server.close(resolve));}};
+  const monopoly=localMonopoly(server,monopolyOptions);
+  return {server,close:async()=>{await monopoly.close();for(const queue of bangQueues.values())clearInterval(queue.timer);for(const room of rooms.values())clearInterval(room.timer);for(const ws of wss.clients)ws.terminate();wss.close();await new Promise(resolve=>server.close(resolve));}};
 }
