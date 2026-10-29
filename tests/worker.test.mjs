@@ -18,9 +18,9 @@ test('Worker handles R2 image requests before origin fallback and denies uploads
  assert.equal((await worker.fetch(new Request('https://example.test/__assets/private/file.webp'),env)).status,400);
 });
 
-test('Worker serves MebiMonopoly, matches launcher style, guards room API origin',async()=>{
+test('Worker serves Tỷ Phú Mebi, matches launcher style, guards room API origin',async()=>{
  for(const route of ['/ty-phu','/ty-phu/','/__game/mebi-monopoly']){
-  const r=await worker.fetch(new Request('https://example.test'+route));assert.equal(r.status,200);assert.match(await r.text(),/<title>MebiMonopoly<\/title>/);
+  const r=await worker.fetch(new Request('https://example.test'+route));assert.equal(r.status,200);assert.match(await r.text(),/<title>Tỷ Phú Mebi<\/title>/);
   assert.equal((await worker.fetch(new Request('https://example.test'+route,{method:'POST'}))).status,405);
  }
  assert.equal((await worker.fetch(new Request('https://example.test/api/monopoly/ABCDEF/join',{method:'POST',headers:{Origin:'https://other.test'}}))).status,403);

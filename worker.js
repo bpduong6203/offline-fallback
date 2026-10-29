@@ -10,7 +10,9 @@ import tienLen from './src/page/games/tien-len.generated.js';
 import uno from './src/page/games/uno.generated.js';
 import { handleAssetRequest } from './src/asset-handler.js';
 import monopoly from './src/page/games/mebi-monopoly.generated.js';
+import chibiRush from './src/page/games/chibi-rush.html';
 export { MonopolyRoom } from './src/monopoly-room.generated.js';
+export { ChibiRushRoom } from './src/chibi-rush-room.js';
 
 // Durable Object phải được export từ file entry
 export { PoolRoom } from './src/pool-room.js';
@@ -39,6 +41,20 @@ export default {
     if (['/ty-phu','/ty-phu/','/__game/mebi-monopoly'].includes(url.pathname)) {
       if (!['GET','HEAD'].includes(request.method)) return new Response('Method Not Allowed', {status:405});
       return new Response(request.method==='HEAD'?null:monopoly,{headers:{'Content-Type':'text/html; charset=UTF-8','Cache-Control':'no-store'}});
+    }
+    if (['/chibi-rush', '/chibi-rush/', '/__game/chibi-rush'].includes(url.pathname)) {
+      if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+      return new Response(request.method === 'HEAD' ? null : chibiRush, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
+    }
+    if (url.pathname === '/__game/chibi-rush/ws') {
+      const origin = request.headers.get('Origin');
+      if (origin) {
+        try { if (new URL(origin).host !== url.host) return new Response('Forbidden', { status: 403 }); }
+        catch { return new Response('Forbidden', { status: 403 }); }
+      }
+      const code = (url.searchParams.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+      if (!code) return new Response('room?', { status: 400 });
+      return env.CHIBIRUSH.get(env.CHIBIRUSH.idFromName(code)).fetch(request);
     }
     if (url.pathname.startsWith('/api/monopoly/')) {
       const origin=request.headers.get('Origin');
