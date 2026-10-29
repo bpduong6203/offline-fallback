@@ -38,23 +38,25 @@ export const styleBase = `  <style>
     .game-library { margin: 18px auto 16px; padding: 12px 14px 5px; border: 1px solid #ffedd5; border-radius: 18px; background: #fffaf5; box-shadow: inset 3px 3px 8px #f1dfcd, inset -3px -3px 8px #ffffff; }
     .library-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 2px 8px; color: #9a3412; font-size: 0.72rem; letter-spacing: 0.08em; }
     .library-heading span { color: #94a3b8; font-size: 0.72rem; font-weight: 500; letter-spacing: 0; }
-    .tabs { display: flex; gap: 8px; justify-content: flex-start; margin-bottom: 0; padding: 2px 2px 9px; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: #fdba74 transparent; }
+    .tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 0; padding: 2px 2px 9px; }
     .tab {
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto; min-height: 42px;
+      display: flex; align-items: center; text-align: left; gap: 10px; min-width: 0; min-height: 68px;
       text-decoration: none;
-      padding: 0 16px; border-radius: 12px; border: 1px solid #ffedd5;
+      padding: 10px 12px; border-radius: 14px; border: 1px solid #ffedd5;
       font-weight: 600; font-size: 0.85rem; cursor: pointer;
       background: #fff7ed; color: #9a3412;
       box-shadow: 0 2px 5px rgba(154, 52, 18, 0.06);
     }
-    .tab:hover { background: #ffedd5; }
+    .tab:hover { background: #ffedd5; transform: translateY(-2px); box-shadow: 0 8px 16px rgba(154, 52, 18, 0.1); }
+    .tab > span:nth-child(2) { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .tab b { font-size: 0.84rem; line-height: 1.2; }
+    .tab small { color: #94a3b8; font-size: 0.7rem; font-weight: 500; line-height: 1.25; }
+    .game-icon { display: grid; place-items: center; flex: 0 0 40px; height: 40px; border-radius: 12px; background: #ffedd5; font-size: 1.35rem; }
+    .launch-icon { margin-left: auto; color: #c2410c; font-size: 0.8rem; }
     .tab-link { background: #fff7ed; color: #9a3412; }
-    .tab-link span { color: #c2410c; font-size: 0.75rem; }
     .tab:focus-visible { outline: 3px solid #fb923c; outline-offset: 2px; }
-    .tab.on {
-      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-      color: #fff; box-shadow: 0 6px 14px -4px rgba(249, 115, 22, 0.5);
-    }
+    .tab.on { background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); color: #9a3412; border-color: #fb923c; box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.18); }
+    .tab.on .game-icon { background: #fed7aa; }
     .game {
       background: #fff7ed; border-radius: 18px; padding: 8px;
       box-shadow: inset 6px 6px 12px #e6d3be, inset -6px -6px 12px #ffffff;
@@ -68,7 +70,7 @@ export const styleBase = `  <style>
     #busEscapeFrame[hidden] { display: none; }
     #bangBangFrame { width: 100%; height: min(90vh, 960px); min-height: 620px; display: block; border: 0; border-radius: 12px; background: #101722; }
     #bangBangFrame[hidden] { display: none; }
-    @media (max-width: 600px) { .card { padding: 18px 12px; } .card[data-w="motorways"] { width: calc(100vw - 16px); padding: 14px 10px; } .game-library { padding: 10px 9px 3px; } .library-heading { font-size: 0.68rem; } .library-heading span { font-size: 0.68rem; } .tab { min-height: 40px; padding: 0 13px; } #motorwaysFrame { height: 72vh; min-height: 360px; } #busEscapeFrame { height: 72vh; min-height: 360px; } #bangBangFrame { height: 86vh; min-height: 660px; } }
+    @media (max-width: 600px) { .card { padding: 18px 12px; } .card[data-w="motorways"] { width: calc(100vw - 16px); padding: 14px 10px; } .game-library { padding: 10px 9px 3px; } .library-heading { font-size: 0.68rem; } .library-heading span { font-size: 0.68rem; } .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .tab { min-height: 66px; padding: 8px; gap: 7px; font-size: 0.78rem; } .game-icon { flex-basis: 34px; height: 34px; font-size: 1.15rem; } .tab b { font-size: 0.75rem; } .tab small { font-size: 0.62rem; } #motorwaysFrame { height: 72vh; min-height: 360px; } #busEscapeFrame { height: 72vh; min-height: 360px; } #bangBangFrame { height: 86vh; min-height: 660px; } }
     .poolui { margin-bottom: 12px; }
     .row { display: flex; gap: 8px; margin-bottom: 8px; }
     .mini {
@@ -83,7 +85,6 @@ export const styleBase = `  <style>
       letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.9rem;
       color: #9a3412; background: #fff;
     }
-    .tabs { flex-wrap: nowrap; }
     .pmsg { font-size: 0.82rem; color: #9a3412; font-weight: 600; min-height: 1.2em; }
     .hint { font-size: 0.78rem; color: #94a3b8; margin-bottom: 14px; }
     .status { font-size: 0.8rem; color: #ea580c; font-weight: 600; margin-bottom: 14px; }
