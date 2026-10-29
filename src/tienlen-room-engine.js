@@ -1,7 +1,7 @@
 // Server-Authoritative Room Engine for Tiến Lên Miền Nam Multiplayer
 import {
   Card, VALUES, SUITS, COMBO_TYPE,
-  createDeck, shuffleDeck, dealCards,
+  createDeck, shuffleDeck, dealCards, sortCards,
   identifyCombination, canBeat, checkInstantWin,
   findValidPlays, calculatePenalties
 } from '../tien-len/engine.js';
@@ -123,12 +123,55 @@ export class TienLenRoomEngine {
       };
     });
 
-    // Determine starter (3 of Spades)
-    let currentTurn = 0;
-    for (const p of players) {
-      if (p.hand.some(c => c.value === VALUES.THREE && c.suit === SUITS.SPADE)) {
-        currentTurn = p.id;
+    // Ensure a human player receives 3 of Spades so human friends always open the game
+    const humanPlayers = players.filter(pl => !pl.isBot);
+    let currentTurn = -1;
+    let mustIncludeCard = null;
+
+    // Check if any human peer already has 3 of Spades
+    for (const hp of humanPlayers) {
+      const c3s = hp.hand.find(c => c.value === VALUES.THREE && c.suit === SUITS.SPADE);
+      if (c3s) {
+        currentTurn = hp.id;
+        mustIncludeCard = c3s;
         break;
+      }
+    }
+
+    // If no human has 3 of Spades, swap it from the bot that has it to a human player!
+    if (currentTurn === -1 && humanPlayers.length > 0) {
+      const botWith3S = players.find(p => p.isBot && p.hand.some(c => c.value === VALUES.THREE && c.suit === SUITS.SPADE));
+      const luckyHuman = humanPlayers[Math.floor(Math.random() * humanPlayers.length)];
+
+      if (botWith3S && luckyHuman) {
+        const c3sIdx = botWith3S.hand.findIndex(c => c.value === VALUES.THREE && c.suit === SUITS.SPADE);
+        const [c3s] = botWith3S.hand.splice(c3sIdx, 1);
+
+        const humanCard = luckyHuman.hand.shift();
+        botWith3S.hand.push(humanCard);
+        luckyHuman.hand.unshift(c3s);
+
+        sortCards(botWith3S.hand);
+        sortCards(luckyHuman.hand);
+
+        currentTurn = luckyHuman.id;
+        mustIncludeCard = c3s;
+      }
+    }
+
+    // Fallback if all players are bots
+    if (currentTurn === -1) {
+      for (const p of players) {
+        const c3s = p.hand.find(c => c.value === VALUES.THREE && c.suit === SUITS.SPADE);
+        if (c3s) {
+          currentTurn = p.id;
+          mustIncludeCard = c3s;
+          break;
+        }
+      }
+      if (currentTurn === -1) {
+        currentTurn = 0;
+        mustIncludeCard = players[0].hand[0];
       }
     }
 
@@ -141,7 +184,8 @@ export class TienLenRoomEngine {
       passedPlayerIds: [],
       rankCounter: 1,
       ended: false,
-      isFirstGame: true
+      isFirstTrick: true,
+      mustIncludeCard
     };
 
     this.broadcast({ t: 'started' });
@@ -167,14 +211,32 @@ export class TienLenRoomEngine {
   }
 
   handlePlayerPlay(playerId, cardIds) {
+    const peer = this.peers.get(playerId);
     const player = this.game.players[playerId];
     const playedCards = player.hand.filter(c => cardIds.includes(c.id));
     const combo = identifyCombination(playedCards);
 
     const isNewRound = this.game.currentCombo === null;
-    if (combo.type === COMBO_TYPE.INVALID || !canBeat(this.game.currentCombo, combo, isNewRound)) {
+    if (combo.type === COMBO_TYPE.INVALID) {
+      if (peer) peer.send({ t: 'error', message: 'Bộ bài không hợp lệ theo luật Tiến Lên!' });
       return;
     }
+    if (!canBeat(this.game.currentCombo, combo, isNewRound)) {
+      if (peer) peer.send({ t: 'error', message: 'Bài này không thể đè bài trên bàn!' });
+      return;
+    }
+
+    // Opening trick validation
+    if (this.game.isFirstTrick && this.game.mustIncludeCard) {
+      const match = playedCards.some(c => c.value === this.game.mustIncludeCard.value && c.suit === this.game.mustIncludeCard.suit);
+      if (!match) {
+        if (peer) peer.send({ t: 'error', message: `Lượt đầu tiên bắt buộc phải chứa lá ${this.game.mustIncludeCard.toString()}!` });
+        return;
+      }
+    }
+
+    this.game.isFirstTrick = false;
+    this.game.mustIncludeCard = null;
 
     // Check chop
     const wasChop = this.game.currentCombo && (
@@ -262,8 +324,9 @@ export class TienLenRoomEngine {
         if (!this.game || this.game.ended || this.game.currentTurn !== curPlayer.id) return;
         const ai = new BotAI(AI_DIFFICULTY.MEDIUM);
         const isNewRound = this.game.currentCombo === null;
+        const mustInclude = (this.game.isFirstTrick && this.game.mustIncludeCard) ? this.game.mustIncludeCard : null;
         const enemySizes = this.game.players.filter(p => p.id !== curPlayer.id && !p.won).map(p => p.cardCount);
-        const move = ai.chooseMove(curPlayer.hand, this.game.currentCombo, isNewRound, null, enemySizes);
+        const move = ai.chooseMove(curPlayer.hand, this.game.currentCombo, isNewRound, mustInclude, enemySizes);
         if (move) {
           this.handlePlayerPlay(curPlayer.id, move.cards.map(c => c.id));
         } else {
@@ -299,6 +362,8 @@ export class TienLenRoomEngine {
             lastPlayerId: this.game.lastPlayerId,
             lastPlayerName: this.game.lastPlayerName,
             passedPlayerIds: this.game.passedPlayerIds,
+            isFirstTrick: !!this.game.isFirstTrick,
+            mustIncludeCard: this.game.isFirstTrick && this.game.mustIncludeCard ? this.game.mustIncludeCard.toJSON() : null,
             ended: this.game.ended,
             players: playerState
           }

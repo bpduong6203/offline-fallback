@@ -71,6 +71,9 @@ test('TienLen room: playing cards, passing and round advancement', () => {
   const id4 = engine.join('P4', () => {});
 
   engine.handle(id1, { t: 'start' });
+  if (engine.game.ended) {
+    engine.game.ended = false;
+  }
 
   const activeTurn = engine.game.currentTurn;
   const activePlayer = engine.game.players[activeTurn];
@@ -90,6 +93,49 @@ test('TienLen room: playing cards, passing and round advancement', () => {
   assert.equal(activePlayer.cardCount, 12);
 });
 
+test('TienLen room: human starter with 3 of Spades and opening trick validation', () => {
+  const engine = new TienLenRoomEngine();
+  const p1Msgs = [];
+  const p2Msgs = [];
+
+  const id1 = engine.join('Player 1', msg => p1Msgs.push(msg));
+  const id2 = engine.join('Player 2', msg => p2Msgs.push(msg));
+
+  engine.handle(id1, { t: 'start' });
+  if (engine.game.ended) {
+    engine.game.ended = false;
+  }
+
+  // 1. One of the humans MUST have the first turn and hold 3 of Spades
+  const starterId = engine.game.currentTurn;
+  assert.ok(starterId === id1 || starterId === id2, 'Starter must be a human player');
+
+  const starter = engine.game.players[starterId];
+  const has3S = starter.hand.some(c => c.value === 3 && c.suit === 0);
+  assert.equal(has3S, true, 'Starter must hold 3 of Spades');
+  assert.equal(engine.game.isFirstTrick, true);
+  assert.ok(engine.game.mustIncludeCard);
+
+  // 2. Starter attempts to play a card without 3 of Spades -> rejected with error
+  const cardWithout3S = starter.hand.find(c => !(c.value === 3 && c.suit === 0));
+  const msgs = starterId === id1 ? p1Msgs : p2Msgs;
+  const initialMsgCount = msgs.length;
+
+  engine.handle(starterId, { t: 'play', cardIds: [cardWithout3S.id] });
+  assert.equal(engine.game.currentCombo, null, 'Play without 3 of Spades must be rejected');
+  const lastErr = msgs[msgs.length - 1];
+  assert.equal(lastErr.t, 'error');
+  assert.ok(lastErr.message.includes('Lượt đầu tiên bắt buộc'));
+
+  // 3. Starter plays 3 of Spades -> accepted!
+  const card3S = starter.hand.find(c => c.value === 3 && c.suit === 0);
+  engine.handle(starterId, { t: 'play', cardIds: [card3S.id] });
+  assert.ok(engine.game.currentCombo, 'Valid play with 3 of Spades must be accepted');
+  assert.equal(engine.game.isFirstTrick, false);
+  assert.equal(engine.game.mustIncludeCard, null);
+  assert.equal(starter.cardCount, 12);
+});
+
 test('TienLen room: host migration on leave', () => {
   const engine = new TienLenRoomEngine();
   const id1 = engine.join('H1', () => {});
@@ -99,3 +145,4 @@ test('TienLen room: host migration on leave', () => {
   engine.leave(id1);
   assert.equal(engine.host, id2);
 });
+

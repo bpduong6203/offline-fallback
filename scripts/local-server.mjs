@@ -53,7 +53,7 @@ export function localServer(getHtml){
         if(binary)return;const now=Date.now();if(now-windowStart>1000){windowStart=now;count=0;}if(++count>90){ws.close(1008,'Too many messages');leave();return;}
         let message;try{message=JSON.parse(data.toString());}catch{return;}
         room.engine.handle(id,message,now);
-        if(playing()&&!room.timer){
+        if(playing()&&typeof room.engine.tick==='function'&&!room.timer){
           let last=now,accumulator=0,frames=0;
           room.timer=setInterval(()=>{
             const now=Date.now();accumulator+=Math.min(.1,(now-last)/1000);last=now;
