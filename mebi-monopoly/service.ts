@@ -1,7 +1,7 @@
-import {createState,Engine,execute,snapshot,State} from './engine';
+import {createState,Engine,execute,snapshot,upgradeState,State} from './tour-engine';
 export class RoomService {
  state:State; peers=new Map<any,string>(); limits=new Map<string,{time:number;count:number}>();
- constructor(state:State,public persist:(s:State)=>Promise<void>,public schedule:(time:number)=>Promise<void>){this.state=state;}
+ constructor(state:State,public persist:(s:State)=>Promise<void>,public schedule:(time:number)=>Promise<void>){this.state=upgradeState(state);}
  async save(){await this.persist(this.state);await this.schedule(Date.now()+1000);}
  broadcast(){const message=JSON.stringify({type:'state',state:snapshot(this.state)});for(const [peer] of this.peers){try{peer.send(message);}catch{}}}
  rate(key:string,max=20){const now=Date.now();let r=this.limits.get(key);if(!r||now-r.time>10000){r={time:now,count:0};this.limits.set(key,r);}if(++r.count>max)throw Error('Thao tác quá nhanh, vui lòng chờ');if(this.limits.size>2000)this.limits.clear();}
@@ -25,4 +25,5 @@ export class RoomService {
  async request(request:Request){try{if(request.method!=='POST')return Response.json({error:'Chỉ hỗ trợ POST'},{status:405});const text=await request.text();if(text.length>1024)throw Error('Payload quá lớn');const body=JSON.parse(text);const op=new URL(request.url).pathname.split('/').pop()!;if(!['create','join','resume'].includes(op))throw Error('Đường dẫn không hợp lệ');return Response.json(await this.enter(op,body));}catch(e:any){return Response.json({error:e.message},{status:400});}}
 }
 export {createState};
-export {snapshot,Engine,execute} from './engine';
+export {snapshot,Engine,execute,upgradeState} from './tour-engine';
+export {BOARD,RULES,GROUPS,SIDES,TOURISTS,CARDS,tileByKey,PREMIUM} from './tour-data';

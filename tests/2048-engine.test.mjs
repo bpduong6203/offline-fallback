@@ -110,7 +110,7 @@ test('renderOffline generates HTML containing 2048 tab, canvas and UI controls',
   const res = renderOffline(req);
   assert.equal(res.status, 503);
   const html = await res.text();
-  assert.ok(html.includes('data-g="2048"'), 'Must have 2048 tab button');
+  assert.ok(html.includes('href="/?game=2048"'), 'Must have 2048 library link');
   assert.ok(html.includes('id="game2048ui"'), 'Must have game2048ui container');
   assert.ok(html.includes('id="g2048New"'), 'Must have g2048New button');
   assert.ok(html.includes('id="g2048Undo"'), 'Must have g2048Undo button');
