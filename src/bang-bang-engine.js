@@ -29,6 +29,7 @@ export class BangBangEngine{
     send({t:'hello',id});this.lobby();return id;
   }
   broadcast(message,ids=null){for(const p of this.peers.values())if(!ids||ids.includes(p.id))try{p.send(message);}catch{}}
+  emit(type,data={}){if(this.match)this.match.events.push({type,...data});}
   lobby(){const queued=[...this.peers.values()].filter(p=>!p.matchId);for(const peer of queued){const players=queued.filter(p=>p.mode===peer.mode);peer.send({t:'lobby',mode:peer.mode,players:players.map(({id,name,tank,ready,mode})=>({id,name,tank,ready,mode})),readyCount:players.filter(p=>p.ready).length,needed:peer.mode*2});}}
   handle(id,m){const p=this.peers.get(id);if(!p||!m||typeof m!=='object')return;
     if(m.t==='select'&&!p.matchId&&Object.hasOwn(TANKS,m.tank)){p.tank=m.tank;if(typeof m.name==='string')p.name=m.name.trim().slice(0,18)||'Người chơi '+id;this.lobby();}
@@ -43,23 +44,23 @@ export class BangBangEngine{
     this.broadcast({t:'matched',matchId,mode,players:[...this.players.values()].map(this.publicPlayer)},selected.map(p=>p.id));this.lobby();this.snapshot();
   }
   publicPlayer(p){return {id:p.id,name:p.name,tank:p.tank,team:p.team,x:p.x,y:p.y,bodyAngle:p.bodyAngle,turretAngle:p.turretAngle,hp:p.hp,maxHp:p.maxHp,energy:p.energy,maxEnergy:p.maxEnergy,shield:p.shield,kills:p.kills,deaths:p.deaths,alive:p.alive,respawn:p.respawn,buffs:p.buffs,skillCd:p.skillCd};}
-  damage(target,amount,source,magic=false,reflect=true){if(!target.alive)return;target.revealed=2.5;let armor=target.tankDef.armor;if(target.tank==='tiger'&&target.hp/target.maxHp<.3)armor+=50;let taken=amount*(magic?1:100/(100+armor));if(target.shield>0){const before=target.shield,soak=Math.min(target.shield,taken);target.shield-=soak;taken-=soak;if(before>0&&target.shield===0){for(const q of this.players.values())if(q.team!==target.team&&dist(q,target)<100){q.stun=1;this.damage(q,85,target,true);}}}target.hp-=taken;if(reflect&&target.tank==='aegis'&&source&&source.team!==target.team)this.damage(source,amount*.15,target,true,false);if(target.hp<=0){target.hp=0;target.alive=false;target.respawn=3;target.deaths++;this.match.score[source?.team===0?0:1]++;if(source&&source.team!==target.team)source.kills++;this.match.events.push({type:'TANK_DIED',victim:target.id,killer:source?.id||null,x:target.x,y:target.y});}}
+  damage(target,amount,source,magic=false,reflect=true){if(!target.alive)return;target.revealed=2.5;let armor=target.tankDef.armor;if(target.tank==='tiger'&&target.hp/target.maxHp<.3)armor+=50;let taken=amount*(magic?1:100/(100+armor));if(target.shield>0){const before=target.shield,soak=Math.min(target.shield,taken);target.shield-=soak;taken-=soak;if(before>0&&target.shield===0){for(const q of this.players.values())if(q.team!==target.team&&dist(q,target)<100){q.stun=1;this.damage(q,85,target,true);}}}target.hp-=taken;if(reflect&&target.tank==='aegis'&&source&&source.team!==target.team)this.damage(source,amount*.15,target,true,false);if(target.hp<=0){target.hp=0;target.alive=false;target.respawn=3;target.deaths++;this.match.score[source?.team===0?0:1]++;if(source&&source.team!==target.team)source.kills++;this.emit('TANK_DIED',{victim:target.id,killer:source?.id||null,x:target.x,y:target.y,team:target.team});}}
   cast(p,key){const cd=p.skillCd[key]||0,cost={Q:20,W:35,R:80}[key];if(cd>0||p.energy<cost)return;p.energy-=cost;
     if(p.tank==='pegasus'){
-      if(key==='Q'){this.bullet(p,150+p.tankDef.damage,p.turretAngle,850,true);p.skillCd.Q=4;}
-      if(key==='W'){const dx=Math.cos(p.bodyAngle),dy=Math.sin(p.bodyAngle);p.x=clamp(p.x+dx*260,30,W-30);p.y=clamp(p.y+dy*260,30,H-30);p.skillCd.W=8;}
-      if(key==='R'){const targets=[...this.players.values()].filter(q=>q.team!==p.team&&q.alive).sort((a,b)=>dist(a,p)-dist(b,p)).slice(0,3);for(const t of targets)this.bullet(p,100,Math.atan2(t.y-p.y,t.x-p.x),520,false,100);p.skillCd.R=35;}
+      if(key==='Q'){this.bullet(p,150+p.tankDef.damage,p.turretAngle,850,true,0,0,'pegasus-q');p.skillCd.Q=4;}
+      if(key==='W'){const fromX=p.x,fromY=p.y,dx=Math.cos(p.bodyAngle),dy=Math.sin(p.bodyAngle);p.x=clamp(p.x+dx*260,30,W-30);p.y=clamp(p.y+dy*260,30,H-30);this.emit('dash',{player:p.id,team:p.team,fromX,fromY,x:p.x,y:p.y});p.skillCd.W=8;}
+      if(key==='R'){const targets=[...this.players.values()].filter(q=>q.team!==p.team&&q.alive).sort((a,b)=>dist(a,p)-dist(b,p)).slice(0,3);for(const t of targets)this.bullet(p,100,Math.atan2(t.y-p.y,t.x-p.x),520,false,100,0,'pegasus-r');this.emit('ultimate',{player:p.id,team:p.team,x:p.x,y:p.y,kind:'pegasus'});p.skillCd.R=35;}
     }else if(p.tank==='tiger'){
-      if(key==='Q'){for(const a of [-Math.PI/6,0,Math.PI/6])this.bullet(p,p.tankDef.damage,p.turretAngle+a,650,false);p.skillCd.Q=5;}
-      if(key==='W'){p.shield+=455;p.buffs.push({type:'shield',time:4});p.skillCd.W=12;}
-      if(key==='R'){p.buffs.push({type:'charge',time:1.4});p.skillCd.R=40;}
+      if(key==='Q'){for(const a of [-Math.PI/6,0,Math.PI/6])this.bullet(p,p.tankDef.damage,p.turretAngle+a,650,false,0,0,'tiger-q');p.skillCd.Q=5;}
+      if(key==='W'){p.shield+=455;p.buffs.push({type:'shield',time:4});this.emit('shield',{player:p.id,team:p.team,x:p.x,y:p.y,radius:92,kind:'tiger'});p.skillCd.W=12;}
+      if(key==='R'){p.buffs.push({type:'charge',time:1.4});this.emit('charge',{player:p.id,team:p.team,x:p.x,y:p.y,angle:p.bodyAngle});p.skillCd.R=40;}
     }else{
-      if(key==='Q'){this.bullet(p,120,p.turretAngle,700,false,0,3);p.skillCd.Q=6;}
-      if(key==='W'){for(const q of this.players.values())if(q.team===p.team&&dist(p,q)<250)q.shield+=180;p.skillCd.W=14;}
-      if(key==='R'){for(const q of this.players.values()){if(q.team===p.team&&dist(p,q)<800)q.hp=Math.min(q.maxHp,q.hp+q.maxHp*.2);else if(q.team!==p.team&&dist(p,q)<200){const a=Math.atan2(q.y-p.y,q.x-p.x);q.x=clamp(q.x+Math.cos(a)*180,30,W-30);q.y=clamp(q.y+Math.sin(a)*180,30,H-30);this.damage(q,190,p,true);}}p.skillCd.R=45;}
+      if(key==='Q'){this.bullet(p,120,p.turretAngle,700,false,0,3,'aegis-q');p.skillCd.Q=6;}
+      if(key==='W'){const allies=[];for(const q of this.players.values())if(q.team===p.team&&dist(p,q)<250){q.shield+=180;allies.push({id:q.id,x:q.x,y:q.y});}this.emit('shield-pulse',{player:p.id,team:p.team,x:p.x,y:p.y,radius:250,allies});p.skillCd.W=14;}
+      if(key==='R'){const healed=[];for(const q of this.players.values()){if(q.team===p.team&&dist(p,q)<800){q.hp=Math.min(q.maxHp,q.hp+q.maxHp*.2);healed.push({id:q.id,x:q.x,y:q.y});}else if(q.team!==p.team&&dist(q,p)<200){const a=Math.atan2(q.y-p.y,q.x-p.x);q.x=clamp(q.x+Math.cos(a)*180,30,W-30);q.y=clamp(q.y+Math.sin(a)*180,30,H-30);this.damage(q,190,p,true);}}this.emit('heal-wave',{player:p.id,team:p.team,x:p.x,y:p.y,radius:800,allies:healed});p.skillCd.R=45;}
     }
   }
-  bullet(p,damage,angle,speed,pierce=false,aoe=0,bounces=0){const range=p.tank==='pegasus'&&p.inBush?720:600;this.match.bullets.push({id:Math.random().toString(36).slice(2),owner:p.id,team:p.team,x:p.x+Math.cos(angle)*25,y:p.y+Math.sin(angle)*25,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,damage,life:Math.min(1.5,range/speed),pierce,aoe,bounces,hit:[]});}
+  bullet(p,damage,angle,speed,pierce=false,aoe=0,bounces=0,kind='basic'){const range=p.tank==='pegasus'&&p.inBush?720:600;this.match.bullets.push({id:Math.random().toString(36).slice(2),owner:p.id,team:p.team,kind,x:p.x+Math.cos(angle)*34,y:p.y+Math.sin(angle)*34,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,damage,life:Math.min(1.5,range/speed),pierce,aoe,bounces,hit:[]});}
   tick(dt){const m=this.match;if(!m||m.result)return;m.time+=dt;for(const p of this.players.values()){
       p.energy=Math.min(100,p.energy+10*dt);p.revealed=Math.max(0,(p.revealed||0)-dt);for(const k of Object.keys(p.skillCd))p.skillCd[k]=Math.max(0,p.skillCd[k]-dt);p.buffs=p.buffs.filter(b=>(b.time-=dt)>0);
       if(!p.alive){p.respawn-=dt;if(p.respawn<=0){p.alive=true;p.hp=p.maxHp;p.shield=0;p.x=p.team?W-180:180;p.y=H/2+(Math.floor(Math.random()*3)-1)*220;}continue;}
@@ -69,13 +70,13 @@ export class BangBangEngine{
       const ice=this.map.blocks.some(b=>b.type==='ice'&&rectHit(p.x,p.y,22,b));const mult=ice ? .75 : 1;const nx=clamp(p.x+dx*mult,28,W-28),ny=clamp(p.y+dy*mult,28,H-28);
       if(!this.map.blocks.some(b=>['wall','water','crate','rock'].includes(b.type)&&rectHit(nx,p.y,22,b)))p.x=nx;if(!this.map.blocks.some(b=>['wall','water','crate','rock'].includes(b.type)&&rectHit(p.x,ny,22,b)))p.y=ny;
       if(i.skill)this.cast(p,i.skill);
-      if(p.tank==='tiger'&&p.buffs.some(b=>b.type==='charge'))for(const q of this.players.values())if(q.team!==p.team&&q.alive&&dist(p,q)<36){this.damage(q,350,p);q.x=clamp(q.x+Math.cos(p.bodyAngle)*100,24,W-24);q.y=clamp(q.y+Math.sin(p.bodyAngle)*100,24,H-24);p.buffs=p.buffs.filter(b=>b.type!=='charge');}
-      if(i.fire&&p.fireCd<=0){this.bullet(p,p.tankDef.damage*(p.bushCrit?1.5:1),p.turretAngle,620);p.bushCrit=false;p.revealed=2.5;p.fireCd=p.tankDef.rate;}else p.fireCd=Math.max(0,p.fireCd-dt);
+      if(p.tank==='tiger'&&p.buffs.some(b=>b.type==='charge'))for(const q of this.players.values())if(q.team!==p.team&&q.alive&&dist(p,q)<48){this.damage(q,350,p);q.x=clamp(q.x+Math.cos(p.bodyAngle)*100,24,W-24);q.y=clamp(q.y+Math.sin(p.bodyAngle)*100,24,H-24);this.emit('impact',{x:q.x,y:q.y,team:p.team,kind:'tiger-r'});p.buffs=p.buffs.filter(b=>b.type!=='charge');}
+      if(i.fire&&p.fireCd<=0){this.bullet(p,p.tankDef.damage*(p.bushCrit?1.5:1),p.turretAngle,620,false,0,0,'basic');p.bushCrit=false;p.revealed=2.5;p.fireCd=p.tankDef.rate;}else p.fireCd=Math.max(0,p.fireCd-dt);
       if(p.tank==='aegis'&&p.hp<p.maxHp)p.hp=Math.min(p.maxHp,p.hp+2*dt);
     }
     for(const bullet of m.bullets||[]){bullet.x+=bullet.vx*dt;bullet.y+=bullet.vy*dt;bullet.life-=dt;let hitBlock=null;for(const b of this.map.blocks){if(rectHit(bullet.x,bullet.y,bullet.aoe?bullet.aoe/8:6,b)){if(b.type==='crate'){b.hp-=bullet.damage;this.mapDirty=true;if(b.hp<=0)b.type='ground';else hitBlock=b;}else if(['wall','rock'].includes(b.type)&&!bullet.pierce)hitBlock=b;}}
-      if(hitBlock){if(bullet.bounces>0){bullet.vx*=-1;bullet.vy*=-1;bullet.bounces--;}else bullet.life=0;}
-      for(const p of this.players.values()){if(!p.alive||p.team===bullet.team||bullet.hit.includes(p.id))continue;if(Math.hypot(p.x-bullet.x,p.y-bullet.y)<29){this.damage(p,bullet.damage,this.players.get(bullet.owner));bullet.hit.push(p.id);if(bullet.aoe){for(const other of this.players.values())if(other.team!==bullet.team&&other.id!==p.id&&dist(other,bullet)<bullet.aoe)this.damage(other,bullet.damage*.65,this.players.get(bullet.owner),true);bullet.life=0;}else if(!bullet.pierce)bullet.life=0;}}
+      if(hitBlock){if(bullet.bounces>0){bullet.vx*=-1;bullet.vy*=-1;bullet.bounces--;this.emit('ricochet',{x:bullet.x,y:bullet.y,team:bullet.team,kind:bullet.kind});}else{this.emit('impact',{x:bullet.x,y:bullet.y,team:bullet.team,kind:bullet.kind});bullet.life=0;}}
+      for(const p of this.players.values()){if(!p.alive||p.team===bullet.team||bullet.hit.includes(p.id))continue;if(Math.hypot(p.x-bullet.x,p.y-bullet.y)<29){this.damage(p,bullet.damage,this.players.get(bullet.owner));bullet.hit.push(p.id);this.emit('impact',{x:bullet.x,y:bullet.y,team:bullet.team,kind:bullet.kind});if(bullet.aoe){this.emit('explosion',{x:bullet.x,y:bullet.y,team:bullet.team,radius:bullet.aoe,kind:bullet.kind});for(const other of this.players.values())if(other.team!==bullet.team&&other.id!==p.id&&dist(other,bullet)<bullet.aoe)this.damage(other,bullet.damage*.65,this.players.get(bullet.owner),true);bullet.life=0;}else if(!bullet.pierce)bullet.life=0;}}
     }
     m.bullets=(m.bullets||[]).filter(b=>b.life>0&&b.x>0&&b.y>0&&b.x<W&&b.y<H);this.map.blocks=this.map.blocks.filter(b=>b.type!=='ground'||b.maxHp===0);
     if(m.score[0]>=MAX_SCORE||m.score[1]>=MAX_SCORE){m.result=m.score[0]>=MAX_SCORE?0:1;const matchIds=[...this.players.keys()];this.broadcast({t:'result',winner:m.result,score:m.score},matchIds);for(const peer of this.peers.values())if(peer.matchId===m.id){peer.matchId=null;peer.ready=false;}this.match=null;this.players.clear();this.lobby();this.tryMatch();}
