@@ -79,7 +79,12 @@
         <!-- PLAYER HAND AREA -->
         <div class="player-hand-container">
           <div class="hand-header-bar">
-            <div class="hand-label" id="handLabel">BÀI CỦA BẠN (7 LÁ)</div>
+            <div class="hand-label-group">
+              <div class="hand-label" id="handLabel">BÀI CỦA BẠN (7 LÁ)</div>
+              <div class="turn-timer-badge" id="turnTimerBadge" style="display:none">
+                <span class="timer-icon">⏱️</span> <span id="turnTimerSeconds">15s</span>
+              </div>
+            </div>
             <button class="btn-sort-cards" id="btnSortCards" title="Đổi cách xếp bài: Theo màu hoặc theo số">
               <span id="sortIcon">🎨</span> <span id="sortText">Xếp bài (Màu)</span>
             </button>

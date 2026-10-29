@@ -27,7 +27,9 @@ class UnoController {
     this.calledUno = false;
     this.botTimer = null;
     this.botCatchTimer = null;
-    this.turnTimer = null;
+    this.turnDuration = 15; // 15s giới hạn mỗi lượt đánh
+    this.turnSecondsLeft = 15;
+    this.turnTimerInterval = null;
     this.pendingDrawCard = null;
     this.selectedCards = new Set();
     this.sortMode = 'color'; // 'color' | 'value'
@@ -98,11 +100,15 @@ class UnoController {
       }
     });
 
-    // UNO Call Button
+    // UNO Call Button (Hô Nói UNO khi còn 1 lá hoặc chuẩn bị đánh còn 1 lá)
     this.ui.dom.btnUnoCall?.addEventListener('click', () => {
       this.calledUno = true;
       unoAudio.playUnoHorn();
       UnoEffects.showToast('🔥 BẠN ĐÃ HÔ NÓI UNO!', 'danger');
+      if (this.botCatchTimer) {
+        clearTimeout(this.botCatchTimer);
+        this.botCatchTimer = null;
+      }
       if (this.mode === 'pvp') {
         this.network.callUno();
       } else if (this.pveGame) {
@@ -253,7 +259,12 @@ class UnoController {
   }
 
   checkTurn() {
-    if (this.mode !== 'pve' || !this.pveGame || this.pveGame.ended) return;
+    if (this.mode !== 'pve' || !this.pveGame || this.pveGame.ended) {
+      this.stopTurnTimer();
+      return;
+    }
+
+    this.startTurnTimer();
 
     if (this.pveGame.currentTurn === this.myId) {
       unoAudio.playTurnDing();
@@ -266,8 +277,86 @@ class UnoController {
     this.checkOpponentUnoPenalty();
   }
 
+  startTurnTimer() {
+    this.stopTurnTimer();
+    this.turnSecondsLeft = this.turnDuration;
+    this.updateTimerDisplay();
+
+    this.turnTimerInterval = setInterval(() => {
+      if ((this.mode === 'pve' && (!this.pveGame || this.pveGame.ended)) ||
+          (this.mode === 'pvp' && (!this.pvpState || this.pvpState.ended))) {
+        this.stopTurnTimer();
+        return;
+      }
+
+      this.turnSecondsLeft--;
+      this.updateTimerDisplay();
+
+      if (this.turnSecondsLeft <= 0) {
+        this.stopTurnTimer();
+        this.handleTurnTimeout();
+      }
+    }, 1000);
+  }
+
+  stopTurnTimer() {
+    if (this.turnTimerInterval) {
+      clearInterval(this.turnTimerInterval);
+      this.turnTimerInterval = null;
+    }
+  }
+
+  updateTimerDisplay() {
+    const isMine = this.isMyTurn();
+    this.ui.updateTurnTimer(this.turnSecondsLeft, isMine);
+
+    // Cập nhật số giây & thanh tiến trình đếm ngược trên pod đối thủ nếu là lượt của họ
+    const currentTurn = this.mode === 'pve' ? this.pveGame?.currentTurn : this.pvpState?.currentTurn;
+    if (currentTurn != null && currentTurn !== this.myId) {
+      const activePod = document.getElementById(`pod-${currentTurn}`);
+      if (activePod) {
+        const statusEl = activePod.querySelector('.pod-status');
+        if (statusEl) {
+          const isUno = activePod.classList.contains('is-uno');
+          statusEl.textContent = isUno ? '⚠️ NÓI UNO!' : `Đang đi (${this.turnSecondsLeft}s)...`;
+        }
+        const barEl = activePod.querySelector('.pod-timer-bar');
+        if (barEl) {
+          barEl.style.width = `${Math.max(0, (this.turnSecondsLeft / 15) * 100)}%`;
+        }
+      }
+    }
+  }
+
+  handleTurnTimeout() {
+    if (!this.isMyTurn()) return;
+
+    UnoEffects.showToast('⏱️ Hết thời gian lượt đi (15s)! Đang tự động rút bài / bỏ lượt...', 'warning');
+
+    if (this.mode === 'pve' && this.pveGame) {
+      if (this.pendingDrawCard != null) {
+        this.handlePassTurn();
+      } else {
+        const res = this.pveGame.drawCard(this.myId);
+        if (res.success) {
+          unoAudio.playCardSlide();
+          this.pveGame.passTurn(this.myId);
+          this.pendingDrawCard = null;
+          this.updateUI();
+          this.checkTurn();
+        }
+      }
+    } else if (this.mode === 'pvp') {
+      if (this.pendingDrawCard != null) {
+        this.handlePassTurn();
+      } else {
+        this.network.drawCard();
+      }
+    }
+  }
+
   scheduleBotTurn() {
-    this.clearTimers();
+    if (this.botTimer) clearTimeout(this.botTimer);
     const currId = this.pveGame.currentTurn;
     const bot = this.pveGame.players[currId];
     if (!bot || !bot.isBot) return;
@@ -452,20 +541,23 @@ class UnoController {
 
     if (this.mode === 'pve') {
       const myHand = this.pveGame.players[this.myId].hand;
-      if (myHand.length - cardIds.length === 1 && this.calledUno) {
+      const willBeOne = myHand.length - cardIds.length === 1;
+      if (willBeOne && this.calledUno) {
         this.pveGame.callUno(this.myId);
       }
 
       let res;
       if (cardIds.length === 1) {
-        res = this.pveGame.playCard(this.myId, cardIds[0], chosenColor);
+        res = this.pveGame.playCard(this.myId, cardIds[0], chosenColor, this.calledUno);
       } else {
-        res = this.pveGame.playCards(this.myId, cardIds, chosenColor);
+        res = this.pveGame.playCards(this.myId, cardIds, chosenColor, this.calledUno);
       }
 
       if (res.success) {
         unoAudio.playCardSnap();
-        this.calledUno = false;
+        if (!willBeOne) {
+          this.calledUno = false;
+        }
         this.pendingDrawCard = null;
         this.selectedCards.clear();
 
@@ -601,7 +693,20 @@ class UnoController {
 
     this.network.on('state', packet => {
       document.getElementById('roomLobbyModal')?.classList.remove('open');
+      const prevTurn = this.pvpState?.currentTurn;
       this.pvpState = packet;
+      if (packet.ended) {
+        this.stopTurnTimer();
+      } else if (prevTurn !== packet.currentTurn) {
+        this.startTurnTimer();
+      }
+      this.updateUI();
+    });
+
+    this.network.on('unoCalled', packet => {
+      unoAudio.playUnoHorn();
+      const pName = this.pvpState?.players?.find(p => p.id === packet.playerId)?.name || 'Người chơi';
+      UnoEffects.showToast(`🔥 ${pName} HÔ NÓI UNO!`, 'warning');
       this.updateUI();
     });
 
@@ -694,7 +799,7 @@ class UnoController {
     this.ui.setDirection(state.direction);
 
     // Opponent Pods
-    this.ui.renderOpponents(state.players, this.myId, state.currentTurn, state.unoPenaltyWindow);
+    this.ui.renderOpponents(state.players, this.myId, state.currentTurn, state.unoPenaltyWindow, this.turnSecondsLeft);
 
     // Player Hand Fan
     this.ui.renderHand(displayHand, topCard, state.activeColor, isMyTurn, cardId => {
@@ -716,7 +821,10 @@ class UnoController {
     }
 
     // Action Controls
-    const canCallUno = myHand.length === 2 && !this.calledUno && isMyTurn;
+    const hasCalledUno = myPlayer?.hasCalledUno || this.calledUno;
+    // Bổ sung điều kiện canCallUno: Cho phép bấm Nói UNO khi còn 1 lá bài trên tay chưa hô UNO,
+    // hoặc khi đang cầm 2 lá trong lượt của mình để chuẩn bị đánh xuống 1 lá!
+    const canCallUno = !hasCalledUno && (myHand.length === 1 || (myHand.length === 2 && isMyTurn));
     const penaltyTarget = state.unoPenaltyWindow?.playerId;
     const canCatchUno = penaltyTarget != null && penaltyTarget !== this.myId;
     const canPass = isMyTurn && this.pendingDrawCard != null;
@@ -730,12 +838,14 @@ class UnoController {
       canDraw,
       isMyTurn
     });
+
+    this.ui.updateTurnTimer(this.turnSecondsLeft, isMyTurn);
   }
 
   clearTimers() {
     if (this.botTimer) clearTimeout(this.botTimer);
     if (this.botCatchTimer) clearTimeout(this.botCatchTimer);
-    if (this.turnTimer) clearTimeout(this.turnTimer);
+    this.stopTurnTimer();
   }
 }
 

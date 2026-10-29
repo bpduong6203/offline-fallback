@@ -26,6 +26,8 @@ export class UnoUI {
       btnPassTurn: document.getElementById('btnPassTurn'),
       handFanTrack: document.getElementById('handFanTrack'),
       handLabel: document.getElementById('handLabel'),
+      turnTimerBadge: document.getElementById('turnTimerBadge'),
+      turnTimerSeconds: document.getElementById('turnTimerSeconds'),
       btnSortCards: document.getElementById('btnSortCards'),
       sortIcon: document.getElementById('sortIcon'),
       sortText: document.getElementById('sortText'),
@@ -84,7 +86,7 @@ export class UnoUI {
     this.dom.activeColorBadge.textContent = names[color] || color.toUpperCase();
   }
 
-  renderOpponents(players, myId, currentTurn, unoPenaltyWindow) {
+  renderOpponents(players, myId, currentTurn, unoPenaltyWindow, turnSeconds = 15) {
     if (!this.dom.opponentsContainer) return;
     this.dom.opponentsContainer.innerHTML = '';
 
@@ -105,6 +107,8 @@ export class UnoUI {
         miniCardsHtml += `<div class="mini-card-back"></div>`;
       }
 
+      const timerWidth = Math.max(0, Math.min(100, ((turnSeconds ?? 15) / 15) * 100));
+
       pod.innerHTML = `
         <div class="pod-avatar">
           ${p.isBot ? '🤖' : '👤'}
@@ -113,14 +117,29 @@ export class UnoUI {
         <div class="pod-info">
           <div class="pod-name" title="${p.name}">${p.name}</div>
           <div class="pod-status">
-            ${isUno ? '⚠️ NÓI UNO!' : isTurn ? 'Đang đi...' : p.isBot ? 'Bot' : 'Người chơi'}
+            ${isUno ? '⚠️ NÓI UNO!' : isTurn ? `Đang đi (${turnSeconds}s)...` : p.isBot ? 'Bot' : 'Người chơi'}
           </div>
           <div class="opponent-cards-fan">${miniCardsHtml}</div>
         </div>
-        ${isTurn ? `<div class="pod-timer-bar"></div>` : ''}
+        ${isTurn ? `<div class="pod-timer-bar" style="width:${timerWidth}%; transition:width 1s linear"></div>` : ''}
       `;
 
       this.dom.opponentsContainer.appendChild(pod);
+    }
+  }
+
+  updateTurnTimer(secondsLeft, isMyTurn) {
+    if (!this.dom.turnTimerBadge || !this.dom.turnTimerSeconds) return;
+    if (isMyTurn && secondsLeft != null && secondsLeft >= 0) {
+      this.dom.turnTimerBadge.style.display = 'inline-flex';
+      this.dom.turnTimerSeconds.textContent = `${secondsLeft}s`;
+      if (secondsLeft <= 5) {
+        this.dom.turnTimerBadge.classList.add('warning-pulse');
+      } else {
+        this.dom.turnTimerBadge.classList.remove('warning-pulse');
+      }
+    } else {
+      this.dom.turnTimerBadge.style.display = 'none';
     }
   }
 

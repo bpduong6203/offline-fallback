@@ -353,3 +353,70 @@ test('UnoGame.playCards handles pair of Draw 2s (cumulative penalty)', () => {
   assert.equal(game.currentTurn, 2);
 });
 
+test('isValidPlay restricts other action cards when top card is (+ bài)', () => {
+  const redDraw2 = 12; // Red Draw 2
+  const blueDraw2 = 14 * 3 + 12; // Blue Draw 2
+  const redSkip = 10; // Red Skip
+  const redReverse = 11; // Red Reverse
+  const wild = 13; // Wild
+  const draw4 = 13 + 14 * 4; // Wild Draw 4
+  const red3 = 3; // Red 3 (number)
+  const blue3 = 14 * 3 + 3; // Blue 3 (number)
+
+  // Top card is redDraw2, activeColor is 'red'
+  // Same function is allowed:
+  assert.equal(isValidPlay(blueDraw2, redDraw2, 'red'), true);
+  assert.equal(isValidPlay(redDraw2, redDraw2, 'red'), true);
+
+  // Same color number card is allowed:
+  assert.equal(isValidPlay(red3, redDraw2, 'red'), true);
+  // Different color number card is disallowed:
+  assert.equal(isValidPlay(blue3, redDraw2, 'red'), false);
+
+  // Other action cards are FORBIDDEN on (+ bài):
+  assert.equal(isValidPlay(redSkip, redDraw2, 'red'), false);
+  assert.equal(isValidPlay(redReverse, redDraw2, 'red'), false);
+  assert.equal(isValidPlay(wild, redDraw2, 'red'), false);
+  assert.equal(isValidPlay(draw4, redDraw2, 'red'), false);
+
+  // Top card is Wild Draw 4, activeColor is 'yellow'
+  const yellowSkip = 14 + 10;
+  const yellowDraw2 = 14 + 12;
+  const yellow5 = 14 + 5;
+  const anotherDraw4 = 13 + 14 * 5;
+
+  assert.equal(isValidPlay(anotherDraw4, draw4, 'yellow'), true);
+  assert.equal(isValidPlay(yellow5, draw4, 'yellow'), true);
+  assert.equal(isValidPlay(yellowSkip, draw4, 'yellow'), false);
+  assert.equal(isValidPlay(yellowDraw2, draw4, 'yellow'), false);
+  assert.equal(isValidPlay(wild, draw4, 'yellow'), false);
+});
+
+test('UnoGame.callUno clears penalty window for player holding 1 card', () => {
+  const game = new UnoGame({
+    players: [{ id: 0, name: 'P1' }, { id: 1, name: 'P2' }]
+  });
+
+  game.currentTurn = 0;
+  game.activeColor = 'red';
+  game.discardPile = [0]; // Red 0
+  const red1 = 1;
+  const red2 = 2;
+  game.players[0].hand = [red1, red2];
+
+  // P1 plays red1 without calling UNO beforehand (calledUno = false)
+  const res = game.playCard(0, red1, null, false);
+  assert.equal(res.success, true);
+  assert.equal(game.players[0].hand.length, 1);
+  // Penalty window should be open targeting P1
+  assert.ok(game.unoPenaltyWindow);
+  assert.equal(game.unoPenaltyWindow.playerId, 0);
+
+  // P1 calls UNO before being caught
+  const callRes = game.callUno(0);
+  assert.equal(callRes.success, true);
+  // Penalty window is cleared!
+  assert.equal(game.unoPenaltyWindow, null);
+  assert.equal(game.calledUnoPlayers.has(0), true);
+});
+

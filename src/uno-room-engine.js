@@ -221,6 +221,7 @@ export class UnoRoomEngine {
           const res = this.game.callUno(playerId);
           if (res.success) {
             this.broadcast({ t: 'unoCalled', playerId });
+            this.snapshot();
           }
         }
         break;
@@ -341,12 +342,12 @@ export class UnoRoomEngine {
         this.executeBotTurn(currId);
       }, delay);
     } else {
-      // 20s timeout turn timer for human player
+      // 15s timeout turn timer for human player
       this.turnTimer = setTimeout(() => {
         if (this.game && !this.game.ended && this.game.currentTurn === currId) {
           this.autoPlayForPlayer(currId);
         }
-      }, 20000);
+      }, 15000);
     }
   }
 

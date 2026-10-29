@@ -112,7 +112,19 @@ export function isValidPlay(cardId, topCardId, activeColor) {
   const cardType = getCardType(cardId);
   const cardVal = getCardValue(cardId);
 
-  // Lá Wild hoặc Wild Draw 4 luôn được phép đánh
+  const topColor = getCardColor(topCardId);
+  const topType = getCardType(topCardId);
+  const topVal = getCardValue(topCardId);
+
+  // Khi lá trên cùng là lá chức năng (+ bài: draw2 hoặc draw4):
+  // Không được đánh các lá chức năng khác (chỉ cho phép đánh lá cùng chức năng hoặc lá số hợp lệ)
+  if (topType === 'draw2' || topType === 'draw4') {
+    if (cardType !== topType && cardType !== 'number') {
+      return false;
+    }
+  }
+
+  // Lá Wild hoặc Wild Draw 4 luôn được phép đánh (nếu không bị chặn bởi điều kiện trên)
   if (cardColor === 'black' || cardType === 'wild' || cardType === 'draw4') {
     return true;
   }
@@ -121,10 +133,6 @@ export function isValidPlay(cardId, topCardId, activeColor) {
   if (activeColor && cardColor === activeColor) {
     return true;
   }
-
-  const topColor = getCardColor(topCardId);
-  const topType = getCardType(topCardId);
-  const topVal = getCardValue(topCardId);
 
   // Nếu cọc đánh là màu đen nhưng chưa có activeColor
   if (topColor === 'black' && !activeColor) {
@@ -617,6 +625,9 @@ export class UnoGame {
     const player = this.players.find(p => p.id === playerId);
     if (!player) return { success: false, reason: 'Người chơi không tồn tại' };
     this.calledUnoPlayers.add(playerId);
+    if (this.unoPenaltyWindow && this.unoPenaltyWindow.playerId === playerId) {
+      this.unoPenaltyWindow = null;
+    }
     this.log(`🔥 ${player.name} đã hô "UNO!"`);
     return { success: true };
   }
