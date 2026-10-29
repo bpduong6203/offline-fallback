@@ -5,9 +5,11 @@ import {readFile} from 'node:fs/promises';
 const entry=new URL('../worker.js',import.meta.url);
 const html=await readFile(new URL('../src/page/games/Mini_Motorways.html',import.meta.url),'utf8');
 const bangBangHtml=await readFile(new URL('../src/page/games/Bang_Bang.html',import.meta.url),'utf8');
+const chibiRushHtml=await readFile(new URL('../src/page/games/chibi-rush.html',import.meta.url),'utf8');
 const source=(await readFile(entry,'utf8'))
   .replace("import miniMotorways from './src/page/games/Mini_Motorways.html';",`const miniMotorways=${JSON.stringify(html)};`)
   .replace("import bangBang from './src/page/games/Bang_Bang.html';",`const bangBang=${JSON.stringify(bangBangHtml)};`)
+  .replace("import chibiRush from './src/page/games/chibi-rush.html';",`const chibiRush=${JSON.stringify(chibiRushHtml)};`)
   .replace(/from '(\.\/[^']+)'/g,(_,relative)=>`from '${new URL(relative,entry).href}'`);
 const worker=(await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).default;
 
@@ -54,6 +56,18 @@ test('Worker serves Tiến Lên Miền Nam routes and rejects writes',async()=>{
     assert.equal(post.status,405);
   }
 });
+test('Worker serves UNO Arena routes and rejects writes',async()=>{
+  for(const route of ['/uno','/uno/','/__game/uno']){
+    const response=await worker.fetch(new Request('https://example.test'+route));
+    assert.equal(response.status,200);
+    assert.match(await response.text(),/UNO ARENA/);
+    const head=await worker.fetch(new Request('https://example.test'+route,{method:'HEAD'}));
+    assert.equal(head.status,200);
+    assert.equal(await head.text(),'');
+    const post=await worker.fetch(new Request('https://example.test'+route,{method:'POST'}));
+    assert.equal(post.status,405);
+  }
+});
 test('existing Mini Motorways route and fallback page remain available',async()=>{
   const response=await worker.fetch(new Request('https://example.test/__game/mini-motorways'));assert.equal(response.status,200);assert.equal(await response.text(),html);
   const {renderOffline}=await import('../src/page/render.js');
@@ -61,3 +75,4 @@ test('existing Mini Motorways route and fallback page remain available',async()=
   assert.equal(fallback.status,503);assert.match(await fallback.text(),/href="\/__game\/bomb-arena"/);
   assert.equal(renderOffline(new Request('https://example.test/api')).status,503);
 });
+

@@ -9,6 +9,8 @@
     "test:browser": "node scripts/browser-check.mjs",
     "test:stickman:browser": "node scripts/stickman-browser-check.mjs",
     "test:tienlen:browser": "node scripts/tienlen-browser-check.mjs",
+    "test:uno:browser": "node scripts/uno-browser-check.mjs",
+    "upload:assets": "node scripts/upload-assets.mjs",
     "test:monopoly:browser": "node scripts/monopoly-browser-check.mjs",
     "check:monopoly": "tsc -p mebi-monopoly/tsconfig.json"
   },

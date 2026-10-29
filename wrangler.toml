@@ -65,6 +65,15 @@ new_sqlite_classes = ["TienLenRoom"]
 tag = "v6"
 new_sqlite_classes = ["BangBangQueue"]
 
+# UNO Arena: server-authoritative room cho 2 đến 4 người
+[[durable_objects.bindings]]
+name = "UNO"
+class_name = "UnoRoom"
+
+[[migrations]]
+tag = "v8"
+new_sqlite_classes = ["UnoRoom"]
+
 [[r2_buckets]]
 # Existing bucket: public image reads are served through /__assets/images/ only.
 binding = "IMAGES"
@@ -83,5 +92,5 @@ name = "CHIBIRUSH"
 class_name = "ChibiRushRoom"
 
 [[migrations]]
-tag = "v8"
+tag = "v9"
 new_sqlite_classes = ["ChibiRushRoom"]

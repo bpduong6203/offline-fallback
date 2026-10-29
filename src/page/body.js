@@ -12,7 +12,7 @@ export const body = (hostname) => `  </style>
       <nav class="tabs" aria-label="Danh sách game">
       <a class="tab on" href="/?game=flappy"><span class="game-icon">🐞</span><span><b>Flappy Bug</b><small>Vượt chướng ngại vật</small></span></a>
       <a class="tab" href="/?game=caro"><span class="game-icon">⭕</span><span><b>Caro</b><small>Đấu với máy hoặc bạn bè</small></span></a>
-      <a class="tab" href="/?game=2048"><span class="game-icon">🔢</span><span><b>2048</b><small>Ghép ô số</small></span></a>
+      <a class="tab" data-g="2048" href="/?game=2048"><span class="game-icon">🔢</span><span><b>2048</b><small>Ghép ô số</small></span></a>
       <a class="tab" href="/?game=wolf"><span class="game-icon">🐺</span><span><b>Ma sói</b><small>Trò chơi suy luận nhóm</small></span></a>
       <a class="tab" href="/?game=played"><span class="game-icon">🎮</span><span><b>YOU GOT PLAYED</b><small>Platformer đánh lừa</small></span></a>
       <a class="tab" href="/?game=motorways"><span class="game-icon">🚗</span><span><b>Mini Motorways</b><small>Nối đường và điều phối xe</small></span></a>
@@ -21,6 +21,7 @@ export const body = (hostname) => `  </style>
       <!-- <button class="tab" data-g="sword">⚔️ Đấu kiếm</button>  -->
       <a class="tab tab-link" href="/ty-phu"><span class="game-icon">▦</span><span><b>Tỷ Phú Mebi</b><small>Cờ tỷ phú online 2–4 người</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/tien-len"><span class="game-icon">🃏</span><span><b>Tiến Lên</b><small>Chơi bài cùng bạn bè</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
+      <a class="tab tab-link" href="/uno"><span class="game-icon">🌈</span><span><b>UNO</b><small>Đấu bài sắc màu 2-4 người</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/stickman-fight"><span class="game-icon">🥊</span><span><b>Stickman Showdown</b><small>Đối kháng người que</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/__game/bomb-arena"><span class="game-icon">✹</span><span><b>Bomb Arena</b><small>Đặt bom tranh đấu</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       </nav>

@@ -3,6 +3,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {buildStickman} from './build-stickman.mjs';
 import {buildTienLen} from './build-tienlen.mjs';
+import {buildUno} from './build-uno.mjs';
 import {buildMonopoly} from './build-monopoly.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 export async function build(){
@@ -30,6 +31,7 @@ export async function build(){
   console.log(`Built Bomb Arena (${Buffer.byteLength(html)} bytes)`);
   await buildStickman();
   await buildTienLen();
+  await buildUno();
   await buildMonopoly();
   return html;
 }

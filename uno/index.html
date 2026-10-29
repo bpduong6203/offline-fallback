@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>UNO Arena - Classic & Multiplayer Card Game</title>
+  <style>
+/* STYLE */
+  </style>
+</head>
+<body>
+  <div id="unoApp">
+    <canvas id="confettiCanvas"></canvas>
+
+    <!-- TOP BAR -->
+    <header class="uno-header">
+      <div class="brand-section">
+        <button class="btn-header" id="btnMenu" title="Menu chọn chế độ">
+          <span>☰</span> Chế độ
+        </button>
+        <div class="brand-title">
+          <span>🌈</span> UNO ARENA
+        </div>
+      </div>
+
+      <div class="header-badges">
+        <div class="egg-badge" title="Số dư Hộp trứng Mebi Farm">
+          <span class="egg-icon"></span>
+          <span id="userEggBalance">100</span>
+          <span>Trứng</span>
+        </div>
+        <div class="room-badge" id="roomBadge">
+          PVE • 4 NGƯỜI
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px">
+        <button class="btn-header" id="btnMute" title="Bật/Tắt âm thanh">🔊</button>
+        <button class="btn-header" id="btnRules" title="Luật chơi">📖</button>
+      </div>
+    </header>
+
+    <!-- MAIN ARENA -->
+    <main class="uno-arena">
+      <div class="table-felt">
+        <!-- OPPONENTS ROW -->
+        <div class="opponents-row" id="opponentsContainer"></div>
+
+        <!-- DIRECTION ROTATION RING -->
+        <div class="direction-indicator cw" id="directionRing">
+          <span class="direction-arrow top">▲</span>
+          <span class="direction-arrow right">▶</span>
+          <span class="direction-arrow bottom">▼</span>
+          <span class="direction-arrow left">◀</span>
+        </div>
+
+        <!-- CENTER PLAY AREA -->
+        <div class="center-play-area">
+          <div class="pile-container">
+            <span class="pile-label">Cọc rút</span>
+            <div class="draw-pile" id="drawPile" title="Bấm để rút 1 lá bài"></div>
+          </div>
+
+          <div class="pile-container">
+            <span class="pile-label">Cọc đánh</span>
+            <div class="discard-pile" id="discardPile"></div>
+            <div class="active-color-badge color-red" id="activeColorBadge">🔴 Đỏ</div>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS ROW -->
+        <div class="action-controls-row" id="actionControls">
+          <button class="btn-uno-call" id="btnUnoCall" style="display:none">🔥 NÓI UNO!</button>
+          <button class="btn-uno-catch" id="btnUnoCatch" style="display:none">⚡ BẮT UNO!</button>
+          <button class="btn-pass-turn" id="btnPassTurn" style="display:none">Bỏ lượt (Pass)</button>
+        </div>
+
+        <!-- PLAYER HAND AREA -->
+        <div class="player-hand-container">
+          <div class="hand-label" id="handLabel">BÀI CỦA BẠN (7 LÁ)</div>
+          <div class="cards-fan-track" id="handFanTrack"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- COLOR PICKER MODAL -->
+    <div class="uno-modal-overlay" id="colorPickerModal">
+      <div class="uno-modal-box">
+        <h2 style="margin-bottom:8px">🌈 CHỌN MÀU MỚI</h2>
+        <p style="color:#94A3B8;font-size:0.9rem">Bạn vừa đánh lá Wild! Hãy chọn màu sắc tiếp theo trên bàn:</p>
+        <div class="color-wheel-grid">
+          <button class="color-quadrant red" id="btnChoose-red">🔴 ĐỎ</button>
+          <button class="color-quadrant yellow" id="btnChoose-yellow">🟡 VÀNG</button>
+          <button class="color-quadrant green" id="btnChoose-green">🟢 XANH LÁ</button>
+          <button class="color-quadrant blue" id="btnChoose-blue">🔵 LAM</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOBBY / MODE SELECTOR MODAL -->
+    <div class="uno-modal-overlay" id="lobbyModal">
+      <div class="uno-modal-box" style="width:min(90vw,480px)">
+        <h2 style="margin-bottom:16px">🎮 CHỌN CHẾ ĐỘ CHƠI</h2>
+        <div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:12px">
+          <button class="btn-header active" id="tabPvE" style="flex:1">🤖 Đấu với Máy (PvE)</button>
+          <button class="btn-header" id="tabPvP" style="flex:1">🌐 Đấu Online (PvP)</button>
+        </div>
+
+        <!-- PANEL PVE -->
+        <div id="panelPvE">
+          <div style="text-align:left;margin-bottom:14px">
+            <label style="font-size:0.85rem;color:#94A3B8;display:block;margin-bottom:4px">Số lượng Bot đối thủ:</label>
+            <select id="pveBotCount" style="width:100%;padding:10px;border-radius:10px;background:#0F172A;color:#FFF;border:1px solid rgba(255,255,255,0.15)">
+              <option value="1">1 Bot (Đấu tay đôi 2 người)</option>
+              <option value="2">2 Bot (Bàn 3 người)</option>
+              <option value="3" selected>3 Bot (Bàn chuẩn 4 người)</option>
+            </select>
+          </div>
+
+          <div style="text-align:left;margin-bottom:20px">
+            <label style="font-size:0.85rem;color:#94A3B8;display:block;margin-bottom:4px">Độ khó của Bot:</label>
+            <select id="pveBotDifficulty" style="width:100%;padding:10px;border-radius:10px;background:#0F172A;color:#FFF;border:1px solid rgba(255,255,255,0.15)">
+              <option value="easy">Dễ (Tập làm quen)</option>
+              <option value="medium" selected>Vừa (Tiêu chuẩn)</option>
+              <option value="hard">Khó (Chiến thuật cao cấp)</option>
+            </select>
+          </div>
+
+          <button class="btn-uno-call" id="btnStartPvE" style="width:100%;justify-content:center">
+            🚀 VÀO BÀN CHƠI NGAY
+          </button>
+        </div>
+
+        <!-- PANEL PVP -->
+        <div id="panelPvP" style="display:none">
+          <div style="text-align:left;margin-bottom:14px">
+            <label style="font-size:0.85rem;color:#94A3B8;display:block;margin-bottom:4px">Tên hiển thị của bạn:</label>
+            <input id="playerNameInput" maxlength="15" value="Người chơi" style="width:100%;padding:10px;border-radius:10px;background:#0F172A;color:#FFF;border:1px solid rgba(255,255,255,0.15)">
+          </div>
+
+          <button class="btn-uno-call" id="btnCreateRoom" style="width:100%;justify-content:center;margin-bottom:16px">
+            ✨ TẠO PHÒNG MỚI (MÃ TỰ ĐỘNG)
+          </button>
+
+          <div style="display:flex;gap:8px">
+            <input id="roomCodeInput" maxlength="4" placeholder="MÃ PHÒNG (4 KÝ TỰ)" style="flex:1;padding:10px;border-radius:10px;background:#0F172A;color:#FFF;border:1px solid rgba(255,255,255,0.15);text-transform:uppercase;font-weight:700">
+            <button class="btn-header" id="btnJoinRoom" style="padding:0 20px">Vào phòng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PVP ROOM WAITING LOBBY MODAL -->
+    <div class="uno-modal-overlay" id="roomLobbyModal">
+      <div class="uno-modal-box" style="width:min(90vw,450px)">
+        <h2>PHÒNG ĐẤU: <span id="lobbyRoomCode" style="color:#60A5FA"></span></h2>
+        <p style="color:#94A3B8;font-size:0.85rem;margin:6px 0 16px">Chia sẻ mã phòng này để bạn bè cùng tham gia (2 - 4 người).</p>
+
+        <div id="lobbyPlayerList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;text-align:left"></div>
+
+        <div style="display:flex;gap:10px;justify-content:center">
+          <button class="btn-header" id="btnAddBot">➕ Thêm Bot</button>
+          <button class="btn-uno-call" id="btnStartMatch">▶ Bắt đầu ván đấu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div class="uno-modal-overlay" id="gameOverModal">
+      <div class="uno-modal-box">
+        <h2 id="gameOverTitle" style="font-size:1.8rem;margin-bottom:10px">🏆 CHIẾN THẮNG!</h2>
+        <p id="gameOverMsg" style="color:#94A3B8;margin-bottom:14px"></p>
+        <div id="gameOverScore"></div>
+        <button class="btn-uno-call" id="btnPlayAgain" style="margin-top:20px;width:100%;justify-content:center">
+          🔄 CHƠI VÁN TIẾP THEO
+        </button>
+      </div>
+    </div>
+
+    <!-- RULES MODAL -->
+    <div class="uno-modal-overlay" id="rulesModal">
+      <div class="uno-modal-box" style="width:min(92vw,560px);max-height:85vh;overflow-y:auto;text-align:left">
+        <h2 style="margin-bottom:12px;text-align:center">📖 LUẬT CHƠI UNO CHUẨN</h2>
+        <div style="font-size:0.88rem;line-height:1.6;color:#CBD5E1;display:flex;flex-direction:column;gap:10px">
+          <p><b>1. Mục tiêu</b>: Đánh hết toàn bộ các lá bài trên tay đầu tiên.</p>
+          <p><b>2. Đánh bài hợp lệ</b>: Lá bài phải cùng màu hoặc cùng số/chức năng với lá trên cùng cọc đánh. Lá Đen (Wild & Wild +4) có thể đánh bất cứ lúc nào.</p>
+          <p><b>3. Các lá chức năng đặc biệt</b>:
+            <br>• <b>Skip (Cấm lượt)</b>: Người kế tiếp mất lượt.
+            <br>• <b>Reverse (Đổi chiều)</b>: Đổi chiều xoay kim đồng hồ (Trong ván 2 người: tương đương lá Skip).
+            <br>• <b>Draw 2 (+2)</b>: Người kế tiếp rút 2 lá và mất lượt.
+            <br>• <b>Wild (Đổi màu)</b>: Đổi màu bàn cờ theo ý muốn.
+            <br>• <b>Wild Draw 4 (+4)</b>: Đổi màu + người kế tiếp rút 4 lá và mất lượt.
+          </p>
+          <p><b>4. Rút bài</b>: Nếu không có bài đánh hoặc muốn giữ bài, bấm vào cọc bài để rút 1 lá. Nếu lá rút hợp lệ, bạn có thể đánh ngay hoặc bấm "Bỏ lượt (Pass)".</p>
+          <p><b>5. Nói UNO! & Bắt phạt</b>: Khi chuẩn bị đánh xuống còn đúng 1 lá, <b>bắt buộc phải bấm "NÓI UNO!"</b>. Nếu quên, đối thủ có 2.5s để bấm "BẮT UNO!" và bạn sẽ bị phạt rút ngay 2 lá bài!</p>
+          <p><b>6. Thưởng Hộp Trứng Mebi Farm</b>: Thắng ván nhận ngay +5 Trứng cùng điểm thưởng quy đổi!</p>
+        </div>
+        <button class="btn-header" id="btnCloseRules" style="margin-top:18px;width:100%;justify-content:center">
+          ĐÃ HIỂU
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+/* SCRIPT */
+  </script>
+</body>
+</html>
