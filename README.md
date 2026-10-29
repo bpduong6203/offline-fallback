@@ -197,4 +197,4 @@ Binding `IMAGES` dùng bucket hiện có `offline-fallback-images`. Icon trứng
 
 Kiểm kê ảnh, lệnh upload và các bước Cloudflare thủ công: [R2_ASSETS.md](R2_ASSETS.md). Không có upload hoặc deploy tự động.
 
-Luật Việt Nam v2, các biến thể và nguồn tham khảo: [docs/business-tour-rules.md](docs/business-tour-rules.md). Bàn cờ 32 ô có zoom/pan, HUD gọn và xử lý snapshot cũ rõ ràng.
+Luật theo Gameplay Specification 1.0, preset Việt Nam và cách kiểm tra: [docs/business-tour-rules.md](docs/business-tour-rules.md). Bàn cờ 32 ô có zoom/pan, HUD gọn và xử lý snapshot cũ rõ ràng.

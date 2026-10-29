@@ -8,17 +8,17 @@ Node 20+, `npm.cmd install`, `npm.cmd run build`, `npm.cmd run dev`. Mở `http:
 
 ## Bộ luật hiện hành
 
-`mebi-tour-v2`, schema 2. Mua/xây tại điểm dừng, mua lại sau trả phí, khách sạn và điểm du lịch chặn mua lại. Có Hoang đảo, du lịch chọn điểm đến ở lượt sau, lễ hội có thời hạn, thẻ may mắn, thanh lý khi nợ và bốn kiểu thắng. Trận tối đa 30 phút, hết giờ xét tổng tài sản. Không đấu giá, thế chấp, xây đều hoặc giao dịch tự do trong v2.
+`mebi-tour-spec-v1`, schema 3, theo MD người dùng cung cấp. Khởi đầu 2 triệu trứng; mua đất + 1/2 nhà atomically; nâng một cấp mỗi lần ghé sau vòng mới; thuế theo tiền mặt; đôi không thêm lượt; du lịch ngay lượt hiện tại. Năm kiểu thắng, không giới hạn thời gian trận mặc định. Chi tiết tại [RULES.md](RULES.md).
 
 Ba bất động sản đắt nhất: **Mebisoft 400.000 trứng → Mebifarm 360.000 trứng → Mebieco 320.000 trứng**. Một đơn vị engine tương đương 1.000 trứng; trên bàn viết gọn `K`. Không dùng VND hoặc tiền thật.
 
-Nguồn, mức độ xác minh, thông số biến thể và đối chiếu v1/v2: [docs/business-tour-rules.md](../docs/business-tour-rules.md). Đây là bản lấy cảm hứng, không phải mô phỏng chính xác mọi mode/phiên bản Business Tour.
+Đặc tả nguồn và preset: [docs/business-tour-rules.md](../docs/business-tour-rules.md). Đây là bản lấy cảm hứng, không phải mô phỏng chính xác mọi mode/phiên bản Business Tour.
 
 ## Cấu trúc
 
 - `tour-data.ts`: map, `boardPosition`, giá, cấp xây, phí, mua lại, sự kiện và timer.
-- `tour-engine.ts`: luật server độc lập UI/network, RNG có thể inject khi test. `engine.ts`/`data.ts` là entry của luật hiện hành.
-- `tour-ui.ts`, `tour.css`, `landmarks.ts`: HUD, camera zoom/pan và mô hình SVG nguyên bản; `main.ts` là client entry.
+- `spec-engine.ts` qua `tour-engine.ts`: luật server độc lập UI/network, RNG có thể inject khi test. `engine.ts`/`data.ts` là entry của luật hiện hành.
+- `tour-ui.ts`, `tour.css`, `dice.css`, `dice.ts`, `landmarks.ts`: HUD, camera zoom/pan và mô hình SVG nguyên bản; `main.ts` là client entry.
 - `service.ts`: phiên/token, rate limit, command version/dedup, persist trước broadcast.
 - `src/monopoly-room.ts`: hàng đợi serial của Durable Object, storage và alarm.
 - `legacy-engine.ts`, `legacy-data.ts`: regression lịch sử v1; `monopoly-legacy.generated.js` chỉ phục vụ test, không import vào Worker hoặc game.
@@ -33,7 +33,7 @@ Cloudflare dùng binding `MONOPOLY`, migration SQLite `v7` hiện có trong `wra
 
 Node local dùng cùng service, lưu `.monopoly-local/` bằng temp-file + rename; startup khôi phục phòng và timer. Chỉ chạy một process local cho thư mục storage này. SessionStorage giữ token theo tab, localStorage chỉ giữ tên/cài đặt. Reload giữ ghế/màu/nhân vật; link mời không chuyển token sang thiết bị khác.
 
-Lobby giữ chỗ 60s, trong trận 120s; nếu tất cả offline giữ danh tính tối đa 30 phút và timer vẫn chạy. Chủ phòng rời sảnh chuyển quyền ghế nhỏ nhất. Trận cũ đang chạy chuyển sang màn giải thích `legacy`, giữ snapshot gốc private; chủ phòng bấm **Mở sảnh luật mới** để chủ động bắt đầu lại. Sảnh/đã kết thúc cũ chuyển về sảnh và hủy ready. Không âm thầm đổi tài sản v1 sang v2.
+Lobby giữ chỗ 60s, trong trận 120s; nếu tất cả offline giữ danh tính tối đa 30 phút và timer vẫn chạy. Chủ phòng rời sảnh chuyển quyền ghế nhỏ nhất. Trận cũ đang chạy chuyển sang màn giải thích `legacy`, giữ snapshot gốc private; chủ phòng bấm **Mở sảnh luật mới** để chủ động bắt đầu lại. Sảnh/đã kết thúc cũ chuyển về sảnh và hủy ready. Không âm thầm đổi tài sản giữa các ruleset.
 
 Limiter Worker giữ cấu hình hiện có: create 10/phút/IP, join/resume 30/phút/IP; command 20/10 giây/người. Local chỉ có giới hạn service. Chạy Worker giả lập với Wrangler khi cần kiểm tra binding/alarm thật: `npx.cmd wrangler dev --ip 0.0.0.0 --port 8787`. Không có deploy tự động.
 
@@ -44,14 +44,18 @@ npm.cmd run build
 npm.cmd run check:monopoly
 npm.cmd test
 npm.cmd run test:monopoly:browser
+npm.cmd run simulate:monopoly -- --matches 10000
 ```
 
-Browser test dùng bốn context độc lập, create/join/ready/start, mua/xây/thu phí/mua lại, lễ hội, du lịch, reload và restart backend ở phase chọn điểm đến, hoàn tất Tourist Monopoly, reconnect kết quả và rematch. Các fixture được inject trực tiếp từ process test; không có endpoint seed production. Có kiểm tra 32 vị trí riêng, bàn vuông, nhãn và viewport ở 1440/1024/760/390/320px, zoom reset. Screenshot nằm tại `dist/mebi-monopoly/{desktop,mobile,lobby}-qa.png`.
+Browser test dùng bốn context độc lập, create/join/ready/start, mua/xây/thu phí/mua lại, lễ hội, du lịch, reload và restart backend ở phase chọn điểm đến, hoàn tất Tourist Monopoly, reconnect kết quả và rematch. Các fixture được inject trực tiếp từ process test; không có endpoint seed production. Có kiểm tra 32 vị trí riêng, bàn vuông, nhãn và viewport ở 1440/1024/760/390/320px, zoom reset, xúc xắc 3D đang chạy và dừng đúng kết quả server, hình 1/2/3 nhà + khách sạn. Screenshot nằm tại `dist/mebi-monopoly/{desktop,mobile,lobby}-qa.png`.
 
-Engine test kiểm tra mọi kiểu thắng, số dư không âm, luật sai phase và 12 trận mô phỏng seed chạy đến kết quả. Test DO dùng storage giả lập cho cạnh tranh ghế/nhân vật và restart. Chỉ báo pass sau khi thật sự chạy.
+Engine test kiểm tra mọi kiểu thắng, số dư không âm, luật sai phase, nợ sinh nhật và replay khớp state cuối (trận dài dùng lệnh rời trận hợp lệ để kiểm tra replay, không đổi luật kết thúc). Test DO dùng storage giả lập cho cạnh tranh ghế/nhân vật và restart. Chỉ báo pass sau khi thật sự chạy.
 
 ## Asset và giới hạn
 
 SVG địa điểm, ba khu thương hiệu, nhân vật, CSS và nhạc synth là nguyên bản, không dùng asset từ Business Tour. Wordmark Mebisoft/Mebifarm/Mebieco không phải logo chính thức. Giấy phép thuật toán v1: [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md). Không thay đổi R2 trong lần cập nhật này.
 
 Bản này có 2.5D SVG/CSS, không dùng WebGL. Animation nhân vật dùng chuyển động đơn giản theo sự kiện, chưa phải hệ skeletal 3D riêng cho từng nhân vật. Mobile overview ưu tiên tên và giá; zoom/pan hoặc bottom sheet để đọc chi tiết. Chưa xác minh trên Cloudflare thật, mạng công khai hoặc thiết bị di động vật lý. Storage archive không tự xóa; vận hành lâu dài cần chính sách retention. Không tự deploy.
+Simulator báo rõ `completed` và `budgetReached` sau ngân sách 2.000 lệnh, không gộp trận chưa kết thúc vào thắng. Báo cáo tại `dist/mebi-monopoly/simulation.json`. Replay server được chia phần qua `storage.ts` trong transaction Durable Object; seed và token không có trong snapshot công khai.
+
+Kết quả kiểm tra và giới hạn mô phỏng: [docs/mebi-monopoly-validation.md](../docs/mebi-monopoly-validation.md).
