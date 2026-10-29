@@ -15,7 +15,10 @@
 .board-stage{width:min(1120px,100%);max-width:100%}
 .game-layout.in-lobby{grid-template-columns:minmax(0,1fr) 320px;gap:28px;align-items:start}
 .in-lobby .board-stage{width:100%;max-width:1120px}
-.lobby-panel{margin-top:42px;max-height:none;overflow:visible;min-width:0}
+.room-info{grid-column:1;min-width:0}
+.room-info .players-hud{max-width:none;margin-bottom:0}
+body[data-phase]:not([data-phase="entry"]) main{padding-top:12px}
+.lobby-panel{grid-column:2;grid-row:1 / span 2;margin-top:42px;max-height:none;overflow:visible;min-width:0}
 .character svg{display:block;height:auto;max-width:100%;margin:0 auto 8px}
 .lobby-panel label{margin-top:18px}
 body[data-phase="lobby"] .action-bar{display:none}
@@ -54,7 +57,7 @@ body[data-phase="lobby"] main{padding-bottom:40px}
 }
 @media(max-width:1000px){
  .game-layout.in-lobby{grid-template-columns:minmax(0,1fr)}
- .lobby-panel{margin-top:0}
+ .lobby-panel{grid-column:1;grid-row:auto;margin-top:0}
  .lobby-panel .characters{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 @media(max-width:760px){
