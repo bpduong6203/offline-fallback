@@ -55,7 +55,8 @@ export default {
       if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
       return new Response(request.method === 'HEAD' ? null : chibiRush, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
     }
-    if (['/tower-city', '/tower-city/', '/__game/tower-city'].includes(url.pathname)) {
+    const decodedPath = decodeURIComponent(url.pathname).toLowerCase();
+    if (['/tower-city', '/tower-city/', '/__game/tower-city', '/tower city', '/tower city.html', '/tower-city.html'].includes(decodedPath)) {
       if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
       return new Response(request.method === 'HEAD' ? null : towerCity, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
     }

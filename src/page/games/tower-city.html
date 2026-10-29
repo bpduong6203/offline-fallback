@@ -94,7 +94,6 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 .card .new{color:var(--mint)}
 @media (prefers-reduced-motion:reduce){.pips i,#hint{transition:none}}
 </style>
-
 </head>
 <body>
 <div id="app" data-view="menu">
@@ -170,6 +169,7 @@ let view='menu',mode='city',S=null,city=null,cityL=null,muted=false;
 const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const savedBest=store.get('towercity.best')||{};
 let best={quick:Number(savedBest.quick)||0,city:Number(savedBest.city)||0};
+function saveCity(){try{if(city&&!city.over&&city.towers>0){store.set('towercity.city',{grid:city.grid,pop:city.pop,towers:city.towers})}else{store.set('towercity.city',null)}}catch(e){}}
 
 const hash=n=>{const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(s)};
 const hexRGB=c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));
@@ -206,10 +206,10 @@ const sfx={
 
 /* ---------- layout ---------- */
 function resize(){
-  const r=stage.getBoundingClientRect();SW=r.width;SH=r.height;
+  const r=stage.getBoundingClientRect();SW=Math.max(10,r.width||360);SH=Math.max(10,r.height||520);
   DPR=Math.min(2,window.devicePixelRatio||1);
   for(const c of [G,C]){c.width=Math.max(1,Math.round(SW*DPR));c.height=Math.max(1,Math.round(SH*DPR))}
-  scale=Math.min(SW/VW,SH/520);H=SH/scale;xOff=(SW/scale-VW)/2;
+  scale=Math.max(0.01,Math.min(SW/VW,SH/520));H=SH/scale;xOff=(SW/scale-VW)/2;
 }
 
 /* ---------- tower game ---------- */
@@ -558,7 +558,7 @@ function cellAt(e){
   return {r:row,c:k};
 }
 function hoverMsg(p){
-  const pm=$('#pmsg');if(!city.pending){pm.textContent='';return}
+  const pm=$('#pmsg');if(!pm)return;if(!city||!city.pending){pm.textContent='';return}
   if(!p){pm.textContent='';return}
   if(city.grid[p.r][p.c]){pm.textContent='Ô này đã có tòa nhà.';return}
   const T=TYPES[city.pending.type];
@@ -573,12 +573,10 @@ function place(r,k){
   city.grid[r][k]={type:p.type,floors:p.floors,pop:gain,anim:0};
   city.pop+=gain;city.towers++;city.pending=null;
   city.popups.push({x:cityL.ox+k*cityL.ts+cityL.ts/2,y:cityL.oy+r*cityL.ts,text:'+'+gain,t:0});
-  sfx.place();
-  renderPanel();
+  sfx.place();saveCity();renderPanel();
   if(cityFull())setTimeout(endCity,1100);
 }
-function endCity(){
-  city.over=true;
+function endCity(){city.over=true;saveCity();
   const nb=city.pop>best.city;if(nb){best.city=city.pop;store.set('towercity.best',best)}
   modal('Thành phố hoàn thành','<dl><dt>Dân số</dt><dd>'+city.pop.toLocaleString()+'</dd><dt>Số tòa nhà</dt><dd>'+city.towers+'</dd><dt>Kỷ lục</dt><dd>'+best.city.toLocaleString()+'</dd></dl>'+(nb?'<p class="new">Kỷ lục mới.</p>':''),
     [['Xây thành phố mới','primary',startCity],['Menu','ghost',goMenu]]);
@@ -615,9 +613,7 @@ function hudTick(){
     setText(lB,'Tòa nhà');setText(vB,city.towers+'/'+N*N);
   }
 }
-function show(v){
-  view=v;app.dataset.view=v;
-  $('#home').setAttribute('aria-label',v==='menu'?'Về trang chủ':'Về menu chính');
+function show(v){view=v;app.dataset.view=v;$('#home').setAttribute('aria-label',v==='menu'?'Về trang chủ':'Về menu chính');
   $('#menu').hidden=v!=='menu';G.hidden=v==='city';C.hidden=v!=='city';
   $('#panel').hidden=v!=='city';$('#hint').hidden=v!=='play';
   if(v==='play')$('#hint').classList.remove('gone');
@@ -628,7 +624,7 @@ function show(v){
 }
 function goMenu(){newGame('Q',0,true);show('menu')}
 function startQuick(){mode='quick';newGame('Q',0,false);show('play')}
-function startCity(){mode='city';newCity();enterCity()}
+function startCity(){mode='city';newCity();saveCity();enterCity()}
 function resumeCity(){mode='city';enterCity()}
 function enterCity(){show('city');renderPanel();hudTick()}
 function startTower(type){mode='city';newGame(type,TYPES[type].floors,false);show('play')}
@@ -659,23 +655,16 @@ addEventListener('keydown',e=>{
   if((e.code==='Space'||e.code==='Enter')&&view==='play'&&$('#modal').hidden){e.preventDefault();dropIt()}
 });
 addEventListener('keyup',e=>{if(e.code==='Space'&&view==='play')e.preventDefault()});
-C.addEventListener('pointermove',e=>{const p=cellAt(e);city.hover=p;hoverMsg(p)});
+C.addEventListener('pointermove',e=>{if(!city)return;const p=cellAt(e);city.hover=p;hoverMsg(p)});
 C.addEventListener('pointerleave',()=>{city.hover=null;hoverMsg(null)});
 C.addEventListener('pointerdown',e=>{
-  const p=cellAt(e);city.hover=p;hoverMsg(p);
+  if(!city)return;const p=cellAt(e);city.hover=p;hoverMsg(p);
   if(p&&city.pending&&valid(p.r,p.c,city.pending.type))place(p.r,p.c);
 });
 $('#bCity').onclick=startCity;
 $('#bQuick').onclick=startQuick;
 $('#bResume').onclick=resumeCity;
-$('#home').onclick=e=>{
-  e.currentTarget.blur();
-  if(view==='menu'){
-    location.assign('/');
-  }else{
-    goMenu();
-  }
-};
+$('#home').onclick=e=>{e.currentTarget.blur();goMenu()};
 $('#mute').onclick=e=>{
   muted=!muted;const b=e.currentTarget;b.setAttribute('aria-pressed',String(muted));
   b.setAttribute('aria-label',muted?'Bật âm thanh':'Tắt âm thanh');$('#waves').style.display=muted?'none':'';b.blur();
@@ -684,7 +673,7 @@ addEventListener('resize',resize);
 if(window.ResizeObserver)new ResizeObserver(resize).observe(stage);
 
 /* ---------- loop ---------- */
-resize();newCity();city=null;newGame('Q',0,true);show('menu');
+resize();newCity();try{const sc=store.get('towercity.city');if(sc&&Array.isArray(sc.grid)&&sc.towers>0){city={grid:sc.grid,pop:Number(sc.pop)||0,disp:Number(sc.pop)||0,towers:Number(sc.towers)||0,pending:null,hover:null,popups:[],t:0,over:false}}else{city=null}}catch(e){city=null}newGame('Q',0,true);show('menu');
 let last=performance.now();
 function frame(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
@@ -696,5 +685,7 @@ function frame(now){
 requestAnimationFrame(frame);
 })();
 </script>
+
+
 </body>
 </html>

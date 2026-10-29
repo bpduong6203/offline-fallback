@@ -34,8 +34,14 @@ export async function build(){
   await buildUno();
   await buildMonopoly();
   try {
-    const tc = await readFile(path.join(root, 'tower-city.html'), 'utf8');
-    await writeFile(path.join(root, 'src/page/games/tower-city.html'), tc);
+    let tc = '';
+    try { tc = await readFile(path.join(root, 'Tower City.html'), 'utf8'); } catch {}
+    if (!tc) { tc = await readFile(path.join(root, 'tower-city.html'), 'utf8'); }
+    if (tc) {
+      await writeFile(path.join(root, 'src/page/games/tower-city.html'), tc);
+      await writeFile(path.join(root, 'tower-city.html'), tc);
+      await writeFile(path.join(root, 'Tower City.html'), tc);
+    }
   } catch {}
   return html;
 }

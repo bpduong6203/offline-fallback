@@ -313,6 +313,7 @@ test('UnoGame.playCards allows playing pairs of numbers and action cards', () =>
 
   game.currentTurn = 0;
   game.activeColor = 'red';
+  game.direction = 1;
   game.discardPile = [7]; // Red 7 on table
 
   const red1 = 1;
