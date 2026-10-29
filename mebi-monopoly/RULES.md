@@ -18,7 +18,7 @@ Ruleset **mebi-tour-spec-v1**, schema **3**, map **vietnam-32-v1**. Theo [đặc
 
 Trận cũ được giữ riêng; chủ phòng mở sảnh luật mới, không tự đổi kinh tế giữa trận. Replay JSON chỉ tải sau khi kết thúc; không lộ token, seed hoặc bộ bài tương lai trong snapshot đang chơi. Lịch sử chia phần và lưu atomically trong Durable Object.
 
-Xúc xắc khối 3D sáu mặt, tung/nảy/đổ bóng, dừng đúng kết quả server. Giảm chuyển động/bỏ qua/tải lại chỉ đổi trình bày. Nhà có 1/2/3 biểu tượng + số; khách sạn có biểu tượng + KS. Toàn cảnh vừa chiều cao màn hình, có zoom/pan để đọc chi tiết.
+Xúc xắc khối 3D sáu mặt, tung/nảy/đổ bóng, dừng đúng kết quả server. Giảm chuyển động/bỏ qua/tải lại chỉ đổi trình bày. Nhà có 1/2/3 biểu tượng + số; khách sạn có biểu tượng + KS. Bàn desktop rộng tối đa 1.120 px theo không gian ngang, không ép vừa chiều cao; cho phép cuộn dọc và zoom/pan để đọc chi tiết.
 
 ```powershell
 npm.cmd run build
