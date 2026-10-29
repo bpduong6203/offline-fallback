@@ -23,3 +23,10 @@ Chrome headless tắt GPU, nhiều context: bản ghi bình thường khoảng *
 Chưa deploy, chưa thử Cloudflare production, Internet công khai hoặc điện thoại vật lý. Live arena không persist qua restart, người chơi nhận thông báo vào lại; matcher directory/affinity có persistence. Không thay đổi tài khoản Cloudflare, không upload asset hoặc tạo bucket.
 
 Artifacts local trong `dist/mebi-snake/`: `menu-qa.png`, `playing-qa.png`, `mobile-qa.png`, `result-qa.png`, `load-test.json`, `load-test-long.json`, `browser-metrics.json`, `tests.txt`, `snake-tests.txt`.
+
+
+## Cập nhật bot tự động
+
+Thêm 1–4 bot vào mỗi arena đang có người, tách khỏi session/token/capacity. Kiểm tra mới xác nhận 10 người thật + 4 bot, người thứ 11 vẫn vào arena tiếp theo, snapshot count chỉ là số slot người thật, client không điều khiển bot bằng id, bot chết rơi food và thay mới, AI thực sự di chuyển, bot không giữ arena sau khi người cuối rời. Cửa sổ ACK khi join arena đang chạy cũng được khởi tạo tại tick hiện tại để chịu mất snapshot đầu.
+
+Node tests toàn project: **186/186 qua**; bộ Snake hiện **19 test**. Browser nhiều context/RTT/multi-touch/reconnect qua, HUD kiểm tra số người/bot riêng. Load test 11 WebSocket + bot, long snakes: arena 1 có 10 người + 2 bot, arena 2 có 1 người + 4 bot; p95 tick 2,36 ms, max 3,99 ms, 847 snapshots trong ~7 giây. Đây là mẫu đo local với arena đã mở rộng, không so trực tiếp với bản đồ cũ và không bảo đảm 60 FPS. Các chỉ số phần trên là lịch sử trước cập nhật bot.

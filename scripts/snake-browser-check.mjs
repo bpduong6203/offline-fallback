@@ -26,7 +26,7 @@ try{
  const shot=async(s,name)=>{const r=await cdp('Page.captureScreenshot',{format:'png'},s);await writeFile(new URL('../dist/mebi-snake/'+name+'.png',import.meta.url),Buffer.from(r.data,'base64'));};
  const click=async(s,id)=>evalIn(s,`document.getElementById('${id}').click()`);
  const one=await context('Bạn Một'),two=await context('Bạn Hai');await shot(one,'menu-qa');await click(one,'play');await click(two,'play');await until(()=>evalIn(one,'document.body.dataset.phase==="playing"'),'first spawn');await until(()=>evalIn(two,'document.body.dataset.phase==="playing"'),'second spawn');
- const service=app.snake.arenas.get(1),players=()=>[...service.arena.sessions.values()];assert.equal(players().length,2);assert.equal(players()[0].phase,'alive');
+ const service=app.snake.arenas.get(1),players=()=>[...service.arena.sessions.values()];assert.equal(players().length,2);assert.equal(players()[0].phase,'alive');assert.ok(service.arena.bots.size>=1&&service.arena.bots.size<=4);await until(()=>evalIn(one,'document.getElementById("arena-label").textContent.includes("2/10")&&document.getElementById("arena-label").textContent.includes("bot")'),'human/bot HUD counts');
  const first=players().find(p=>p.name==='Bạn Một'),second=players().find(p=>p.name==='Bạn Hai'),firstId=first.id;
  // These are process-local fixtures only; production has no seed/admin endpoint.
  function reset(s,x,y){Object.assign(s.snake,{x,y,angle:0,path:[{x,y},{x:x-290,y}],protectedUntil:0});s.input.angle=0;s.input.boost=false;}

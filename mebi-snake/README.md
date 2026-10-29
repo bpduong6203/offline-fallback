@@ -1,6 +1,6 @@
 # MebiRắn.io
 
-Game rắn online thật tại **`/snake`**, Canvas 2D + WebSocket, thêm vào Worker hiện có. Không bot, không tài khoản, không lobby/ready. Không dùng server hoặc asset của slither.io. JavaScript ES modules theo stack Worker/Canvas đang có; không thêm thư viện runtime frontend.
+Game rắn online thật tại **`/snake`**, Canvas 2D + WebSocket, thêm vào Worker hiện có. Mỗi đấu trường có 1–4 bot, không tài khoản, không lobby/ready. Không dùng server hoặc asset của slither.io. JavaScript ES modules theo stack Worker/Canvas đang có; không thêm thư viện runtime frontend.
 
 ## Chạy và chơi nhiều thiết bị
 
@@ -66,10 +66,19 @@ npm.cmd run test:snake:load -- --long
 npm.cmd run test:snake:browser
 ```
 
-Browser cần Chrome/Edge, hoặc `CHROME_PATH`. Load test mở 11 WebSocket thật với cùng service, xác nhận 10+1, đo tick/snapshot. `--long` là fixture trong process test cho mass tối đa, không phải endpoint production. Browser dùng các context độc lập, Input.dispatchMouseEvent/KeyEvent/TouchEvent, kiểm tra chuột/vòng tròn/Space/multi-touch/resize, reload, chết/chơi lại, RTT 50/100/200 ms + jitter + bỏ 12% snapshot ở tầng app và CPU throttling. Không mô phỏng bot để thay người thật.
+Browser cần Chrome/Edge, hoặc `CHROME_PATH`. Load test mở 11 WebSocket thật với cùng service, xác nhận 10+1, đo tick/snapshot. `--long` là fixture trong process test cho mass tối đa, không phải endpoint production. Browser dùng các context độc lập, Input.dispatchMouseEvent/KeyEvent/TouchEvent, kiểm tra chuột/vòng tròn/Space/multi-touch/resize, reload, chết/chơi lại, RTT 50/100/200 ms + jitter + bỏ 12% snapshot ở tầng app và CPU throttling. Client load test là WebSocket thật; bot của sản phẩm có nhãn riêng và không thay thế số người thật.
 
 Artifacts: `dist/mebi-snake/{menu,playing,mobile,result}-qa.png`, `load-test.json`, `load-test-long.json`, `browser-metrics.json`. FPS được đọc từ F2, tick ms từ server. Chrome headless software rendering nhiều context chưa chứng minh 60 FPS ổn định; bật giảm hiệu ứng giảm DPR và glow. Chưa kiểm tra Cloudflare thật, Internet công khai hoặc điện thoại vật lý.
 
 Kết quả đo cụ thể: [VALIDATION.md](VALIDATION.md).
 
 Điều chỉnh kích thước: bán kính 5.400 (đường kính 10.800, gấp 3 bản đầu); mỗi mass tăng 2,2 chiều dài thay vì 3,3 (tăng trưởng còn 2/3). Base length 156 giữ chiều dài xuất phát 288 ở mass 60.
+
+
+## Bot tự động trong đấu trường
+
+Mỗi arena chọn số bot từ **1 đến 4** khi khởi tạo và duy trì số đó trong lúc có session người thật. Bot được lưu riêng trong `Arena.bots`, không vào `sessions`, không có token/socket và không chiếm capacity/reservation/reconnect/result slot. Vì vậy vẫn đủ **10 người thật + tối đa 4 bot**; người thật thứ 11 vẫn vào arena tiếp theo. HUD ghi `x/10 · y bot`, tên trong trận và leaderboard có nhãn BOT.
+
+Bot xuất hiện sau khi người đầu tiên vào chơi, spawn an toàn gần người chơi, tìm thức ăn/di chuyển quanh khu vực có người, tránh biên/thân/đầu rắn, boost khi phù hợp. AI chỉ chọn hướng và boost từ geometry hiện tại; movement, giới hạn quay, tiêu hao mass, protection, food và collision dùng chung simulation. Bot chết thả thức ăn bình thường, bot mới thay thế ngay; spawn không an toàn thì thử lại tick sau, không có miễn va chạm đặc biệt. Người cuối rời/hết slot thì bot được dọn và không giữ arena sống quá idle timeout.
+
+Thông số `botMin`, `botMax`, `botThinkTicks` ở `config.js`; AI ở `bots.js`. Không có nút tạo bot hoặc tham gia matchmaking cho bot.
