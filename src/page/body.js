@@ -17,6 +17,7 @@ export const body = (hostname) => `  </style>
       <a class="tab" href="/?game=played"><span class="game-icon">🎮</span><span><b>YOU GOT PLAYED</b><small>Platformer đánh lừa</small></span></a>
       <a class="tab" href="/?game=motorways"><span class="game-icon">🚗</span><span><b>Mini Motorways</b><small>Nối đường và điều phối xe</small></span></a>
       <a class="tab" href="/?game=bangbang"><span class="game-icon">🚀</span><span><b>Bang Bang</b><small>Đấu trường xe tăng</small></span></a>
+      <a class="tab tab-link" href="/chibi-rush"><span class="game-icon">🏃</span><span><b>Chibi Rush</b><small>Đua vượt chướng ngại vật, tối đa 8 người</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <!-- <button class="tab" data-g="sword">⚔️ Đấu kiếm</button>  -->
       <a class="tab tab-link" href="/ty-phu"><span class="game-icon">▦</span><span><b>MebiMonopoly</b><small>Cờ tỷ phú online 2–4 người</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/tien-len"><span class="game-icon">🃏</span><span><b>Tiến Lên</b><small>Chơi bài cùng bạn bè</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
