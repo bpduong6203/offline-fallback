@@ -1,3 +1,4 @@
+import {CONFIG as C} from '../mebi-snake/config.js';
 import {spawn} from 'node:child_process';
 import {mkdtemp,writeFile} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
@@ -37,7 +38,7 @@ try{
  const rects=await evalIn(one,'["joystick","boost"].map(id=>{const r=document.getElementById(id).getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})');
  await cdp('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{id:1,x:rects[0].x+25,y:rects[0].y},{id:2,x:rects[1].x,y:rects[1].y}]},one);await until(()=>first.snake.boost,'mobile multi-touch boost');await cdp('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]},one);await until(()=>!first.snake.boost,'mobile release');await shot(one,'mobile-qa');
  await cdp('Page.reload',{},one);await until(()=>players().some(p=>p.id===firstId&&p.connected),'resume same snake');assert.equal(players().length,2);
- reset(first,1790,0);first.input.angle=0;await until(()=>first.phase==='dead','server wall death');await until(()=>evalIn(one,'document.body.dataset.phase==="dead"'),'death UI');await shot(one,'result-qa');await click(one,'again');await until(()=>first.phase==='alive','same arena respawn');assert.equal(first.id,firstId);
+ reset(first,C.radius-10,0);first.input.angle=0;await until(()=>first.phase==='dead','server wall death');await until(()=>evalIn(one,'document.body.dataset.phase==="dead"'),'death UI');await shot(one,'result-qa');await click(one,'again');await until(()=>first.phase==='alive','same arena respawn');assert.equal(first.id,firstId);
  const network=[];for(const rtt of [50,100,200]){const s=await context('RTT '+rtt,rtt);await click(s,'play');await until(()=>evalIn(s,'document.body.dataset.phase==="playing"'),'latency '+rtt);await cdp('Page.bringToFront',{},s);await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'F2'},s);await wait(1250);await until(()=>evalIn(s,'document.getElementById("debug").textContent.includes("FPS")'),'network debug');if(rtt===200){await cdp('Emulation.setCPUThrottlingRate',{rate:4},s);await wait(500);await cdp('Emulation.setCPUThrottlingRate',{rate:1},s);}network.push({simulatedRtt:rtt,debug:await evalIn(s,'document.getElementById("debug").textContent')});await click(s,'leave');}
  await writeFile(new URL('../dist/mebi-snake/browser-metrics.json',import.meta.url),JSON.stringify({debug,network},null,2));assert.deepEqual(errors,[]);console.log('MebiRắn.io browser PASS: two real contexts, mouse turn/circles, Space boost, mobile multi-touch/resize, same-snake reload, server death/respawn, 50/100/200 ms RTT+jitter+12% snapshot loss, no runtime exceptions.');
 }finally{socket?.close();child.kill();await app.close();}
