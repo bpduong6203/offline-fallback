@@ -18,10 +18,10 @@ export class ChibiRushRoom {
     if (req.headers.get('Upgrade') !== 'websocket') return new Response('ws only', { status: 426 });
     const [c, s] = Object.values(new WebSocketPair());
     s.accept();
-    const err = m => { s.send(JSON.stringify({ t: 'err', m })); s.close(1000, 'x'); };
+    const err = (m, retry) => { s.send(JSON.stringify({ t: 'err', m, retry: retry ? 1 : 0 })); s.close(1000, 'x'); };
     if (this.p.size === 0 && !u.searchParams.get('create')) err('Phòng không tồn tại');
-    else if (this.phase !== 'lobby') err('Phòng đang chơi, đợi ván sau');
-    else if (this.p.size >= 8) err('Phòng đã đủ 8 người');
+    else if (this.phase !== 'lobby') err('Phòng đang chơi, đợi ván sau', true);
+    else if (this.p.size >= 8) err('Phòng đã đủ 8 người', true);
     else {
       const id = crypto.randomUUID().slice(0, 6);
       const used = new Set([...this.p.values()].map(q => q.slot));
@@ -40,7 +40,7 @@ export class ChibiRushRoom {
     let m; try { m = JSON.parse(raw) } catch (e) { return }
     if (m.t === 'join') { me.name = String(m.name || 'Bạn').slice(0, 12); this.state(); }
     else if (m.t === 'pos') this.all({ t: 'pos', id: me.id, x: m.x, y: m.y, z: m.z, f: m.f }, me.id);
-    else if (m.t === 'start' && me.id === this.host && this.phase === 'lobby') {
+    else if (m.t === 'start' && me.id === this.host && this.phase === 'lobby' && this.p.size >= 2) {
       this.phase = 'count'; this.fin = []; this.t0 = Date.now() + 3000;
       this.all({ t: 'start', in: 3000 }); this.state();
       setTimeout(() => {
