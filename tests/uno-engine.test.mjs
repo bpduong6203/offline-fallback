@@ -339,6 +339,7 @@ test('UnoGame.playCards handles pair of Draw 2s (cumulative penalty)', () => {
 
   game.currentTurn = 0;
   game.activeColor = 'red';
+  game.direction = 1;
   game.discardPile = [0]; // Red 0
 
   const redDraw2 = 12;

@@ -1,0 +1,997 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"
+    />
+    <title>Party Cats</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #a9d8ff;
+        font-family: ui-rounded, "Nunito", system-ui, sans-serif;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      canvas {
+        display: block;
+      }
+      .ui {
+        position: fixed;
+        color: #2d2347;
+        font-weight: 800;
+      }
+      #hud {
+        top: max(10px, env(safe-area-inset-top));
+        left: 12px;
+        background: #fffd;
+        padding: 8px 12px;
+        border-radius: 14px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      #big {
+        top: 18%;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 80px;
+        text-shadow: 0 4px #fff;
+        pointer-events: none;
+      }
+      #menu {
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #a9d8ffe6;
+      }
+      .card {
+        background: #fff;
+        padding: 24px;
+        border-radius: 24px;
+        box-shadow: 0 8px 0 #f9a8d4;
+        display: grid;
+        gap: 10px;
+        width: min(330px, 88vw);
+      }
+      .card h1 {
+        margin: 0;
+        font-size: 32px;
+      }
+      input,
+      button {
+        font: inherit;
+        padding: 12px;
+        border-radius: 14px;
+        border: 3px solid #2d2347;
+        color: #2d2347;
+      }
+      button {
+        background: #ff9ed2;
+        cursor: pointer;
+        font-weight: 800;
+      }
+      button:focus-visible,
+      input:focus-visible {
+        outline: 3px solid #7c5cff;
+        outline-offset: 2px;
+      }
+      #ty {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      #ty button {
+        padding: 8px 0;
+        background: #fff;
+      }
+      #ty button[aria-pressed="true"] {
+        background: #ffd37a;
+      }
+      #start {
+        bottom: max(24px, env(safe-area-inset-bottom));
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        font-size: 20px;
+        padding: 14px 28px;
+      }
+      #acts {
+        right: max(14px, env(safe-area-inset-right));
+        bottom: max(18px, env(safe-area-inset-bottom));
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+      }
+      .ab {
+        display: grid;
+        justify-items: center;
+        gap: 6px;
+        width: 92px;
+        text-align: center;
+      }
+      .ab button {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        padding: 0;
+        font-size: 30px;
+        box-shadow: 0 5px 0 #2d2347;
+      }
+      .ab button:active {
+        transform: translateY(4px);
+        box-shadow: 0 1px 0 #2d2347;
+      }
+      .ab span {
+        font-size: 15px;
+        line-height: 1.15;
+        text-shadow: 0 1px #fff;
+      }
+      .ab small {
+        display: block;
+        font-size: 11px;
+        opacity: 0.8;
+      }
+      #punch {
+        background: #ff9ed2;
+      }
+      #grab {
+        background: #9ee0ff;
+      }
+      #jump {
+        background: #ffd37a;
+      }
+      #pad {
+        left: max(16px, env(safe-area-inset-left));
+        bottom: max(18px, env(safe-area-inset-bottom));
+        display: grid;
+        gap: 4px;
+        justify-items: center;
+        font-size: 15px;
+        text-shadow: 0 1px #fff;
+      }
+      #pad .kr {
+        display: flex;
+        gap: 4px;
+      }
+      #pad b {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        background: #fff;
+        border: 3px solid #2d2347;
+        border-radius: 10px;
+        box-shadow: 0 4px 0 #2d2347;
+      }
+      #pad b.on {
+        background: #ffd37a;
+        transform: translateY(3px);
+        box-shadow: 0 1px 0 #2d2347;
+      }
+      #stick {
+        left: 24px;
+        bottom: max(18px, env(safe-area-inset-bottom));
+        display: none;
+        text-align: center;
+        font-size: 14px;
+        text-shadow: 0 1px #fff;
+      }
+      #ring {
+        width: 104px;
+        height: 104px;
+        border-radius: 50%;
+        border: 4px solid #2d2347;
+        background: #fff8;
+        display: grid;
+        place-items: center;
+        margin-bottom: 4px;
+      }
+      #knob {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #ff9ed2;
+        border: 3px solid #2d2347;
+      }
+      @media (pointer: coarse) {
+        #pad {
+          display: none;
+        }
+        #stick {
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="hud" class="ui"></div>
+    <div id="big" class="ui"></div>
+    <button id="start" class="ui">Bắt đầu trận</button>
+    <div id="acts" class="ui">
+      <div class="ab">
+        <button id="jump" aria-label="Nhảy">🦘</button
+        ><span>Nhảy<small>Space</small></span>
+      </div>
+      <div class="ab">
+        <button id="grab" aria-label="Nắm và ném">✋</button
+        ><span>Nắm &amp; ném<small>giữ K, thả để ném</small></span>
+      </div>
+      <div class="ab">
+        <button id="punch" aria-label="Đấm">👊</button
+        ><span>Đấm<small>J</small></span>
+      </div>
+    </div>
+    <div id="pad" class="ui">
+      <div class="kr"><b data-k="w">W</b></div>
+      <div class="kr">
+        <b data-k="a">A</b><b data-k="s">S</b><b data-k="d">D</b>
+      </div>
+      <span>Di chuyển</span>
+    </div>
+    <div id="stick" class="ui">
+      <div id="ring"><div id="knob"></div></div>
+      Kéo để di chuyển
+    </div>
+    <div id="menu" class="ui">
+      <div class="card">
+        <h1>Party Cats</h1>
+        <input
+          id="name"
+          placeholder="Tên của bạn"
+          maxlength="12"
+          autocomplete="off"
+        />
+        <div id="ty">
+          <button aria-pressed="true">Mèo</button
+          ><button aria-pressed="false">Chó</button
+          ><button aria-pressed="false">Gấu</button
+          ><button aria-pressed="false">Thỏ</button>
+        </div>
+        <input
+          id="room"
+          placeholder="Mã phòng"
+          maxlength="24"
+          autocomplete="off"
+        />
+        <button id="go">Vào phòng</button>
+        <small
+          >Đấm, nắm rồi ném đối thủ khỏi đảo mây. Người cuối cùng còn trên đảo
+          thắng.<br />Máy tính: WASD di chuyển, Space nhảy, J đấm, giữ K nắm
+          (thả để ném).</small
+        >
+      </div>
+    </div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+        }
+      }
+    </script>
+    <script type="module">
+      import * as THREE from "three";
+      const $ = (id) => document.getElementById(id);
+      const R = new THREE.WebGLRenderer({ antialias: true });
+      R.setPixelRatio(Math.min(devicePixelRatio, 2));
+      document.body.prepend(R.domElement);
+      const S = new THREE.Scene();
+      S.background = new THREE.Color(0xa9d8ff);
+      S.fog = new THREE.Fog(0xcfe8ff, 50, 180);
+      const cam = new THREE.PerspectiveCamera(50, 1, 0.1, 300);
+      S.add(new THREE.HemisphereLight(0xffffff, 0xcfe0ff, 1.7));
+      const sun = new THREE.DirectionalLight(0xffffff, 1);
+      sun.position.set(5, 10, 6);
+      S.add(sun);
+      const oM = new THREE.MeshBasicMaterial({
+        color: 0x2d2347,
+        side: THREE.BackSide,
+      });
+      function mk(g, c, o = 1.07, p = S) {
+        const m = new THREE.Mesh(
+          g,
+          new THREE.MeshLambertMaterial({ color: c }),
+        );
+        if (o) {
+          const h = new THREE.Mesh(g, oM);
+          h.scale.setScalar(o);
+          m.add(h);
+        }
+        p.add(m);
+        return m;
+      }
+      const B = (w, h, d) => new THREE.BoxGeometry(w, h, d),
+        Sp = (r) => new THREE.SphereGeometry(r, 16, 12);
+      const COL = [0xff9ed2, 0xffd37a, 0x9ee0ff, 0xc9a0ff, 0xa8f0b8, 0xff9a5c];
+
+      // Đảo + mây + thanh quét ở giữa
+      const arena = mk(
+        new THREE.CylinderGeometry(14, 14, 1, 48),
+        0xffffff,
+        1.02,
+      );
+      arena.position.y = -0.5;
+      const cm = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      for (let i = 0; i < 60; i++) {
+        const g = new THREE.Group(),
+          s = 1.5 + Math.random() * 3,
+          a = Math.random() * 6.28,
+          d = 18 + Math.random() * 50;
+        for (let k = 0; k < 3; k++) {
+          const m = new THREE.Mesh(Sp(s * (0.6 + Math.random() * 0.5)), cm);
+          m.position.set(k * s * 0.8, Math.random() * s * 0.4, 0);
+          g.add(m);
+        }
+        g.position.set(
+          Math.cos(a) * d,
+          -4 - Math.random() * 8,
+          Math.sin(a) * d,
+        );
+        S.add(g);
+      }
+      mk(new THREE.CylinderGeometry(4, 4, 0.06, 40), 0xffd5ec, 0).position.y =
+        0.03;
+      mk(new THREE.CylinderGeometry(2, 2, 0.08, 40), 0xfdfd8c, 0).position.y =
+        0.04;
+
+      // Thú mềm nhũn
+      function animal(ty, col) {
+        const g = new THREE.Group(),
+          rig = new THREE.Group();
+        g.add(rig);
+        const c = COL[col],
+          d = new THREE.Color(c).multiplyScalar(0.86).getHex();
+        mk(Sp(0.55), d, 1.1, rig).position.y = 0.6;
+        const head = mk(Sp(0.72), c, 1.07, rig);
+        head.position.y = 1.4;
+        const fc = mk(Sp(0.45), 0xffffff, 0, head);
+        fc.position.set(0, -0.12, 0.4);
+        fc.scale.set(1, 0.75, 0.7);
+        [-1, 1].forEach((s) => {
+          mk(Sp(0.07), 0x2d2347, 0, head).position.set(s * 0.26, 0.08, 0.66);
+          let e;
+          if (ty === 0) {
+            e = mk(new THREE.ConeGeometry(0.2, 0.4, 4), c, 1.1, head);
+            e.position.set(s * 0.45, 0.62, 0);
+            e.rotation.z = -s * 0.3;
+          } else if (ty === 1) {
+            e = mk(Sp(1), d, 1.07, head);
+            e.scale.set(0.2, 0.45, 0.15);
+            e.position.set(s * 0.7, 0, 0);
+          } else if (ty === 2) {
+            e = mk(Sp(0.22), d, 1.1, head);
+            e.position.set(s * 0.5, 0.55, 0);
+          } else {
+            e = mk(Sp(1), c, 1.07, head);
+            e.scale.set(0.17, 0.6, 0.12);
+            e.position.set(s * 0.25, 1, 0);
+          }
+        });
+        mk(Sp(0.09), 0x2d2347, 0, head).position.set(0, -0.05, 0.76);
+        const a = [-1, 1].map((s) => {
+          const m = mk(Sp(0.17), 0xffffff, 1.1, rig);
+          m.position.set(s * 0.62, 0.7, 0.1);
+          return m;
+        });
+        const f = [-1, 1].map((s) => {
+          const m = mk(Sp(0.2), 0xfdfd8c, 1.1, rig);
+          m.position.set(s * 0.25, 0.12, 0);
+          return m;
+        });
+        g.userData = { rig, head, a, f, t: Math.random() * 9, sq: 1, st: 0 };
+        return g;
+      }
+      function label(t) {
+        const c = document.createElement("canvas");
+        c.width = 256;
+        c.height = 64;
+        const x = c.getContext("2d");
+        x.font = "bold 36px system-ui";
+        x.textAlign = "center";
+        x.lineWidth = 8;
+        x.strokeStyle = "#fff";
+        x.strokeText(t, 128, 44);
+        x.fillStyle = "#2d2347";
+        x.fillText(t, 128, 44);
+        const s = new THREE.Sprite(
+          new THREE.SpriteMaterial({
+            map: new THREE.CanvasTexture(c),
+            depthTest: false,
+          }),
+        );
+        s.scale.set(3, 0.75, 1);
+        s.position.y = 3;
+        return s;
+      }
+      const lp = (m, x, y, z, k) => {
+        m.position.x += (x - m.position.x) * k;
+        m.position.y += (y - m.position.y) * k;
+        m.position.z += (z - m.position.z) * k;
+      };
+      // fl: 1 = choáng (ragdoll), 2 = đang nắm, 4 = đang đấm
+      function anim(g, dt, spd, fl, vx, vz) {
+        const u = g.userData,
+          st = fl & 1,
+          k = Math.min(1, dt * 10);
+        u.t += dt * (2 + spd * 1.1);
+        if (st && !u.st) u.sq = 0.6;
+        u.st = st;
+        u.sq += (1 - u.sq) * Math.min(1, dt * 8);
+        u.rig.scale.set(1 / Math.sqrt(u.sq), u.sq, 1 / Math.sqrt(u.sq));
+        u.rig.rotation.x += ((st ? -1.35 : 0) - u.rig.rotation.x) * k;
+        u.rig.position.y += ((st ? 0.35 : 0) - u.rig.position.y) * k;
+        const sw = Math.sin(u.t * 3) * Math.min(1, spd / 4);
+        u.f.forEach((m, i) => {
+          const q = i ? -sw : sw;
+          m.position.z = q * 0.4;
+          m.position.y = 0.12 + Math.max(0, q) * 0.2;
+        });
+        u.head.position.x +=
+          ((st ? Math.sin(u.t * 2) * 0.4 : -vx * 0.025) - u.head.position.x) *
+          Math.min(1, dt * 6);
+        u.head.position.z +=
+          ((st ? 0 : -vz * 0.025) - u.head.position.z) * Math.min(1, dt * 6);
+        u.head.rotation.z = -u.head.position.x * 0.8;
+        u.a.forEach((m, i) => {
+          const s = i ? 1 : -1;
+          if (fl & 2) lp(m, s * 0.5, 1.5, 0.8, k);
+          else if (fl & 4 && i) lp(m, 0.5, 0.95, 1.4, k);
+          else if (st)
+            lp(
+              m,
+              s * 0.8,
+              0.7 + Math.sin(u.t * 3 + i * 2) * 0.5,
+              Math.sin(u.t * 3.5 + i) * 0.6,
+              k,
+            );
+          else lp(m, s * 0.62, 0.7, 0.1 + (i ? sw : -sw) * 0.4, k);
+        });
+      }
+
+      // Trạng thái
+      const rm0 =
+        new URLSearchParams(location.search).get("room") ||
+        Math.random().toString(36).slice(2, 6);
+      $("room").value = rm0;
+      $("name").value = localStorage.pcName || "";
+      let ty = 0;
+      document.querySelectorAll("#ty button").forEach(
+        (b, i) =>
+          (b.onclick = () => {
+            ty = i;
+            document
+              .querySelectorAll("#ty button")
+              .forEach((x, j) => x.setAttribute("aria-pressed", i === j));
+          }),
+      );
+      const me = {
+        id: 0,
+        x: 0,
+        y: 0,
+        z: 0,
+        vx: 0,
+        vy: 0,
+        vz: 0,
+        r: 0,
+        stun: 0,
+        dmg: 0,
+        alive: true,
+        holding: 0,
+        gby: 0,
+        gt: 0,
+        ht: 0,
+        pt: 0,
+        pcd: 0,
+        gcd: 0,
+        g: null,
+      };
+      let ws,
+        phase = "lobby",
+        startAt = 0,
+        off = 0,
+        alive = [],
+        winner = 0,
+        roster = {},
+        col = Math.floor(Math.random() * 6),
+        goT = 0,
+        jb = 0,
+        pun = 0,
+        roomName = "";
+      const P = new Map(),
+        keys = {},
+        joy = { x: 0, y: 0 },
+        now = () => Date.now() + off;
+      const send = (m) =>
+        ws && ws.readyState === 1 && ws.send(JSON.stringify(m));
+      function spawn(circle) {
+        if (circle) {
+          const a = me.id * 2.4;
+          me.x = Math.sin(a) * 9;
+          me.z = Math.cos(a) * 9;
+          me.r = a + Math.PI;
+        } else {
+          me.x = (Math.random() - 0.5) * 8;
+          me.z = (Math.random() - 0.5) * 8;
+        }
+        me.y = me.vx = me.vy = me.vz = 0;
+        me.stun = me.dmg = 0;
+        me.gby = me.holding = 0;
+        me.alive = true;
+        if (me.g) me.g.visible = true;
+      }
+      function setRoster(r) {
+        roster = r;
+        for (const [k, v] of Object.entries(r)) {
+          const id = +k;
+          if (id === me.id) {
+            if (!me.g) {
+              me.g = animal(v[1], v[2]);
+              me.g.add(label(v[0]));
+              S.add(me.g);
+            }
+            continue;
+          }
+          if (!P.has(id)) {
+            const g = animal(v[1], v[2]);
+            g.add(label(v[0]));
+            g.visible = false;
+            S.add(g);
+            P.set(id, { g, x: 0, y: -99, z: 0, r: 0, f: 0, k: 0 });
+          }
+        }
+        for (const [id, p] of P)
+          if (!r[id]) {
+            S.remove(p.g);
+            P.delete(id);
+          }
+      }
+      function drop() {
+        if (me.holding) {
+          send({ t: "thr", to: me.holding, vx: 0, vy: 2, vz: 0 });
+          me.holding = 0;
+        }
+        me.gby = 0;
+      }
+      function knock(nx, nz, pw) {
+        if (!me.alive || phase === "countdown" || (me.gby && 0)) return;
+        me.dmg += pw;
+        const k = 1 + me.dmg / 50;
+        me.vx = nx * 9 * k;
+        me.vz = nz * 9 * k;
+        me.vy = 5 + Math.min(5, me.dmg / 20);
+        me.stun = 0.6 + Math.min(1.6, me.dmg / 70);
+        drop();
+      }
+      function onMsg(m) {
+        if (m.t === "hi") {
+          me.id = m.id;
+          off = m.now - Date.now();
+          phase = m.phase;
+          startAt = m.startAt;
+          alive = m.alive;
+          winner = m.winner;
+          setRoster(m.roster);
+          spawn();
+          if (phase === "play" || phase === "countdown") {
+            me.alive = false;
+            me.g.visible = false;
+          }
+        } else if (m.t === "ro") setRoster(m.roster);
+        else if (m.t === "p")
+          m.p.forEach(([id, x, y, z, r, f]) => {
+            const p = P.get(id);
+            if (p) {
+              p.x = x;
+              p.y = y;
+              p.z = z;
+              p.r = r;
+              p.f = f;
+              if (!p.k) {
+                p.k = 1;
+                p.g.position.set(x, y, z);
+              }
+            }
+          });
+        else if (m.t === "ph") {
+          const old = phase;
+          phase = m.phase;
+          startAt = m.startAt;
+          alive = m.alive;
+          winner = m.winner;
+          if (phase === "countdown") spawn(true);
+          else if (phase === "lobby" && old !== "lobby") spawn();
+          else if (phase === "play" && old === "countdown")
+            goT = performance.now();
+        } else if (m.t === "hit") knock(m.nx, m.nz, m.pw);
+        else if (m.t === "grab") {
+          if (me.alive && !me.gby && phase !== "countdown") {
+            if (me.holding) drop();
+            me.gby = m.from;
+            me.gt = 0;
+          }
+        } else if (m.t === "thr") {
+          if (me.gby === m.from) {
+            me.gby = 0;
+            me.vx = m.vx;
+            me.vz = m.vz;
+            me.vy = m.vy;
+            me.stun = 1.2;
+            me.dmg += 15;
+          }
+        } else if (m.t === "brk") {
+          if (me.holding === m.from) me.holding = 0;
+        }
+      }
+      $("go").onclick = () => {
+        const rm = ($("room").value || "main").trim().toLowerCase(),
+          nm = ($("name").value || "Mèo").trim();
+        localStorage.pcName = nm;
+        roomName = rm;
+        history.replaceState(0, "", "?room=" + encodeURIComponent(rm));
+        ws = new WebSocket(
+          (location.protocol === "https:" ? "wss" : "ws") +
+            "://" +
+            location.host +
+            "/ws?room=" +
+            encodeURIComponent(rm),
+        );
+        ws.onopen = () => send({ t: "join", name: nm, ty, col });
+        ws.onmessage = (e) => onMsg(JSON.parse(e.data));
+        ws.onclose = () => {
+          $("big").style.fontSize = "34px";
+          $("big").textContent = "Mất kết nối, hãy tải lại trang";
+        };
+        $("menu").style.display = "none";
+      };
+      $("start").onclick = () => send({ t: "start" });
+
+      // Điều khiển
+      const AR = {
+        w: "arrowup",
+        a: "arrowleft",
+        s: "arrowdown",
+        d: "arrowright",
+      };
+      const mark = () =>
+        document
+          .querySelectorAll("#pad b")
+          .forEach((b) =>
+            b.classList.toggle(
+              "on",
+              !!(keys[b.dataset.k] || keys[AR[b.dataset.k]]),
+            ),
+          );
+      addEventListener("keydown", (e) => {
+        if (e.repeat) return;
+        keys[e.key.toLowerCase()] = 1;
+        mark();
+        if (e.code === "Space") {
+          jb = 0.15;
+          e.preventDefault();
+        }
+        if (e.key.toLowerCase() === "j") pun = 1;
+      });
+      addEventListener("keyup", (e) => {
+        keys[e.key.toLowerCase()] = 0;
+        mark();
+      });
+      $("jump").addEventListener("pointerdown", (e) => {
+        jb = 0.15;
+        e.preventDefault();
+      });
+      $("punch").addEventListener("pointerdown", (e) => {
+        pun = 1;
+        e.preventDefault();
+      });
+      $("grab").addEventListener("pointerdown", (e) => {
+        keys.btng = 1;
+        e.preventDefault();
+      });
+      ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
+        $("grab").addEventListener(ev, () => (keys.btng = 0)),
+      );
+      let jo = null;
+      R.domElement.addEventListener("pointerdown", (e) => {
+        if (e.clientX < innerWidth * 0.55)
+          jo = { id: e.pointerId, x: e.clientX, y: e.clientY };
+      });
+      addEventListener("pointermove", (e) => {
+        if (jo && e.pointerId === jo.id) {
+          joy.x = Math.max(-1, Math.min(1, (e.clientX - jo.x) / 50));
+          joy.y = Math.max(-1, Math.min(1, (e.clientY - jo.y) / 50));
+          $("knob").style.transform =
+            `translate(${joy.x * 28}px,${joy.y * 28}px)`;
+        }
+      });
+      addEventListener("pointerup", (e) => {
+        if (jo && e.pointerId === jo.id) {
+          jo = null;
+          joy.x = joy.y = 0;
+          $("knob").style.transform = "";
+        }
+      });
+      const resize = () => {
+        R.setSize(innerWidth, innerHeight);
+        cam.aspect = innerWidth / innerHeight;
+        cam.updateProjectionMatrix();
+      };
+      addEventListener("resize", resize);
+      resize();
+      const ang = (a, b, k) => {
+        const d = ((b - a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+        return a + d * k;
+      };
+      const near = (rng) => {
+        const f = [Math.sin(me.r), Math.cos(me.r)];
+        let best = 0,
+          bd = rng;
+        P.forEach((p, id) => {
+          const dx = p.x - me.x,
+            dz = p.z - me.z,
+            d = Math.hypot(dx, dz);
+          if (
+            d < bd &&
+            d > 0.01 &&
+            Math.abs(p.y - me.y) < 2 &&
+            (dx * f[0] + dz * f[1]) / d > 0.2
+          ) {
+            bd = d;
+            best = id;
+          }
+        });
+        return best;
+      };
+      const radius = () =>
+        phase === "play" || phase === "done"
+          ? Math.max(
+              6,
+              14 - Math.max(0, (now() - startAt - 30000) / 1000) * 0.15,
+            )
+          : 14;
+
+      let last = performance.now(),
+        sendT = 0,
+        hudS = "",
+        bigS = "",
+        tv = new THREE.Vector3();
+      function loop(t) {
+        requestAnimationFrame(loop);
+        const dt = Math.min((t - last) / 1000, 0.05);
+        last = t;
+        const T = now() / 1000,
+          Rr = radius();
+        arena.scale.set(Rr / 14, 1, Rr / 14);
+        if (me.g) {
+          if (me.alive) {
+            const frozen = phase === "countdown";
+            let ix =
+                (keys.d || keys.arrowright ? 1 : 0) -
+                (keys.a || keys.arrowleft ? 1 : 0) +
+                joy.x,
+              iz =
+                (keys.s || keys.arrowdown ? 1 : 0) -
+                (keys.w || keys.arrowup ? 1 : 0) +
+                joy.y;
+            const l = Math.hypot(ix, iz);
+            if (l > 1) {
+              ix /= l;
+              iz /= l;
+            }
+            if (me.stun > 0 || frozen) {
+              me.stun -= dt;
+              ix = iz = 0;
+            }
+            me.pcd -= dt;
+            me.pt -= dt;
+            me.gcd -= dt;
+            jb -= dt;
+            if (me.gby) {
+              const h = P.get(me.gby);
+              if (!h) me.gby = 0;
+              else {
+                me.gt += dt;
+                me.x = h.x + Math.sin(h.r) * 1.1;
+                me.z = h.z + Math.cos(h.r) * 1.1;
+                me.y = h.y + 1.3;
+                me.vx = me.vy = me.vz = 0;
+                me.stun = 0.3;
+                if ((jb > 0 && me.gt > 0.7) || me.gt > 3.5) {
+                  send({ t: "brk", to: me.gby });
+                  me.gby = 0;
+                  me.vy = 8;
+                  me.stun = 0.4;
+                  jb = 0;
+                }
+              }
+            }
+            if (!me.gby) {
+              if (pun && me.pcd <= 0 && me.stun <= 0 && !frozen) {
+                const f = [Math.sin(me.r), Math.cos(me.r)];
+                me.pt = 0.25;
+                me.pcd = 0.5;
+                me.vx += f[0] * 4;
+                me.vz += f[1] * 4;
+                P.forEach((p, id) => {
+                  const dx = p.x - me.x,
+                    dz = p.z - me.z,
+                    d = Math.hypot(dx, dz);
+                  if (
+                    d < 2 &&
+                    d > 0.01 &&
+                    Math.abs(p.y - me.y) < 2 &&
+                    (dx * f[0] + dz * f[1]) / d > 0.2
+                  )
+                    send({ t: "hit", to: id, nx: dx / d, nz: dz / d, pw: 12 });
+                });
+              }
+              const gk = keys.k || keys.shift || keys.btng;
+              if (gk && !me.holding && me.stun <= 0 && me.gcd <= 0 && !frozen) {
+                const id = near(1.8);
+                if (id) {
+                  me.holding = id;
+                  me.ht = 0;
+                  send({ t: "grab", to: id });
+                }
+              }
+              if (me.holding) {
+                me.ht += dt;
+                if (!P.has(me.holding) || me.ht > 3) me.holding = 0;
+              }
+              if (!gk && me.holding) {
+                const f = [Math.sin(me.r), Math.cos(me.r)];
+                send({
+                  t: "thr",
+                  to: me.holding,
+                  vx: f[0] * 16,
+                  vy: 8,
+                  vz: f[1] * 16,
+                });
+                me.holding = 0;
+                me.gcd = 0.5;
+              }
+              const sp = me.holding ? 5 : 9,
+                a = Math.min(
+                  1,
+                  dt * (me.stun > 0 ? 2.5 : me.y > 0.01 ? 4 : 12),
+                );
+              me.vx += (ix * sp - me.vx) * a;
+              me.vz += (iz * sp - me.vz) * a;
+              const on = Math.hypot(me.x, me.z) < Rr;
+              if (jb > 0 && me.y <= 0.001 && on && me.stun <= 0 && !frozen) {
+                me.vy = 11;
+                jb = 0;
+              }
+              me.vy -= 30 * dt;
+              me.x += me.vx * dt;
+              me.y += me.vy * dt;
+              me.z += me.vz * dt;
+              if (on && me.y <= 0 && me.vy <= 0) {
+                me.y = 0;
+                me.vy = 0;
+              }
+              P.forEach((p) => {
+                if (p.y < -6 || Math.abs(p.y - me.y) > 1.5) return;
+                const dx = me.x - p.x,
+                  dz = me.z - p.z,
+                  d = Math.hypot(dx, dz);
+                if (d < 1.1 && d > 0.01) {
+                  me.x += (dx / d) * (1.1 - d) * 0.4;
+                  me.z += (dz / d) * (1.1 - d) * 0.4;
+                }
+              });
+              if (ix || iz)
+                if (!me.holding)
+                  me.r = ang(me.r, Math.atan2(ix, iz), Math.min(1, dt * 14));
+                else me.r = ang(me.r, Math.atan2(ix, iz), Math.min(1, dt * 6));
+            }
+            me.dmg = Math.max(0, me.dmg - dt * 4);
+            if (me.y < -8) {
+              if (phase === "play") {
+                me.alive = false;
+                send({ t: "out" });
+                me.g.visible = false;
+                drop();
+              } else spawn();
+            }
+            me.g.position.set(me.x, me.y, me.z);
+            me.g.rotation.y = me.r;
+            const fl =
+              (me.stun > 0 ? 1 : 0) |
+              (me.holding ? 2 : 0) |
+              (me.pt > 0 ? 4 : 0);
+            anim(me.g, dt, Math.hypot(me.vx, me.vz), fl, me.vx, me.vz);
+            if ((sendT += dt) > 0.05) {
+              sendT = 0;
+              const q = (v) => Math.round(v * 100) / 100;
+              send({
+                t: "s",
+                x: q(me.x),
+                y: q(me.y),
+                z: q(me.z),
+                r: q(me.r),
+                f: fl,
+              });
+            }
+          }
+          pun = 0;
+        }
+        const k = 1 - Math.exp(-dt * 12);
+        let cx = 0,
+          cz = 0,
+          n = 0;
+        if (me.alive) {
+          cx += me.x;
+          cz += me.z;
+          n++;
+        }
+        P.forEach((p) => {
+          const o = p.g.position,
+            px = o.x,
+            pz = o.z;
+          o.lerp(tv.set(p.x, p.y, p.z), k);
+          p.g.rotation.y = ang(p.g.rotation.y, p.r, k);
+          p.g.visible = !!p.k && p.y > -6;
+          anim(
+            p.g,
+            dt,
+            Math.hypot(o.x - px, o.z - pz) / dt,
+            p.f,
+            (o.x - px) / dt,
+            (o.z - pz) / dt,
+          );
+          if (p.g.visible && p.y > -1) {
+            cx += p.x;
+            cz += p.z;
+            n++;
+          }
+        });
+        if (n) {
+          cx /= n;
+          cz /= n;
+        }
+        cam.position.lerp(
+          tv.set(cx * 0.6, 23, cz * 0.6 + 19),
+          1 - Math.exp(-dt * 3),
+        );
+        cam.lookAt(cx * 0.7, 0, cz * 0.7);
+        // giao diện
+        const nm = (id) => (roster[id] || ["?"])[0];
+        let big = "";
+        if (phase === "countdown")
+          big = Math.max(1, Math.ceil((startAt - now()) / 1000));
+        else if (phase === "play" && performance.now() - goT < 1000)
+          big = "ĐẤM!";
+        else if (phase === "done")
+          big = winner ? nm(winner) + " thắng!" : "Hòa";
+        else if (phase === "play" && !me.alive) big = "Bạn đã rơi!";
+        let hud = "Phòng: " + roomName + " · " + (P.size + 1) + " người";
+        if (phase === "play")
+          hud +=
+            "<br>Còn lại: " +
+            alive.length +
+            (me.alive ? " · Choáng " + Math.round(me.dmg) + "%" : "");
+        hud +=
+          "<br>" +
+          Object.values(roster)
+            .map((v) => v[0] + " ★" + v[3])
+            .join("<br>");
+        if (hud !== hudS) $("hud").innerHTML = hudS = hud;
+        if (big !== bigS) {
+          $("big").style.fontSize =
+            typeof big === "string" && big.length > 6 ? "44px" : "";
+          $("big").textContent = bigS = big;
+        }
+        $("start").style.display = phase === "lobby" && me.g ? "block" : "none";
+        R.render(S, cam);
+      }
+      requestAnimationFrame(loop);
+    </script>
+  </body>
+</html>
