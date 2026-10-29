@@ -1,6 +1,6 @@
 // Main Entry Point for Tiến Lên Miền Nam
 import {
-  Card, VALUES, SUITS, COMBO_TYPE,
+  Card, Combination, VALUES, SUITS, COMBO_TYPE,
   createDeck, shuffleDeck, dealCards, sortCards,
   identifyCombination, canBeat, isFreeJumpBeater,
   checkInstantWin, findValidPlays, calculatePenalties
@@ -46,6 +46,9 @@ class TienLenGameApp {
     this.passedPlayerIds = new Set();
     this.rankCounter = 1;
     this.isFirstGame = true;
+    this.isFirstTrick = true;
+    this.mustIncludeCard = null;
+    this.onlineListenersBound = false;
     this.turnTimer = null;
     this.turnTimeRemaining = 15;
     this.lobbyRoomCode = '';
@@ -280,6 +283,9 @@ class TienLenGameApp {
   }
 
   setupOnlineListeners() {
+    if (this.onlineListenersBound) return;
+    this.onlineListenersBound = true;
+
     // 1. LOBBY EVENT
     this.network.on('lobby', (msg) => {
       const isHost = this.network.playerId === msg.host;
@@ -327,6 +333,7 @@ class TienLenGameApp {
     this.network.on('started', () => {
       document.getElementById('lobbyOverlay').style.display = 'none';
       document.getElementById('roomBadge').innerHTML = `🌐 Phòng: <b>#${this.lobbyRoomCode}</b>`;
+      this.isFirstTrick = true;
       sounds.playDeal();
     });
 
@@ -337,6 +344,8 @@ class TienLenGameApp {
       this.currentCombo = state.currentCombo ? Combination.fromJSON(state.currentCombo) : null;
       this.currentTurn = state.currentTurn;
       this.passedPlayerIds = new Set(state.passedPlayerIds || []);
+      this.isFirstTrick = !!state.isFirstTrick;
+      this.mustIncludeCard = state.mustIncludeCard ? Card.fromJSON(state.mustIncludeCard) : null;
 
       const myInfo = state.players.find(p => p.id === this.network.playerId);
       if (myInfo && myInfo.hand) {
@@ -348,18 +357,25 @@ class TienLenGameApp {
       state.players.forEach((sp) => {
         const localIdx = (sp.id - this.network.playerId + 4) % 4;
         if (this.players[localIdx]) {
+          this.players[localIdx].id = sp.id;
           this.players[localIdx].name = sp.name;
+          this.players[localIdx].isBot = sp.isBot;
           this.players[localIdx].cardCount = sp.cardCount;
           this.players[localIdx].won = sp.won;
           this.players[localIdx].rank = sp.rank;
         }
       });
 
-      this.ui.renderArena(this.currentCombo, state.lastPlayerName);
-      this.ui.renderPlayers(this.players, this.currentTurn, this.passedPlayerIds);
+      this.ui.renderArena(this.currentCombo, state.lastPlayerName, this.isFirstTrick, this.mustIncludeCard);
+      this.ui.renderPlayers(this.players, this.currentTurn, this.passedPlayerIds, this.network.playerId);
       this.updateControls();
 
+      if (!state.ended) {
+        this.startOnlineTurnTimer();
+      }
+
       if (state.ended) {
+        clearInterval(this.turnTimer);
         this.endMatch();
       }
     });
@@ -372,8 +388,33 @@ class TienLenGameApp {
     });
 
     this.network.on('server_error', (msg) => {
-      alert(msg.message || 'Lỗi từ máy chủ phòng!');
+      sounds.playError();
+      this.effects.showBanner('Không thể đánh bài', msg.message || 'Lỗi từ máy chủ phòng!', 'chop');
     });
+  }
+
+  startOnlineTurnTimer() {
+    clearInterval(this.turnTimer);
+    this.turnTimeRemaining = 15;
+    this.ui.updateTimer(100, false);
+
+    this.turnTimer = setInterval(() => {
+      this.turnTimeRemaining -= 0.1;
+      const pct = (this.turnTimeRemaining / 15) * 100;
+      const isUrgent = this.turnTimeRemaining <= 5;
+      this.ui.updateTimer(pct, isUrgent);
+
+      if (isUrgent && Math.abs(Math.round(this.turnTimeRemaining) - this.turnTimeRemaining) < 0.05) {
+        sounds.playTick(true);
+      }
+
+      if (this.turnTimeRemaining <= 0) {
+        clearInterval(this.turnTimer);
+        if (this.currentTurn === this.network.playerId) {
+          this.handleTimeout();
+        }
+      }
+    }, 100);
   }
 
   startSoloMatch() {
@@ -410,6 +451,7 @@ class TienLenGameApp {
     }
 
     // Determine who goes first
+    this.isFirstTrick = true;
     if (this.isFirstGame) {
       let starterId = 0;
       for (const p of this.players) {
@@ -419,13 +461,15 @@ class TienLenGameApp {
         }
       }
       this.currentTurn = starterId;
+      this.mustIncludeCard = new Card(VALUES.THREE, SUITS.SPADE);
     } else {
       this.currentTurn = this.lastWinnerId || 0;
+      this.mustIncludeCard = null;
     }
 
     this.ui.renderHand(this.players[0].hand);
-    this.ui.renderArena(null);
-    this.ui.renderPlayers(this.players, this.currentTurn, this.passedPlayerIds);
+    this.ui.renderArena(null, '', this.isFirstTrick, this.mustIncludeCard);
+    this.ui.renderPlayers(this.players, this.currentTurn, this.passedPlayerIds, 0);
 
     this.startTurn();
   }
@@ -441,7 +485,7 @@ class TienLenGameApp {
 
     this.turnTimeRemaining = 15;
     this.ui.updateTimer(100, false);
-    this.ui.renderPlayers(this.players, this.currentTurn, this.passedPlayerIds);
+    this.ui.renderPlayers(this.players, this.currentTurn, this.passedPlayerIds, 0);
     this.updateControls();
 
     this.turnTimer = setInterval(() => {
@@ -472,12 +516,26 @@ class TienLenGameApp {
 
   handleTimeout() {
     const isNewRound = this.currentCombo === null;
+    const isFirstTrick = this.mode === 'online' ? this.isFirstTrick : (this.isFirstGame && this.isFirstTrick);
+    const mustInclude = this.mode === 'online'
+      ? (this.isFirstTrick ? this.mustIncludeCard : null)
+      : (isFirstTrick ? new Card(VALUES.THREE, SUITS.SPADE) : null);
+
     if (isNewRound) {
-      const hand = this.players[this.currentTurn].hand;
-      const plays = findValidPlays(hand, null, true);
+      const hand = this.players[0].hand;
+      const plays = findValidPlays(hand, null, true, mustInclude);
       if (plays.length > 0) {
-        this.executePlay(this.currentTurn, plays[0]);
+        if (this.mode === 'online') {
+          this.network.playCards(plays[0].cards.map(c => c.id));
+        } else {
+          this.executePlay(this.currentTurn, plays[0]);
+        }
+        return;
       }
+    }
+
+    if (this.mode === 'online') {
+      this.network.passTurn();
     } else {
       this.executePass(this.currentTurn);
     }
@@ -489,18 +547,24 @@ class TienLenGameApp {
       (this.currentTurn === 0 && !this.players[0].won);
 
     const isNewRound = this.currentCombo === null;
+    const isFirstTrick = this.mode === 'online' ? this.isFirstTrick : (this.isFirstGame && this.isFirstTrick);
+    const mustIncludeCard = this.mode === 'online' ? this.mustIncludeCard : (isFirstTrick ? new Card(VALUES.THREE, SUITS.SPADE) : null);
 
     this.ui.setControlsState({
       isMyTurn,
       isNewRound,
       currentCombo: this.currentCombo,
-      myHand: this.players[0].hand
+      myHand: this.players[0].hand,
+      isFirstTrick,
+      mustIncludeCard
     });
   }
 
   handleUserPlay(selectedCardIds) {
     if (this.mode === 'online') {
       if (this.currentTurn !== this.network.playerId) return;
+      this.ui.clearSelection();
+      sounds.playCard();
       this.network.playCards(selectedCardIds);
       return;
     }
@@ -510,11 +574,11 @@ class TienLenGameApp {
     const combo = identifyCombination(cards);
 
     const isNewRound = this.currentCombo === null;
-    const mustInclude = (this.isFirstGame && isNewRound) ? new Card(VALUES.THREE, SUITS.SPADE) : null;
+    const mustInclude = (this.isFirstGame && this.isFirstTrick) ? new Card(VALUES.THREE, SUITS.SPADE) : null;
 
     if (mustInclude && !cards.some(c => c.value === VALUES.THREE && c.suit === SUITS.SPADE)) {
       sounds.playError();
-      alert('Ván đầu tiên bắt buộc phải đánh lá Ba Bích (3♠)!');
+      this.effects.showBanner('Lượt đầu tiên', 'Bắt buộc phải đánh lá Ba Bích (3♠)!', 'chop');
       return;
     }
 
@@ -523,12 +587,14 @@ class TienLenGameApp {
       return;
     }
 
+    this.isFirstTrick = false;
     this.executePlay(0, combo);
   }
 
   handleUserPass() {
     if (this.mode === 'online') {
       if (this.currentTurn !== this.network.playerId) return;
+      this.ui.clearSelection();
       this.network.passTurn();
       return;
     }
@@ -544,7 +610,10 @@ class TienLenGameApp {
   handleUserHint() {
     const hand = this.players[0].hand;
     const isNewRound = this.currentCombo === null;
-    const mustInclude = (this.isFirstGame && isNewRound) ? new Card(VALUES.THREE, SUITS.SPADE) : null;
+    const isFirstTrick = this.mode === 'online' ? this.isFirstTrick : (this.isFirstGame && this.isFirstTrick);
+    const mustInclude = this.mode === 'online'
+      ? (this.isFirstTrick ? this.mustIncludeCard : null)
+      : (isFirstTrick ? new Card(VALUES.THREE, SUITS.SPADE) : null);
 
     const validPlays = findValidPlays(hand, this.currentCombo, isNewRound, mustInclude);
     if (validPlays.length > 0) {
@@ -576,12 +645,13 @@ class TienLenGameApp {
   executeBotTurn(botPlayer) {
     const ai = this.bots[botPlayer.id];
     const isNewRound = this.currentCombo === null;
-    const mustInclude = (this.isFirstGame && isNewRound) ? new Card(VALUES.THREE, SUITS.SPADE) : null;
+    const mustInclude = (this.isFirstGame && this.isFirstTrick) ? new Card(VALUES.THREE, SUITS.SPADE) : null;
     const enemySizes = this.players.filter(p => p.id !== botPlayer.id && !p.won).map(p => p.cardCount);
 
     const move = ai.chooseMove(botPlayer.hand, this.currentCombo, isNewRound, mustInclude, enemySizes);
 
     if (move) {
+      this.isFirstTrick = false;
       this.executePlay(botPlayer.id, move);
     } else {
       this.executePass(botPlayer.id);
@@ -627,6 +697,7 @@ class TienLenGameApp {
     this.currentCombo = combo;
     this.lastPlayerId = playerId;
     this.isFirstGame = false;
+    this.isFirstTrick = false;
 
     if (playerId === 0) {
       this.ui.clearSelection();

@@ -119,10 +119,15 @@ export class UIManager {
     this.updatePlayButton();
   }
 
-  renderArena(boardCombo, lastPlayerName = '') {
+  renderArena(boardCombo, lastPlayerName = '', isOpeningTrick = false, openingCard = null) {
     this.elArenaCards.innerHTML = '';
     if (!boardCombo || !boardCombo.cards || boardCombo.cards.length === 0) {
-      this.elArenaMsg.textContent = 'Vòng mới - Hãy ra bài mở đầu';
+      if (isOpeningTrick) {
+        const cardStr = openingCard ? openingCard.toString() : '3♠';
+        this.elArenaMsg.textContent = `Lượt đầu tiên: Bắt buộc đánh bài có chứa lá ${cardStr}`;
+      } else {
+        this.elArenaMsg.textContent = 'Vòng mới - Hãy ra bài mở đầu';
+      }
       return;
     }
 
@@ -143,7 +148,7 @@ export class UIManager {
     }
   }
 
-  renderPlayers(players, currentTurn, passedPlayerIds = new Set()) {
+  renderPlayers(players, currentTurn, passedPlayerIds = new Set(), myPlayerId = 0) {
     players.forEach((p, idx) => {
       const pod = this.playerPods[idx];
       if (!pod) return;
@@ -169,7 +174,7 @@ export class UIManager {
           statusTag.textContent = 'Bỏ lượt';
           statusTag.style.display = 'block';
         } else if (isCurrent) {
-          statusTag.textContent = 'Đang nghĩ...';
+          statusTag.textContent = (p.id === myPlayerId) ? '🔥 Đến lượt bạn!' : 'Đang nghĩ...';
           statusTag.style.display = 'block';
         } else {
           statusTag.style.display = 'none';
@@ -178,8 +183,8 @@ export class UIManager {
     });
   }
 
-  setControlsState({ isMyTurn, isNewRound, currentCombo, myHand }) {
-    this.currentContext = { isMyTurn, isNewRound, currentCombo, myHand };
+  setControlsState({ isMyTurn, isNewRound, currentCombo, myHand, isFirstTrick = false, mustIncludeCard = null }) {
+    this.currentContext = { isMyTurn, isNewRound, currentCombo, myHand, isFirstTrick, mustIncludeCard };
     this.btnPass.disabled = !isMyTurn || isNewRound;
     this.btnHint.disabled = !isMyTurn;
     this.updatePlayButton();
@@ -191,8 +196,8 @@ export class UIManager {
       return;
     }
 
-    const { isNewRound, currentCombo, myHand } = this.currentContext;
-    const selected = myHand.filter(c => this.selectedCards.has(c.id));
+    const { isNewRound, currentCombo, myHand, isFirstTrick, mustIncludeCard } = this.currentContext;
+    const selected = (myHand || []).filter(c => this.selectedCards.has(c.id));
 
     if (selected.length === 0) {
       this.btnPlay.disabled = true;
@@ -200,7 +205,13 @@ export class UIManager {
     }
 
     const combo = identifyCombination(selected);
-    const valid = combo.type !== COMBO_TYPE.INVALID && canBeat(currentCombo, combo, isNewRound);
+    let valid = combo.type !== COMBO_TYPE.INVALID && canBeat(currentCombo, combo, isNewRound);
+
+    if (valid && isFirstTrick && mustIncludeCard) {
+      const match = selected.some(c => c.value === mustIncludeCard.value && c.suit === mustIncludeCard.suit);
+      if (!match) valid = false;
+    }
+
     this.btnPlay.disabled = !valid;
   }
 

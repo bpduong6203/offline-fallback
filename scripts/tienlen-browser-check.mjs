@@ -148,12 +148,83 @@ try {
 
   const roomIdText = await evaluate('document.getElementById("lobbyRoomId").textContent');
   assert.match(roomIdText, /^#[A-Z0-9]{4}$/, 'Room ID should be formatted as #XXXX');
+  const roomCode = roomIdText.replace('#', '');
 
-  // Leave lobby back to menu
-  await evaluate('document.getElementById("btnLobbyLeave").click()');
+  // Connect a friend peer via WebSocket
+  const friendWs = new WebSocket(`ws://127.0.0.1:${server.address().port}/__game/ws?g=tienlen&room=${roomCode}&action=join&name=FriendPlayer`);
+  await new Promise(resolve => friendWs.addEventListener('open', resolve, { once: true }));
+
+  const friendMessages = [];
+  friendWs.addEventListener('message', ev => {
+    try { friendMessages.push(JSON.parse(ev.data)); } catch (e) {}
+  });
+
+  await wait(300);
+
+  // Host clicks "Bắt đầu chơi"
+  await evaluate('document.getElementById("btnLobbyStart").click()');
+  await wait(500);
+
+  // Verify lobby closed and match started
+  const isLobbyClosed = await evaluate('getComputedStyle(document.getElementById("lobbyOverlay")).display === "none"');
+  assert.equal(isLobbyClosed, true, 'Lobby overlay should close when match starts');
+
+  // Find latest state for both host and guest
+  const hostState = await evaluate('window.__tl_test_state || { currentTurn: document.querySelector(".player-pod.active")?.id, has3S: !!document.querySelector("#userCards [data-id=\'3_0\']") }');
+  const friendState = friendMessages.filter(m => m.t === 'state').pop();
+  assert.ok(friendState, 'Friend should have received state message');
+
+  const hostHas3S = await evaluate('!!document.querySelector("#userCards [data-id=\'3_0\']")');
+  const friendHas3S = friendState.state.players.find(p => p.id === 1)?.hand?.some(c => c.value === 3 && c.suit === 0);
+
+  assert.ok(hostHas3S || friendHas3S, 'One of the two human players must hold 3 of Spades');
+
+  if (hostHas3S) {
+    // Host is the first player!
+    const pod0Active = await evaluate('document.getElementById("pod0").classList.contains("active")');
+    assert.equal(pod0Active, true, 'Host pod0 should be active when Host goes first');
+
+    const pod0Status = await evaluate('document.querySelector("#pod0 .status-tag").textContent');
+    assert.ok(pod0Status.includes('Đến lượt bạn'), 'Host status should indicate it is their turn');
+
+    // Select 3 of Spades
+    await evaluate('document.querySelector("#userCards [data-id=\'3_0\']").click()');
+    const playEnabled = await evaluate('!document.getElementById("btnPlay").disabled');
+    assert.equal(playEnabled, true, 'btnPlay should be enabled when 3 of Spades is selected');
+
+    // Click "Đánh bài"
+    await evaluate('document.getElementById("btnPlay").click()');
+    await wait(400);
+
+    // Verify 3 of Spades is now in the center arena!
+    const arenaCardCount = await evaluate('document.querySelectorAll("#arenaCards .playing-card").length');
+    assert.equal(arenaCardCount, 1, 'Arena should display the played card');
+    const arenaVal = await evaluate('document.querySelector("#arenaCards .card-val").textContent');
+    assert.equal(arenaVal, '3', 'Played card must be 3');
+  } else {
+    // Friend is the first player!
+    const friendTurn = friendState.state.currentTurn;
+    assert.equal(friendTurn, 1, 'Friend (id: 1) should have the first turn');
+
+    // Friend plays 3 of Spades
+    friendWs.send(JSON.stringify({ t: 'play', cardIds: ['3_0'] }));
+    await wait(400);
+
+    // Verify Host sees Friend's card in center arena!
+    const arenaCardCount = await evaluate('document.querySelectorAll("#arenaCards .playing-card").length');
+    assert.equal(arenaCardCount, 1, 'Host should see Friend played card in arena');
+    const arenaVal = await evaluate('document.querySelector("#arenaCards .card-val").textContent');
+    assert.equal(arenaVal, '3', 'Played card in arena must be 3');
+  }
+
+  friendWs.close();
+  await wait(200);
+
+  // Return to menu
+  await evaluate('document.getElementById("btnMenu").click()');
   await wait(200);
   const menuBack = await evaluate('getComputedStyle(document.getElementById("menuOverlay")).display !== "none"');
-  assert.equal(menuBack, true, 'Should return to menu after leaving lobby');
+  assert.equal(menuBack, true, 'Should return to menu after clicking btnMenu');
 
   // 5. Check responsive sizing without overflow
   for (const [w, h] of [[1920, 1080], [1024, 768], [390, 844]]) {
