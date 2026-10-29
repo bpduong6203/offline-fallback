@@ -83,14 +83,14 @@ class_name = "MonopolyRoom"
 tag = "v7"
 new_sqlite_classes = ["MonopolyRoom"]
 
-[[migrations]]
-tag = "v8"
-new_sqlite_classes = ["UnoRoom"]
-
 [[durable_objects.bindings]]
 name = "CHIBIRUSH"
 class_name = "ChibiRushRoom"
 
 [[migrations]]
-tag = "v9"
+tag = "v8"
 new_sqlite_classes = ["ChibiRushRoom"]
+
+[[migrations]]
+tag = "v9"
+new_sqlite_classes = ["UnoRoom"]
