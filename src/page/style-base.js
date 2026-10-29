@@ -36,6 +36,8 @@ export const styleBase = `  <style>
     h1 { font-size: 1.35rem; color: #1e293b; margin-bottom: 8px; }
     p.sub { color: #64748b; font-size: 0.9rem; line-height: 1.5; margin-bottom: 14px; }
     .game-library { margin: 18px auto 16px; padding: 12px 14px 5px; border: 1px solid #ffedd5; border-radius: 18px; background: #fffaf5; box-shadow: inset 3px 3px 8px #f1dfcd, inset -3px -3px 8px #ffffff; }
+    .back-to-library { display: inline-flex; margin: 0 auto 14px; padding: 8px 14px; border-radius: 10px; background: #fff7ed; color: #9a3412; font-size: 0.85rem; font-weight: 700; text-decoration: none; }
+    .back-to-library:hover { background: #ffedd5; }
     .library-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 2px 8px; color: #9a3412; font-size: 0.72rem; letter-spacing: 0.08em; }
     .library-heading span { color: #94a3b8; font-size: 0.72rem; font-weight: 500; letter-spacing: 0; }
     .tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 0; padding: 2px 2px 9px; }

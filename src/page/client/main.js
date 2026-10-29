@@ -11,7 +11,7 @@ export const clientMain = `    // ===================== CHUNG ==================
     hint.textContent = flappy.hint;
 
     function switchTo(g) {
-      if (cur === games[g]) return;
+      if (!games[g]) return;
       if (cur.leave) cur.leave();
       cur = games[g];
       if (cur.enter) cur.enter();
@@ -29,7 +29,10 @@ export const clientMain = `    // ===================== CHUNG ==================
       document.getElementById('wolfui').hidden = (g !== 'wolf');
       document.getElementById('gameBox').hidden = (g === 'wolf');
       document.getElementById('g').hidden = (g === 'motorways' || g === 'bangbang');
-      document.getElementById('motorwaysFrame').hidden = (g !== 'motorways');
+      var mf = document.getElementById('motorwaysFrame');
+      mf.hidden = (g !== 'motorways');
+      if (g === 'motorways' && !mf.getAttribute('src')) mf.src = mf.getAttribute('data-src');
+      else if (g !== 'motorways' && mf.getAttribute('src')) { mf.src = 'about:blank'; mf.removeAttribute('src'); }
       var bbf = document.getElementById('bangBangFrame');
       if (bbf) {
         bbf.hidden = (g !== 'bangbang');
@@ -42,6 +45,15 @@ export const clientMain = `    // ===================== CHUNG ==================
     }
     for (var t = 0; t < tabs.length; t++) {
       tabs[t].addEventListener('click', function () { switchTo(this.getAttribute('data-g')); });
+    }
+    var requestedGame = new URLSearchParams(location.search).get('game');
+    if (requestedGame && games[requestedGame]) {
+      document.getElementById('homeLibrary').hidden = true;
+      document.getElementById('playScreen').hidden = false;
+      document.getElementById('homeTitle').hidden = true;
+      document.getElementById('homeIntro').hidden = true;
+      document.getElementById('playingTitle').textContent = ({ flappy: 'Flappy Bug', caro: 'Caro', '2048': '2048', wolf: 'Ma sói', played: 'YOU GOT PLAYED', motorways: 'Mini Motorways', bangbang: 'Bang Bang' })[requestedGame];
+      switchTo(requestedGame);
     }
 
     function pos(e) {

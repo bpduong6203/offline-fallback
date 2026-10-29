@@ -5,25 +5,28 @@ export const body = (hostname) => `  </style>
 <body>
   <div class="card">
     <div class="domain-badge">${hostname}</div>
-    <h1>Máy chủ local chưa bật 🐞</h1>
-    <p class="sub">Giúp con bug bay qua các tủ máy chủ, thử Ma sói hoặc YOU GOT PLAYED, hoặc rủ bạn bè chơi các mini game trong lúc chờ nhé. Khi có kết nối trang sẽ tự tải lại.</p>
-    <section class="game-library" aria-label="Thư viện trò chơi">
+    <h1 id="homeTitle">Chọn trò chơi</h1>
+    <p class="sub" id="homeIntro">Chọn một game để bắt đầu chơi trong lúc chờ máy chủ kết nối lại.</p>
+    <section class="game-library" id="homeLibrary" aria-label="Thư viện trò chơi">
       <div class="library-heading"><strong>CHỌN GAME</strong><span>Chọn một trò để bắt đầu</span></div>
       <nav class="tabs" aria-label="Danh sách game">
-      <button class="tab on" data-g="flappy" aria-pressed="true"><span class="game-icon">🐞</span><span><b>Flappy Bug</b><small>Vượt chướng ngại vật</small></span></button>
-      <button class="tab" data-g="caro" aria-pressed="false"><span class="game-icon">⭕</span><span><b>Caro</b><small>Đấu với máy hoặc bạn bè</small></span></button>
-      <button class="tab" data-g="2048" aria-pressed="false"><span class="game-icon">🔢</span><span><b>2048</b><small>Ghép ô số</small></span></button>
-      <button class="tab" data-g="wolf" aria-pressed="false"><span class="game-icon">🐺</span><span><b>Ma sói</b><small>Trò chơi suy luận nhóm</small></span></button>
-      <button class="tab" data-g="played" aria-pressed="false"><span class="game-icon">🎮</span><span><b>YOU GOT PLAYED</b><small>Platformer đánh lừa</small></span></button>
-      <button class="tab" data-g="motorways" aria-pressed="false"><span class="game-icon">🚗</span><span><b>Mini Motorways</b><small>Nối đường và điều phối xe</small></span></button>
-      <button class="tab" data-g="bangbang" aria-pressed="false"><span class="game-icon">🚀</span><span><b>Bang Bang</b><small>Đấu trường xe tăng</small></span></button>
+      <a class="tab on" href="/?game=flappy"><span class="game-icon">🐞</span><span><b>Flappy Bug</b><small>Vượt chướng ngại vật</small></span></a>
+      <a class="tab" href="/?game=caro"><span class="game-icon">⭕</span><span><b>Caro</b><small>Đấu với máy hoặc bạn bè</small></span></a>
+      <a class="tab" href="/?game=2048"><span class="game-icon">🔢</span><span><b>2048</b><small>Ghép ô số</small></span></a>
+      <a class="tab" href="/?game=wolf"><span class="game-icon">🐺</span><span><b>Ma sói</b><small>Trò chơi suy luận nhóm</small></span></a>
+      <a class="tab" href="/?game=played"><span class="game-icon">🎮</span><span><b>YOU GOT PLAYED</b><small>Platformer đánh lừa</small></span></a>
+      <a class="tab" href="/?game=motorways"><span class="game-icon">🚗</span><span><b>Mini Motorways</b><small>Nối đường và điều phối xe</small></span></a>
+      <a class="tab" href="/?game=bangbang"><span class="game-icon">🚀</span><span><b>Bang Bang</b><small>Đấu trường xe tăng</small></span></a>
       <!-- <button class="tab" data-g="sword">⚔️ Đấu kiếm</button>  -->
       <a class="tab tab-link" href="/tien-len"><span class="game-icon">🃏</span><span><b>Tiến Lên</b><small>Chơi bài cùng bạn bè</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/stickman-fight"><span class="game-icon">🥊</span><span><b>Stickman Showdown</b><small>Đối kháng người que</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/__game/bomb-arena"><span class="game-icon">✹</span><span><b>Bomb Arena</b><small>Đặt bom tranh đấu</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       </nav>
     </section>
-    <div class="game" id="gameBox"><canvas id="g"></canvas><div class="pg-touch" id="playedControls" hidden><div class="pg-touch-group"><button type="button" aria-label="Đi sang trái" data-played-control="left">←</button><button type="button" aria-label="Đi sang phải" data-played-control="right">→</button><button type="button" aria-label="Tạm dừng hoặc tiếp tục" data-played-control="pause">Ⅱ</button></div><button type="button" class="jump" aria-label="Nhảy" data-played-control="jump">NHẢY</button></div><iframe id="motorwaysFrame" title="Mini Motorways" src="/__game/mini-motorways" hidden></iframe><iframe id="bangBangFrame" title="Bang Bang đấu trường xe tăng" data-src="/__game/bang-bang" hidden></iframe></div>
+    <main id="playScreen" hidden>
+    <h1 id="playingTitle"></h1>
+    <a class="back-to-library" href="/">← Tất cả trò chơi</a>
+    <div class="game" id="gameBox"><canvas id="g"></canvas><div class="pg-touch" id="playedControls" hidden><div class="pg-touch-group"><button type="button" aria-label="Đi sang trái" data-played-control="left">←</button><button type="button" aria-label="Đi sang phải" data-played-control="right">→</button><button type="button" aria-label="Tạm dừng hoặc tiếp tục" data-played-control="pause">Ⅱ</button></div><button type="button" class="jump" aria-label="Nhảy" data-played-control="jump">NHẢY</button></div><iframe id="motorwaysFrame" title="Mini Motorways" data-src="/__game/mini-motorways" hidden></iframe><iframe id="bangBangFrame" title="Bang Bang đấu trường xe tăng" data-src="/__game/bang-bang" hidden></iframe></div>
     <div class="poolui" id="poolui" hidden>
       <div id="pMenu">
         <div class="row">
@@ -151,6 +154,7 @@ export const body = (hostname) => `  </style>
     <div class="hint" id="hint"></div>
     <div class="status" id="st">Đang tự động thử kết nối lại...</div>
     <button class="btn" id="reload">Tải lại trang</button>
+    </main>
   </div>
 
 `;
