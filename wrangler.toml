@@ -92,5 +92,5 @@ name = "CHIBIRUSH"
 class_name = "ChibiRushRoom"
 
 [[migrations]]
-tag = "v8"
+tag = "v9"
 new_sqlite_classes = ["ChibiRushRoom"]
