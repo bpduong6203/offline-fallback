@@ -47,13 +47,73 @@ export const clientMain = `    // ===================== CHUNG ==================
       tabs[t].addEventListener('click', function () { switchTo(this.getAttribute('data-g')); });
     }
     var requestedGame = new URLSearchParams(location.search).get('game');
+    var homeLibrary = document.getElementById('homeLibrary');
+    var homeTitle = document.getElementById('homeTitle');
+    var homeIntro = document.getElementById('homeIntro');
+    var homeStatus = document.getElementById('homeStatus');
+    var loginOverlay = document.getElementById('loginOverlay');
+    var loginForm = document.getElementById('loginForm');
+    var loginMessage = document.getElementById('loginMessage');
+    var loginAuthenticated = false;
+    function setLibraryAccess(allowed) {
+      loginAuthenticated = allowed;
+      homeLibrary.hidden = !allowed;
+      homeTitle.textContent = allowed ? 'Chọn trò chơi' : 'Máy chủ local chưa bật 🐞';
+      homeIntro.textContent = allowed ? 'Chọn một game để bắt đầu chơi trong lúc chờ máy chủ kết nối lại.' : 'Đang chờ máy chủ kết nối lại. Trang sẽ tự tải khi máy chủ hoạt động.';
+      homeStatus.hidden = allowed;
+      document.getElementById('loginForm').hidden = allowed;
+      document.getElementById('logoutButton').hidden = !allowed;
+      document.getElementById('loginTitle').textContent = allowed ? 'Đã đăng nhập' : 'Đăng nhập';
+      document.getElementById('loginIntro').textContent = allowed ? 'Bạn đã mở khóa thư viện trò chơi.' : 'Đăng nhập để mở thư viện trò chơi.';
+    }
+    function openLogin() {
+      loginMessage.textContent = '';
+      loginOverlay.hidden = false;
+      if (loginAuthenticated) document.getElementById('logoutButton').focus();
+      else document.getElementById('loginUsername').focus();
+    }
+    function closeLogin() { loginOverlay.hidden = true; }
+    document.getElementById('loginTrigger').addEventListener('click', openLogin);
+    document.getElementById('loginClose').addEventListener('click', closeLogin);
+    loginOverlay.addEventListener('click', function (event) { if (event.target === loginOverlay) closeLogin(); });
+    document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !loginOverlay.hidden) closeLogin(); });
+    loginForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var submit = document.getElementById('loginSubmit');
+      submit.disabled = true;
+      loginMessage.textContent = 'Đang đăng nhập...';
+      fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: document.getElementById('loginUsername').value, password: document.getElementById('loginPassword').value })
+      }).then(function (response) {
+        return response.json().then(function (data) { if (!response.ok) throw new Error(data.error || 'Không thể đăng nhập.'); return data; });
+      }).then(function () {
+        setLibraryAccess(true);
+        document.getElementById('loginPassword').value = '';
+        closeLogin();
+      }).catch(function (error) {
+        loginMessage.textContent = error.message || 'Không thể kết nối máy chủ đăng nhập.';
+      }).finally(function () { submit.disabled = false; });
+    });
+    document.getElementById('logoutButton').addEventListener('click', function () {
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }).finally(function () { location.assign('/'); });
+    });
     if (requestedGame && games[requestedGame]) {
+      setLibraryAccess(true);
       document.getElementById('homeLibrary').hidden = true;
       document.getElementById('playScreen').hidden = false;
       document.getElementById('homeTitle').hidden = true;
       document.getElementById('homeIntro').hidden = true;
       document.getElementById('playingTitle').textContent = ({ flappy: 'Flappy Bug', caro: 'Caro', '2048': '2048', wolf: 'Ma sói', played: 'YOU GOT PLAYED', motorways: 'Mini Motorways', bangbang: 'Bang Bang' })[requestedGame];
+      document.getElementById('st').hidden = false;
       switchTo(requestedGame);
+    } else {
+      fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' })
+        .then(function (response) { return response.ok ? response.json() : { authenticated: false }; })
+        .then(function (data) { setLibraryAccess(!!data.authenticated); })
+        .catch(function () { setLibraryAccess(false); });
     }
 
     function pos(e) {

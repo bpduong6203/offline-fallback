@@ -4,10 +4,11 @@ export const body = (hostname) => `  </style>
 </head>
 <body>
   <div class="card">
-    <div class="domain-badge">${hostname}</div>
-    <h1 id="homeTitle">Chọn trò chơi</h1>
-    <p class="sub" id="homeIntro">Chọn một game để bắt đầu chơi trong lúc chờ máy chủ kết nối lại.</p>
-    <section class="game-library" id="homeLibrary" aria-label="Thư viện trò chơi">
+    <button class="domain-badge" id="loginTrigger" type="button" aria-label="Đăng nhập để mở thư viện game">${hostname}</button>
+    <h1 id="homeTitle">Máy chủ local chưa bật 🐞</h1>
+    <p class="sub" id="homeIntro">Đang chờ máy chủ kết nối lại. Trang sẽ tự tải khi máy chủ hoạt động.</p>
+    <div class="status" id="homeStatus">Đang tự động thử kết nối lại...</div>
+    <section class="game-library" id="homeLibrary" aria-label="Thư viện trò chơi" hidden>
       <div class="library-heading"><strong>CHỌN GAME</strong><span>Chọn một trò để bắt đầu</span></div>
       <nav class="tabs" aria-label="Danh sách game">
       <a class="tab on" href="/?game=flappy"><span class="game-icon">🐞</span><span><b>Flappy Bug</b><small>Vượt chướng ngại vật</small></span></a>
@@ -26,6 +27,22 @@ export const body = (hostname) => `  </style>
       <a class="tab tab-link" href="/__game/bomb-arena"><span class="game-icon">✹</span><span><b>Bomb Arena</b><small>Đặt bom tranh đấu</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       </nav>
     </section>
+    <div class="login-overlay" id="loginOverlay" hidden>
+      <section class="login-panel" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+        <button class="login-close" id="loginClose" type="button" aria-label="Đóng">×</button>
+        <h2 id="loginTitle">Đăng nhập</h2>
+        <p id="loginIntro">Đăng nhập để mở thư viện trò chơi.</p>
+        <form id="loginForm">
+          <label for="loginUsername">Tên đăng nhập</label>
+          <input id="loginUsername" name="username" type="text" maxlength="256" autocomplete="username" required>
+          <label for="loginPassword">Mật khẩu</label>
+          <input id="loginPassword" name="password" type="password" maxlength="256" autocomplete="current-password" required>
+          <button class="mini login-submit" id="loginSubmit" type="submit">Đăng nhập</button>
+        </form>
+        <button class="mini login-submit" id="logoutButton" type="button" hidden>Đăng xuất</button>
+        <div class="pmsg login-message" id="loginMessage" role="status" aria-live="polite"></div>
+      </section>
+    </div>
     <main id="playScreen" hidden>
     <h1 id="playingTitle"></h1>
     <a class="back-to-library" href="/">← Tất cả trò chơi</a>

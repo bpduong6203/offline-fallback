@@ -9,6 +9,7 @@ import stickmanFight from './src/page/games/stickman-fight.generated.js';
 import tienLen from './src/page/games/tien-len.generated.js';
 import uno from './src/page/games/uno.generated.js';
 import { handleAssetRequest } from './src/asset-handler.js';
+import { handleAuthRequest, requireGameLogin, requiresGameLogin } from './src/auth.js';
 import monopoly from './src/page/games/mebi-monopoly.generated.js';
 import chibiRush from './src/page/games/chibi-rush.html';
 export { MonopolyRoom } from './src/monopoly-room.generated.js';
@@ -28,6 +29,13 @@ const OFFLINE_STATUS = new Set([502, 503, 504, 521, 522, 523, 524, 530]);
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (url.pathname.startsWith('/api/auth/')) return handleAuthRequest(request, env);
+    if (requiresGameLogin(url) && !(await requireGameLogin(request, env))) {
+      if ((request.headers.get('Upgrade') || '').toLowerCase() !== 'websocket' && ['GET', 'HEAD'].includes(request.method)) {
+        return Response.redirect(new URL('/', url), 302);
+      }
+      return new Response('Login required', { status: 401, headers: { 'Cache-Control': 'no-store' } });
+    }
     if (url.pathname === '/__assets' || url.pathname.startsWith('/__assets/')) {
       const resp = await serveImage(request, env, ctx);
       if (resp.status === 400 && typeof handleAssetRequest === 'function') {
