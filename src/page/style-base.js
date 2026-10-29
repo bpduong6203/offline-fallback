@@ -77,7 +77,7 @@ export const styleBase = `  <style>
       background: #ffedd5; color: #9a3412;
     }
     .mini:hover { background: #fed7aa; }
-    #pCode, #cCode, #sCode, #wCode {
+    #pCode, #cCode, #sCode, #wCode, #g2048Code {
       flex: 1; min-width: 0; padding: 10px 12px; border-radius: 12px;
       border: 2px solid #fed7aa; text-align: center; font-weight: 700;
       letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.9rem;
