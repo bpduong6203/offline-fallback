@@ -1,0 +1,76 @@
+.dice{--die-size:56px;position:relative;display:flex;flex-direction:column;align-items:center;gap:18px;font:inherit;margin:23px 0 16px;isolation:isolate;overflow:visible;min-width:155px}
+.dice-pair{display:flex;gap:30px;align-items:center;justify-content:center;padding:4px 12px 12px}
+.die-scene{position:relative;width:var(--die-size);height:var(--die-size);perspective:650px;perspective-origin:50% 25%;isolation:isolate}
+.die-cube{position:relative;width:100%;height:100%;transform-style:preserve-3d;will-change:transform;z-index:2}
+.die-face{position:absolute;inset:0;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);gap:5px;padding:10px;border-radius:11px;backface-visibility:hidden;border:1px solid #cbd5d1;background:linear-gradient(145deg,#fffef8,#f1f1e8);box-shadow:inset 0 0 0 2px #ffffffb3,inset 0 -5px 12px #bac8c433}
+.die-face .pip{display:block;border-radius:50%;background:#385a60;box-shadow:inset 0 1px 2px #17383f80,0 1px 1px #fff;visibility:hidden}.die-face .pip.visible{visibility:visible}
+.die-face.face-1{transform:translateZ(calc(var(--die-size)/2))}.die-face.face-2{transform:rotateY(90deg) translateZ(calc(var(--die-size)/2));background:#e4e9df}.die-face.face-3{transform:rotateX(90deg) translateZ(calc(var(--die-size)/2));background:#fffdf1}.die-face.face-4{transform:rotateX(-90deg) translateZ(calc(var(--die-size)/2));background:#dbe3dc}.die-face.face-5{transform:rotateY(-90deg) translateZ(calc(var(--die-size)/2));background:#e8ede5}.die-face.face-6{transform:rotateY(180deg) translateZ(calc(var(--die-size)/2));background:#f6f5eb}
+.die-shadow{position:absolute;width:90%;height:17px;background:#2f575a;border-radius:50%;filter:blur(6px);opacity:.18;bottom:-22px;left:5%;z-index:0}
+.dice-summary{font-size:12px;line-height:1.3;color:#6d9493;letter-spacing:.5px;min-height:18px}.dice-summary b{color:#375d66;font-size:18px}.dice.is-rolling .dice-summary{color:#d0955b}
+.dice:before{content:'';position:absolute;inset:-25px -30px -10px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse,#f4d89e55,transparent 70%);opacity:0;transition:opacity .2s}.dice.is-rolling:before{opacity:1}
+.building-marker{display:flex;gap:0;align-items:center;justify-content:center;pointer-events:none}.building-marker>svg{width:19px!important;height:23px!important;flex:0 1 19px;min-width:0;filter:drop-shadow(0 2px 1px #765f4b25)}.building-marker>strong{display:grid;place-items:center;font-size:9px;border-radius:5px;background:#f8e3b6;color:#886e41;min-width:14px;height:15px;flex-shrink:0;margin-left:1px}.building-marker.is-hotel>strong{background:#d9c9ef;color:#7b629f}
+.tile.has-building .landmark{display:none}.tile.has-building .building-marker{position:relative;max-height:43%;width:100%;flex:1 1 auto;min-height:0;margin:2px 0}.detail-landmark .building-marker{margin-top:8px}.detail-landmark .building-marker>svg{width:28px!important;height:34px!important;flex-basis:28px}
+
+/* Keep the map large. Page scrolling is preferable to shrinking its cells. */
+.board-stage{width:min(1120px,100%);max-width:100%}
+.game-layout.in-lobby{grid-template-columns:minmax(0,1fr) 320px;gap:28px;align-items:start}
+.in-lobby .board-stage{width:100%;max-width:1120px}
+.room-info{grid-column:1;min-width:0}
+.room-info .players-hud{max-width:none;margin-bottom:0}
+body[data-phase]:not([data-phase="entry"]) main{padding-top:12px}
+.lobby-panel{grid-column:2;grid-row:1 / span 2;margin-top:42px;max-height:none;overflow:visible;min-width:0}
+.character svg{display:block;height:auto;max-width:100%;margin:0 auto 8px}
+.lobby-panel label{margin-top:18px}
+body[data-phase="lobby"] .action-bar{display:none}
+body[data-phase="lobby"] main{padding-bottom:40px}
+.journal{position:static;max-width:1120px;width:100%;margin:0 auto}
+.status-badge{position:absolute;top:7px;left:2px;font-size:9px;padding:3px;border-radius:4px;color:#6e70a2;background:#e8e2f8}
+.status-badge.disabled-rent{background:#e9dfcc;color:#947b54}
+
+/* Scale the centre artwork and type to the board, not the browser width. */
+.board-center{container-type:inline-size;padding:16px;gap:8px}
+.board-center>*{flex-shrink:0;max-width:100%}
+.board-center>.eyebrow{font-size:clamp(5px,1.3cqw,11px);letter-spacing:1px}
+.board-center .mini-city{width:65%;height:clamp(42px,23cqw,165px);margin:0;flex-shrink:0}
+.mini-city svg{height:100%;object-fit:contain}
+.board-center h2{font-size:clamp(22px,8.5cqw,66px);letter-spacing:-.04em;line-height:1.12;margin:0;white-space:nowrap}
+.board-center>p{font-size:clamp(6px,1.65cqw,13px);line-height:1.5;margin:0}
+.board-center .dice{--die-size:clamp(28px,8cqw,62px);gap:16px;margin:22px 0 10px;font:inherit}
+.board-caption{font-size:clamp(8px,1.8cqw,14px)}
+.win-goals{gap:8px;margin-top:8px;flex-wrap:wrap;justify-content:center}
+.win-goals span{font-size:clamp(6px,1.35cqw,10px);padding:5px 9px}
+
+@container (max-width:400px){
+ .board-center>.eyebrow,.board-center>p{display:none}
+ .board-center .mini-city{height:20cqw;width:60%}
+ .board-center .dice{margin:12px 0 4px;gap:12px;min-width:0}
+ .dice-pair{gap:20px;padding:0 8px 8px}
+ .die-face{padding:6px;gap:3px;border-radius:7px}
+ .dice-summary{font-size:8px;min-height:12px}
+ .dice-summary b{font-size:12px}
+ .die-shadow{height:10px;bottom:-14px;filter:blur(4px)}
+ .win-goals{gap:4px;margin-top:0}
+ .win-goals span{padding:3px 5px}
+}
+@media(max-width:1100px){
+ .game-layout.in-lobby{grid-template-columns:minmax(0,1fr) 280px;gap:20px}
+}
+@media(max-width:1000px){
+ .game-layout.in-lobby{grid-template-columns:minmax(0,1fr)}
+ .lobby-panel{grid-column:1;grid-row:auto;margin-top:0}
+ .lobby-panel .characters{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:760px){
+ .board-center{padding:8px;gap:5px}
+ .board-stage{width:100%;max-width:100%}
+ .lobby-panel{width:100%;max-height:none;overflow:visible}
+ .lobby-panel .character svg{width:50px}
+ .tile.has-building .building-marker{margin:1px 0;max-height:36%}
+ .building-marker>svg{width:9px!important;height:11px!important;flex-basis:9px}
+ .building-marker>strong{font-size:5px;min-width:8px;height:9px;border-radius:3px}
+ .tile.has-building>small{display:none}
+ .tile.has-building>b{line-height:1.12}
+ .status-badge{font-size:5px;padding:1px;top:3px;left:1px}
+ .detail-landmark .building-marker>svg{width:23px!important;height:28px!important;flex-basis:23px}
+}
+@media(max-width:360px){.lobby-panel .characters{grid-template-columns:repeat(2,minmax(0,1fr))}}

@@ -32,7 +32,18 @@ export const styleBase = `  <style>
       font-size: 0.8rem; font-weight: 600;
       margin-bottom: 12px; word-break: break-all;
       box-shadow: inset 3px 3px 6px #e6d3be, inset -3px -3px 6px #ffffff;
+      border: 0; font-family: inherit; line-height: inherit; cursor: pointer;
     }
+    .login-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 18px; background: rgba(15, 23, 42, 0.48); }
+    .login-panel { position: relative; width: min(100%, 380px); padding: 26px 22px 18px; border: 1px solid #ffedd5; border-radius: 22px; background: #fff; text-align: left; box-shadow: 0 24px 70px rgba(51, 29, 15, 0.25); }
+    .login-panel h2 { margin: 0 28px 6px 0; color: #1e293b; font-size: 1.3rem; }
+    .login-panel p { margin: 0 0 18px; color: #64748b; font-size: 0.88rem; line-height: 1.45; }
+    .login-panel label { display: block; margin: 12px 0 5px; color: #475569; font-size: 0.8rem; font-weight: 700; }
+    .login-panel input { width: 100%; padding: 11px 12px; border: 1px solid #fed7aa; border-radius: 11px; color: #334155; background: #fffaf5; outline: none; }
+    .login-panel input:focus { border-color: #fb923c; box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.16); }
+    .login-close { position: absolute; top: 10px; right: 12px; width: 34px; height: 34px; border: 0; border-radius: 10px; color: #64748b; background: transparent; font-size: 1.5rem; cursor: pointer; }
+    .login-submit { width: 100%; margin-top: 16px; }
+    .login-message { min-height: 1.25em; margin-top: 10px; }
     h1 { font-size: 1.35rem; color: #1e293b; margin-bottom: 8px; }
     p.sub { color: #64748b; font-size: 0.9rem; line-height: 1.5; margin-bottom: 14px; }
     .game-library { margin: 18px auto 16px; padding: 12px 14px 5px; border: 1px solid #ffedd5; border-radius: 18px; background: #fffaf5; box-shadow: inset 3px 3px 8px #f1dfcd, inset -3px -3px 8px #ffffff; }

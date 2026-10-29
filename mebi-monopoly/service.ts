@@ -1,4 +1,4 @@
-import {createState,Engine,execute,snapshot,upgradeState,State} from './tour-engine';
+import {createState,Engine,execute,snapshot,upgradeState,exportReplay,State} from './tour-engine';
 export class RoomService {
  state:State; peers=new Map<any,string>(); limits=new Map<string,{time:number;count:number}>();
  constructor(state:State,public persist:(s:State)=>Promise<void>,public schedule:(time:number)=>Promise<void>){this.state=upgradeState(state);}
@@ -18,12 +18,15 @@ export class RoomService {
    this.peers.set(peer,p.id);this.state=engine.s;await this.save();this.broadcast();return;
   }
   this.rate(id);await this.tick();if(message.type==='sync'){peer.send(JSON.stringify({type:'state',state:snapshot(this.state)}));return;}
+  if(message.type==='replay'){peer.send(JSON.stringify({type:'replay',replay:exportReplay(this.state)}));return;}
   this.state=execute(this.state,id,message);await this.save();this.broadcast();
  }
  async disconnect(peer:any){const id=this.peers.get(peer);this.peers.delete(peer);if(!id||[...this.peers.values()].includes(id)||!this.state.players.some(p=>p.id===id))return;const engine=new Engine(structuredClone(this.state));engine.disconnect(id);this.state=engine.s;await this.save();this.broadcast();}
- async tick(){const engine=new Engine(structuredClone(this.state));if(engine.tick()){this.state=engine.s;await this.persist(this.state);this.broadcast();}if(!this.state.closed&&this.state.players.length)await this.schedule(Date.now()+1000);}
+ async tick(){const engine=new Engine(structuredClone(this.state));const timed=engine.tick(),bot=engine.botStep();if(timed||bot){this.state=engine.s;await this.persist(this.state);this.broadcast();}if(!this.state.closed&&this.state.players.length)await this.schedule(Date.now()+1000);}
  async request(request:Request){try{if(request.method!=='POST')return Response.json({error:'Chỉ hỗ trợ POST'},{status:405});const text=await request.text();if(text.length>1024)throw Error('Payload quá lớn');const body=JSON.parse(text);const op=new URL(request.url).pathname.split('/').pop()!;if(!['create','join','resume'].includes(op))throw Error('Đường dẫn không hợp lệ');return Response.json(await this.enter(op,body));}catch(e:any){return Response.json({error:e.message},{status:400});}}
 }
 export {createState};
-export {snapshot,Engine,execute,upgradeState} from './tour-engine';
-export {BOARD,RULES,GROUPS,SIDES,TOURISTS,CARDS,tileByKey,PREMIUM} from './tour-data';
+export {snapshot,Engine,execute,upgradeState,exportReplay,replayGame} from './tour-engine';
+export {BOARD,RULES,GROUPS,TRIPLETS,SIDES,TOURISTS,CARDS,tileByKey,PREMIUM,validateMap} from './tour-data';
+export {chooseBotAction} from './bots';
+export {readRoom,writeRoom} from './storage';

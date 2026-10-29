@@ -1,10 +1,11 @@
 import {RoomService,createState} from '../mebi-monopoly/service';
+import {readRoom,writeRoom} from '../mebi-monopoly/storage';
 // Every storage mutation and alarm goes through this queue, including WebSocket events.
 export class MonopolyRoom{
  service!:RoomService; chain:Promise<any>=Promise.resolve(); ready:Promise<void>; sockets=new Set<any>();
- constructor(public ctx:any){this.ready=ctx.blockConcurrencyWhile(async()=>{const state=await ctx.storage.get('room');this.service=new RoomService(state||createState(''),async s=>{await ctx.storage.put('room',s);},async time=>{await ctx.storage.setAlarm(time);});
+ constructor(public ctx:any){this.ready=ctx.blockConcurrencyWhile(async()=>{const state=await readRoom(ctx.storage);this.service=new RoomService(state||createState(''),async s=>{await writeRoom(ctx.storage,s);},async time=>{await ctx.storage.setAlarm(time);});
    // A restarted isolate has no live accepted sockets; persist disconnect deadlines.
-   if(state){const restored=this.service.state,now=Date.now();for(const p of restored.players)if(p.connected){p.connected=false;p.offline=now;p.ready=false;}if(!restored.allOffline)restored.allOffline=now;await ctx.storage.put('room',restored);await ctx.storage.setAlarm(now+1000);}
+   if(state){const restored=this.service.state,now=Date.now();for(const p of restored.players)if(p.connected&&!p.bot){p.connected=false;p.offline=now;p.ready=false;}if(!restored.allOffline)restored.allOffline=now;await writeRoom(ctx.storage,restored);await ctx.storage.setAlarm(now+1000);}
   });}
  serial<T>(fn:()=>Promise<T>):Promise<T>{const task=this.chain.then(()=>this.ready).then(fn);this.chain=task.catch(()=>{});return task;}
  async fetch(request:Request){return this.serial(async()=>{const url=new URL(request.url);

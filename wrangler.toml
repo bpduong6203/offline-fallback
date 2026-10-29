@@ -70,10 +70,6 @@ new_sqlite_classes = ["BangBangQueue"]
 name = "UNO"
 class_name = "UnoRoom"
 
-[[migrations]]
-tag = "v8"
-new_sqlite_classes = ["UnoRoom"]
-
 [[r2_buckets]]
 # Existing bucket: public image reads are served through /__assets/images/ only.
 binding = "IMAGES"
@@ -92,5 +88,9 @@ name = "CHIBIRUSH"
 class_name = "ChibiRushRoom"
 
 [[migrations]]
-tag = "v9"
+tag = "v8"
 new_sqlite_classes = ["ChibiRushRoom"]
+
+[[migrations]]
+tag = "v9"
+new_sqlite_classes = ["UnoRoom"]

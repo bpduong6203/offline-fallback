@@ -47,9 +47,11 @@
         position: fixed;
         inset: 0;
         display: block;
+        z-index: 0;
       }
       .card {
         position: fixed;
+        z-index: 10;
         background: var(--card);
         border-radius: 18px;
         padding: 10px 16px;
@@ -137,6 +139,7 @@
       }
       #cdn {
         position: fixed;
+        z-index: 10;
         top: 32%;
         left: 50%;
         transform: translate(-50%, -50%);
@@ -179,10 +182,12 @@
     <div id="menu" class="card pn">
       <h2>🏃 Chibi Rush</h2>
       <input id="nm" maxlength="12" placeholder="Tên của bạn" /><br /><button
-        id="bc"
+        id="bq"
       >
-        Tạo phòng
-      </button>
+        👥 Chơi nhiều người</button
+      ><br /><button id="bs" class="alt">🎮 Chơi một mình</button>
+      <div class="sm">hoặc phòng riêng với bạn bè:</div>
+      <button id="bc">Tạo phòng</button>
       <div class="row">
         <input id="cd_in" maxlength="4" placeholder="Mã phòng" /><button
           id="bj"
@@ -190,7 +195,6 @@
           Vào phòng
         </button>
       </div>
-      <button id="bs" class="alt">Chơi một mình (thử)</button>
       <div id="mm" class="sm"></div>
     </div>
     <div
@@ -976,7 +980,7 @@
         const dt = Math.min((now - last) / 1000, 0.05);
         last = now;
         if (go) T += dt;
-        if (!done) update(dt);
+        if (!done && phase !== "menu") update(dt);
         // hoạt ảnh nhân vật
         const spd = Math.hypot(P.vx, P.vz);
         P.anim += dt * spd * 1.4;
@@ -1224,6 +1228,7 @@
         };
       }
       function leave() {
+        qn = 0;
         if (ws) {
           try {
             ws.close();
@@ -1268,6 +1273,12 @@
           ? "Đợi thêm người rồi bấm Bắt đầu (tối đa 8)"
           : "Đợi chủ phòng bấm Bắt đầu…";
         $("st").style.display = isHost ? "inline-block" : "none";
+        const ok = offline || players.length >= 2;
+        $("st").disabled = !ok;
+        $("st").style.opacity = ok ? 1 : 0.5;
+        if (isHost && !ok)
+          $("lw").textContent =
+            "Cần ít nhất 2 người để bắt đầu – đang ghép người chơi…";
       }
       function startCount() {
         reset();
@@ -1318,8 +1329,20 @@
         $("win").style.display = "block";
       }
       function onMsg(m) {
-        if (m.t === "hello") myId = m.id;
-        else if (m.t === "err") {
+        if (m.t === "hello") {
+          myId = m.id;
+          qn = 0;
+        } else if (m.t === "err") {
+          if (m.retry && qn > 0 && qn < 20) {
+            qn++;
+            try {
+              ws.onclose = null;
+              ws.close();
+            } catch (e) {}
+            openQuick();
+            return;
+          }
+          qn = 0;
           $("mm").textContent = m.m;
           if (ws) ws.close();
         } else if (m.t === "state") {
@@ -1355,6 +1378,47 @@
           );
         else if (m.t === "results") showResults(m.list);
       }
+      let qn = 0;
+      function openQuick() {
+        const code = "PUB" + qn;
+        roomCode = "ngẫu nhiên";
+        $("mm").textContent = "Đang tìm phòng…";
+        let opened = false;
+        try {
+          ws = new WebSocket(
+            (location.protocol === "https:" ? "wss://" : "ws://") +
+              location.host +
+              "/ws?room=" +
+              code +
+              "&create=1&pub=1",
+          );
+        } catch (e) {
+          $("mm").textContent = "Chưa có server – hãy chơi một mình";
+          qn = 0;
+          return;
+        }
+        ws.onopen = () => {
+          opened = true;
+          ws.send(JSON.stringify({ t: "join", name: myName }));
+        };
+        ws.onmessage = (e) => onMsg(JSON.parse(e.data));
+        ws.onclose = () => {
+          if (!opened) {
+            $("mm").textContent =
+              "Không kết nối được server – thử chơi một mình";
+            qn = 0;
+          } else if (phase !== "menu") {
+            toast("Mất kết nối");
+            leave();
+          }
+        };
+      }
+      function quick() {
+        myName = $("nm").value.trim() || "Bạn" + ((Math.random() * 99) | 0);
+        qn = 1;
+        openQuick();
+      }
+      $("bq").onclick = quick;
       $("bc").onclick = () => connect(true);
       $("bj").onclick = () => connect(false);
       $("bs").onclick = () => {
