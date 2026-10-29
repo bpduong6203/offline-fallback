@@ -111,7 +111,7 @@ export function requiresGameLogin(url) {
   return path.startsWith('/__game/') || path.startsWith('/api/monopoly/') || [
     '/ty-phu', '/ty-phu/', '/chibi-rush', '/chibi-rush/',
     '/tien-len', '/tien-len/', '/uno', '/uno/', '/stickman-fight', '/stickman-fight/',
-    '/party-cats', '/party-cats/', '/tower-city', '/tower-city/'
+    '/party-cats', '/party-cats/', '/tower-city', '/tower-city/', '/co-ca-ngua', '/co-ca-ngua/'
   ].includes(path);
 }
 

@@ -17,9 +17,11 @@ import monopoly from './src/page/games/mebi-monopoly.generated.js';
 import chibiRush from './src/page/games/chibi-rush.html';
 import partyCats from './src/page/games/party-cats.html';
 import towerCity from './src/page/games/tower-city.html';
+import coCaNgua from './src/page/games/co-ca-ngua.html';
 export { MonopolyRoom } from './src/monopoly-room.generated.js';
 export { ChibiRushRoom } from './src/chibi-rush-room.js';
 export { PartyCatsRoom } from './src/party-cats-room.js';
+export { CoCaNguaRoom } from './src/co-ca-ngua/room.js';
 
 // Durable Object phải được export từ file entry
 export { PoolRoom } from './src/pool-room.js';
@@ -75,6 +77,21 @@ export default {
       const room = (url.searchParams.get('room') || 'main').toLowerCase().slice(0, 24);
       if (!room) return new Response('Mã phòng không hợp lệ', { status: 400 });
       return env.PARTYCATS.get(env.PARTYCATS.idFromName(room)).fetch(request);
+    }
+    if (['/co-ca-ngua', '/co-ca-ngua/'].includes(url.pathname)) {
+      if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+      return new Response(request.method === 'HEAD' ? null : coCaNgua, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
+    }
+    if (url.pathname === '/__game/co-ca-ngua/ws') {
+      if ((request.headers.get('Upgrade') || '').toLowerCase() !== 'websocket') return new Response('Cần WebSocket', { status: 426 });
+      const origin = request.headers.get('Origin');
+      if (origin) {
+        try { if (new URL(origin).host !== url.host) return new Response('Forbidden', { status: 403 }); }
+        catch { return new Response('Forbidden', { status: 403 }); }
+      }
+      const room = (url.searchParams.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+      if (!room) return new Response('Mã phòng không hợp lệ', { status: 400 });
+      return env.COCA.get(env.COCA.idFromName(room)).fetch(request);
     }
     const decodedPath = decodeURIComponent(url.pathname).toLowerCase();
     if (['/tower-city', '/tower-city/', '/__game/tower-city', '/tower city', '/tower city.html', '/tower-city.html'].includes(decodedPath)) {

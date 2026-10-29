@@ -115,3 +115,12 @@ class_name = "SnakeMatchmaker"
 [[migrations]]
 tag = "v11"
 new_sqlite_classes = ["SnakeArena", "SnakeMatchmaker"]
+
+# Cờ Cá Ngựa 3D: authoritative multiplayer rooms.
+[[durable_objects.bindings]]
+name = "COCA"
+class_name = "CoCaNguaRoom"
+
+[[migrations]]
+tag = "v12"
+new_sqlite_classes = ["CoCaNguaRoom"]

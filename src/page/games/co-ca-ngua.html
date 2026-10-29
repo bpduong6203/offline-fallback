@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cờ Cá Ngựa 3D</title>
+<style>
+:root{--bg1:#ffe3f1;--bg2:#d8ecff;--ink:#3b2f5c;--card:rgba(255,255,255,.93);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#2a2350;--bg2:#1c2f55;--ink:#f3eaff;--card:rgba(34,28,66,.94);color-scheme:dark}}
+:root[data-theme="dark"]{--bg1:#2a2350;--bg2:#1c2f55;--ink:#f3eaff;--card:rgba(34,28,66,.94);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:system-ui,"Segoe UI",Roboto,sans-serif;background:linear-gradient(var(--bg1),var(--bg2));color:var(--ink);overflow:hidden}
+canvas{position:fixed;inset:0;display:block;z-index:0;touch-action:none}
+#bar{position:fixed;z-index:5;top:calc(env(safe-area-inset-top,0px) + 8px);left:0;right:0;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:0 8px;pointer-events:none}
+.chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:14px;background:var(--card);font-weight:700;font-size:13px;border:3px solid transparent;transition:transform .2s}
+.chip.on{border-color:var(--ink);transform:scale(1.08)}
+.dot{width:14px;height:14px;border-radius:50%}
+#ctl{position:fixed;z-index:5;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px}
+#msg{font-weight:700;background:var(--card);padding:6px 14px;border-radius:14px;min-height:1.6em;text-align:center;max-width:90vw}
+#msg:empty{display:none}
+button{font:inherit;font-weight:800;border:0;border-radius:14px;padding:10px 22px;margin-top:10px;background:#ff7eb6;color:#fff;cursor:pointer;box-shadow:0 4px 0 #d2588f}
+button:disabled{cursor:default}
+button.alt{background:#8e7bff;box-shadow:0 4px 0 #6a58cc}
+#roll{margin-top:0;font-size:18px;padding:12px 30px}
+.card{position:fixed;z-index:10;background:var(--card);border-radius:18px;padding:12px 18px;font-weight:700;box-shadow:0 4px 0 rgba(0,0,0,.12)}
+.pn{top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;min-width:270px}
+.pn h2{margin:0 0 10px}
+.pn input{font:inherit;font-weight:700;padding:9px 12px;border-radius:12px;border:2px solid #ffb3d1;margin:4px 0;width:200px;text-align:center;background:#fff;color:#3b2f5c}
+.row{display:flex;gap:8px;justify-content:center;align-items:center}.row input{width:110px;text-transform:uppercase}
+.sm{font-size:13px;font-weight:600;margin-top:8px;opacity:.85}
+#pl div{padding:3px 0}
+#toast{top:calc(env(safe-area-inset-top,0px) + 52px);left:50%;transform:translateX(-50%);opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none}
+</style></head><body>
+<div id="bar"></div>
+<div id="ctl"><div id="msg"></div><button id="roll">🎲 Tung xúc xắc</button></div>
+<div id="toast" class="card"></div>
+<div id="menu" class="card pn"><h2>🐴 Cờ Cá Ngựa 3D</h2>
+  <input id="nm" maxlength="12" placeholder="Tên của bạn"><br>
+  <button id="bq">👥 Chơi nhiều người</button><br>
+  <button id="bs" class="alt">🎮 Chơi với máy</button>
+  <div class="sm">hoặc phòng riêng với bạn bè:</div>
+  <button id="bc">Tạo phòng</button>
+  <div class="row"><input id="cd_in" maxlength="4" placeholder="Mã phòng"><button id="bj">Vào phòng</button></div>
+  <div id="mm" class="sm"></div></div>
+<div id="lobby" class="card pn" style="display:none"><h2>Phòng <span id="rc"></span></h2><div id="pl"></div><div id="lw" class="sm"></div>
+  <button id="st">Bắt đầu</button> <button id="lv" class="alt">Rời phòng</button></div>
+<div id="over" class="card pn" style="display:none"><h2 id="ot"></h2><button id="ob"></button> <button id="om" class="alt">Về menu</button></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// Luật cờ cá ngựa dùng chung cho server (Durable Object) và client (chơi với máy).
+// Chỉnh luật ở 2 hằng số dưới: LAUNCH = các số tung được phép xuất quân, MAX_SIXES = số lần tung 6 liên tiếp bị mất lượt.
+const LAUNCH = [6], MAX_SIXES = 3;
+
+const SEG = [[1,6,1,0,5],[6,5,0,-1,6],[7,0,1,0,2],[8,1,0,1,5],[9,6,1,0,6],[14,7,0,1,2],
+  [13,8,-1,0,5],[8,9,0,1,6],[7,14,-1,0,2],[6,13,0,-1,5],[5,8,-1,0,6],[0,7,0,-1,2]];
+const TRACK = [];
+SEG.forEach(([x, y, dx, dy, n]) => { for (let k = 0; k < n; k++) TRACK.push([x + dx * k, y + dy * k]); });
+const HOME = [0, 1, 2, 3].map(s => Array.from({ length: 5 }, (_, k) => [[1 + k, 7], [7, 1 + k], [13 - k, 7], [7, 13 - k]][s]));
+const SAFE = new Set([0, 8, 13, 21, 26, 34, 39, 47]);
+
+// vị trí ngựa: -1 = trong chuồng, 0..50 = đường chính (tính từ ô xuất phát), 51..55 = đường về đích, 56 = đã về đích
+function xy(s, i, p) {
+  if (p < 0) { const o = [[0,0],[9,0],[9,9],[0,9]][s], a = [[2,2],[4,2],[2,4],[4,4]][i]; return [o[0] + a[0], o[1] + a[1]]; }
+  if (p <= 50) { const c = TRACK[(s * 13 + p) % 52]; return [c[0] + .5, c[1] + .5]; }
+  if (p <= 55) { const c = HOME[s][p - 51]; return [c[0] + .5, c[1] + .5]; }
+  const d = [[-.8,0],[0,-.8],[.8,0],[0,.8]][s], t = (i - 1.5) * .22;
+  return [7.5 + d[0] + (s % 2 ? t : 0), 7.5 + d[1] + (s % 2 ? 0 : t)];
+}
+const newGame = () => ({ pos: [0,1,2,3].map(() => [-1,-1,-1,-1]), turn: 0, phase: 'roll', roll: 0, sixes: 0, legal: [], winner: -1 });
+const gi = (s, p) => (s * 13 + p) % 52;
+function legalMoves(g, s, r) {
+  const o = [];
+  for (let i = 0; i < 4; i++) { const p = g.pos[s][i]; if (p < 0 ? LAUNCH.includes(r) : p + r <= 56) o.push(i); }
+  return o;
+}
+function occupied(g, s, c) {
+  const o = [];
+  for (let t = 0; t < 4; t++) if (t !== s) for (let j = 0; j < 4; j++) { const q = g.pos[t][j]; if (q >= 0 && q <= 50 && gi(t, q) === c) o.push([t, j]); }
+  return o;
+}
+function advance(g, extra) {
+  if (g.winner >= 0) { g.phase = 'over'; return; }
+  if (!extra) { g.sixes = 0; g.turn = (g.turn + 1) % 4; }
+  g.phase = 'roll'; g.roll = 0; g.legal = [];
+}
+// trả về true nếu không có nước đi (mất lượt)
+function doRoll(g, r) {
+  g.roll = r; g.sixes = r === 6 ? g.sixes + 1 : 0;
+  g.legal = g.sixes >= MAX_SIXES ? [] : legalMoves(g, g.turn, r);
+  if (!g.legal.length) { advance(g, false); return true; }
+  g.phase = 'move'; return false;
+}
+function act(g, i) {
+  const s = g.turn, r = g.roll, p = g.pos[s][i], np = p < 0 ? 0 : p + r; let cap = [];
+  g.pos[s][i] = np;
+  if (np <= 50 && !SAFE.has(gi(s, np))) { cap = occupied(g, s, gi(s, np)); cap.forEach(([t, j]) => { g.pos[t][j] = -1; }); }
+  const fin = np === 56;
+  if (g.pos[s].every(x => x === 56)) g.winner = s;
+  advance(g, fin || cap.length > 0 || r === 6);
+  return { np, from: p, cap, fin };
+}
+function botPick(g) {
+  const s = g.turn, r = g.roll; let best = g.legal[0], bs = -1e9;
+  for (const i of g.legal) {
+    const p = g.pos[s][i], np = p < 0 ? 0 : p + r; let sc = np;
+    if (np === 56) sc += 200;
+    if (p < 0) sc += 60;
+    if (np <= 50) { const c = gi(s, np); if (SAFE.has(c)) sc += 15; else if (occupied(g, s, c).length) sc += 120; }
+    if (p >= 0 && p <= 50 && SAFE.has(gi(s, p))) sc -= 8;
+    sc += Math.random();
+    if (sc > bs) { bs = sc; best = i; }
+  }
+  return best;
+}
+// Một ván cờ: dùng chung cho server và chế độ chơi với máy. human[s] = ghế s do người chơi (false = máy).
+class Match {
+  constructor(emit, human) { this.emit = emit; this.human = human; this.g = newGame(); this.tm = 0; }
+  start() { this.push(null); this.sched(); }
+  push(ev) {
+    const g = this.g;
+    this.emit({ t: 'g', g: { pos: g.pos, turn: g.turn, phase: g.phase, roll: g.roll, legal: g.legal, winner: g.winner }, ev });
+    if (g.winner >= 0) this.emit({ t: 'over', winner: g.winner });
+  }
+  roll() {
+    const g = this.g; if (g.phase !== 'roll') return;
+    const s = g.turn, r = 1 + Math.floor(Math.random() * 6), skip = doRoll(g, r);
+    this.push({ k: 'roll', s, r, skip }); this.sched();
+  }
+  mv(i) {
+    const g = this.g; if (g.phase !== 'move' || !g.legal.includes(i)) return;
+    const s = g.turn, r = g.roll, res = act(g, i);
+    this.push({ k: 'move', s, i, from: res.from, to: res.np, cap: res.cap, r }); this.sched();
+  }
+  input(seat, m) {
+    if (seat !== this.g.turn) return;
+    if (m.t === 'roll') this.roll(); else if (m.t === 'move') this.mv(m.i);
+  }
+  auto() { if (this.g.phase === 'roll') this.roll(); else this.mv(botPick(this.g)); }
+  sched() {
+    clearTimeout(this.tm); const g = this.g; if (g.winner >= 0) return;
+    this.tm = setTimeout(() => this.auto(), this.human[g.turn] ? 20000 : (g.phase === 'roll' ? 1100 : 900));
+  }
+  stop() { clearTimeout(this.tm); }
+}
+
+
+const $=i=>document.getElementById(i),show=(id,v)=>{$(id).style.display=v?'block':'none'};
+const CH=[0xff6b8b,0x4cd18a,0xffc933,0x4aa8ff],CL=CH.map(c=>'#'+c.toString(16).padStart(6,'0')),CN=['Đỏ','Xanh lá','Vàng','Xanh dương'];
+const lc=(c,t)=>new THREE.Color(c).lerp(new THREE.Color(0xffffff),t);
+
+// ===== cảnh 3D =====
+const R=new THREE.WebGLRenderer({antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.setSize(innerWidth,innerHeight);
+document.body.insertBefore(R.domElement,document.body.firstChild);
+const S=new THREE.Scene(),C=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,.1,200);
+S.add(new THREE.HemisphereLight(0xffffff,0xffc8e6,.95));
+const DL=new THREE.DirectionalLight(0xffffff,.85);DL.position.set(6,16,8);S.add(DL);
+addEventListener('resize',()=>{R.setSize(innerWidth,innerHeight);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()});
+const tm=c=>new THREE.MeshToonMaterial({color:c});
+const OM=new THREE.MeshBasicMaterial({color:0x2b2147,side:THREE.BackSide});
+function mk(g,c,o=1.07){const m=new THREE.Mesh(g,tm(c));if(o){const l=new THREE.Mesh(g,OM);l.scale.setScalar(o);m.add(l)}return m}
+const board=new THREE.Group();S.add(board);
+const slab=mk(new THREE.BoxGeometry(16,.6,16),0x6b5aa8,1.012);slab.position.y=-.35;board.add(slab);
+const CG=new THREE.BoxGeometry(.9,.16,.9),yardMat=CH.map(c=>tm(c)),baseCol=CH.map(c=>new THREE.Color(c));
+function cell(x,y,col,mat){const m=new THREE.Mesh(CG,mat||tm(col));m.position.set(x+.5-7.5,.08,y+.5-7.5);board.add(m)}
+[[0,0],[9,0],[9,9],[0,9]].forEach(([ox,oy],s)=>{
+  const y=new THREE.Mesh(new THREE.BoxGeometry(5.9,.2,5.9),yardMat[s]);y.position.set(ox+3-7.5,.1,oy+3-7.5);board.add(y);
+  const n=new THREE.Mesh(new THREE.BoxGeometry(4,.06,4),tm(lc(CH[s],.8)));n.position.set(ox+3-7.5,.23,oy+3-7.5);board.add(n);
+  [[2,2],[4,2],[2,4],[4,4]].forEach(([a,b])=>{const c=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.04,20),tm(lc(CH[s],.45)));c.position.set(ox+a-7.5,.27,oy+b-7.5);board.add(c)})});
+const starG=new THREE.CylinderGeometry(.27,.27,.03,5),starM=tm(0xffd23f);
+TRACK.forEach(([x,y],i)=>{const s=[0,13,26,39].indexOf(i);cell(x,y,s>=0?CH[s]:(i%2?0xd6efff:0xffe1f0));
+  if(SAFE.has(i)){const st=new THREE.Mesh(starG,starM);st.position.set(x+.5-7.5,.19,y+.5-7.5);board.add(st)}});
+HOME.forEach((h,s)=>h.forEach(([x,y])=>cell(x,y,0,yardMat[s])));
+[[[-1.5,-1.5],[1.5,-1.5]],[[1.5,-1.5],[1.5,1.5]],[[1.5,1.5],[-1.5,1.5]],[[-1.5,1.5],[-1.5,-1.5]]].forEach(([a,b],k)=>{
+  const s=[1,2,3,0][k],g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute([a[0],0,a[1],b[0],0,b[1],0,0,0],3));
+  g.setAttribute('normal',new THREE.Float32BufferAttribute([0,1,0,0,1,0,0,1,0],3));
+  const m=new THREE.Mesh(g,new THREE.MeshToonMaterial({color:CH[s],side:THREE.DoubleSide}));m.position.y=.13;board.add(m)});
+const turnRing=new THREE.Mesh(new THREE.RingGeometry(1.1,1.4,32),new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide}));
+turnRing.rotation.x=-Math.PI/2;turnRing.position.y=.2;S.add(turnRing);
+// mây trang trí
+const cm=new THREE.MeshToonMaterial({color:0xffffff});
+for(let i=0;i<10;i++){const g=new THREE.Group();for(let j=0;j<3;j++){const s=new THREE.Mesh(new THREE.SphereGeometry(1.4+j*.5,12,8),cm);s.position.set(j*1.8,j%2*.4,0);g.add(s)}
+  const a=i/10*6.283;g.position.set(Math.cos(a)*18,-5-Math.random()*3,Math.sin(a)*18);S.add(g)}
+
+// ===== ngựa chibi =====
+function horse(col){const g=new THREE.Group(),SP=r=>new THREE.SphereGeometry(r,14,10);
+  const add=(geo,c,x,y,z,sc,rot)=>{const m=mk(geo,c);m.position.set(x,y,z);if(sc)m.scale.set(sc[0],sc[1],sc[2]);if(rot)m.rotation.set(rot[0],rot[1],rot[2]);g.add(m);return m};
+  add(SP(.34),col,0,.42,0,[1,.95,1.25]);add(SP(.27),col,0,.82,.28);add(SP(.14),0xfff0e0,0,.74,.5,[1,.8,1]);
+  add(new THREE.ConeGeometry(.08,.22,6),col,-.14,1.08,.22);add(new THREE.ConeGeometry(.08,.22,6),col,.14,1.08,.22);
+  add(SP(.05),0x2b2147,-.13,.88,.47);add(SP(.05),0x2b2147,.13,.88,.47);
+  add(SP(.2),0xffffff,0,.98,.1,[.7,1,1.3]);add(new THREE.ConeGeometry(.09,.34,6),0xffffff,0,.5,-.5,null,[-1.1,0,0]);
+  [[-.17,.2],[.17,.2],[-.17,-.2],[.17,-.2]].forEach(([x,z])=>add(new THREE.CylinderGeometry(.07,.07,.28,8),0xfff0e0,x,.14,z));
+  return g}
+const ringG=new THREE.RingGeometry(.5,.66,24);ringG.rotateX(-Math.PI/2);
+const PC=[0,1,2,3].map(s=>[0,1,2,3].map(i=>{const g=horse(CH[s]);g.userData.i=i;S.add(g);
+  const ring=new THREE.Mesh(ringG,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.95}));ring.position.y=.04;ring.visible=false;g.add(ring);
+  return{g,ring,x:0,z:0,q:[],cur:null,delay:0,tx:0,tz:0,face:0,sq:0,legal:false}}));
+
+// ===== xúc xắc 3D =====
+function faceTex(n){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
+  x.fillStyle='#fff';x.fillRect(0,0,128,128);x.strokeStyle='#e5d8f0';x.lineWidth=8;x.strokeRect(4,4,120,120);x.fillStyle=n===1?'#ff4d6d':'#3b2f5c';
+  ({1:[[1,1]],2:[[0,0],[2,2]],3:[[0,0],[1,1],[2,2]],4:[[0,0],[2,0],[0,2],[2,2]],5:[[0,0],[2,0],[1,1],[0,2],[2,2]],6:[[0,0],[2,0],[0,1],[2,1],[0,2],[2,2]]})[n]
+    .forEach(([a,b])=>{x.beginPath();x.arc(32+a*32,32+b*32,11,0,6.283);x.fill()});return new THREE.CanvasTexture(c)}
+const die=new THREE.Mesh(new THREE.BoxGeometry(1.2,1.2,1.2),[3,4,1,6,2,5].map(n=>new THREE.MeshToonMaterial({map:faceTex(n)})));
+const dieOut=new THREE.Mesh(new THREE.BoxGeometry(1.2,1.2,1.2),OM);dieOut.scale.setScalar(1.06);die.add(dieOut);die.position.y=.78;S.add(die);
+const NV={1:[0,1,0],6:[0,-1,0],3:[1,0,0],4:[-1,0,0],2:[0,0,1],5:[0,0,-1]};let dieAnim=null;
+function rollDie(r){const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(...NV[r]),new THREE.Vector3(0,1,0));
+  q.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),Math.random()*6.283));
+  dieAnim={t:0,d:.95,q,sp:[(Math.random()+.5)*14,(Math.random()+.5)*12,(Math.random()+.5)*10]}}
+
+// ===== tên trên chuồng =====
+const tags=[0,1,2,3].map(s=>{const c=document.createElement('canvas');c.width=256;c.height=64;
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));
+  sp.scale.set(3.6,.9,1);const o=[[0,0],[9,0],[9,9],[0,9]][s];sp.position.set(o[0]+3-7.5,2,o[1]+3-7.5);sp.userData.c=c;S.add(sp);return sp});
+function drawTags(){tags.forEach((sp,s)=>{const x=sp.userData.c.getContext('2d');x.clearRect(0,0,256,64);x.fillStyle=CL[s];x.fillRect(6,8,244,48);
+  x.fillStyle='#fff';x.font='700 28px system-ui,sans-serif';x.textAlign='center';
+  x.fillText((s===mySeat&&phase==='play'?'★ ':'')+nm(s)+(seats[s]&&seats[s].bot?' 🤖':''),128,42);sp.material.map.needsUpdate=true})}
+
+// ===== trạng thái =====
+let ws=null,myId=null,hostId=null,isHost=false,roomCode='',myName='Bạn',players=[],offline=false,qn=0,phase='menu',match=null,mySeat=0,lock=0,T=0,G=newGame();
+let seats=[0,1,2,3].map(s=>({name:CN[s]}));
+const nm=s=>seats[s]?seats[s].name:CN[s];
+function send(m){if(offline){if(match)match.input(0,m)}else if(ws&&ws.readyState===1)ws.send(JSON.stringify(m))}
+
+// vị trí đích của từng ngựa (ô chung thì xếp vòng nhỏ)
+function targets(){const grp={},t=[0,1,2,3].map(()=>[]);
+  for(let s=0;s<4;s++)for(let i=0;i<4;i++){const p=G.pos[s][i],[cx,cy]=xy(s,i,p);t[s][i]=[cx-7.5,cy-7.5];
+    if(p>=0&&p<=55){const k=cx+','+cy;(grp[k]=grp[k]||[]).push([s,i])}}
+  Object.values(grp).forEach(a=>{if(a.length>1)a.forEach(([s,i],k)=>{const an=k/a.length*6.283+.6;t[s][i]=[t[s][i][0]+Math.cos(an)*.22,t[s][i][1]+Math.sin(an)*.22]})});
+  return t}
+function snap(){const t=targets();PC.forEach((a,s)=>a.forEach((p,i)=>{p.x=p.tx=t[s][i][0];p.z=p.tz=t[s][i][1];p.q=[];p.cur=null;p.delay=0;
+  p.face=Math.atan2(-p.x,-p.z);p.g.rotation.y=p.face}))}
+function onMove(e){const t=targets(),mv=PC[e.s][e.i];let mt=0;
+  if(e.from<0){mv.q.push({x:t[e.s][e.i][0],z:t[e.s][e.i][1],d:.4,h:.9});mt=.4}
+  else for(let q=e.from+1;q<=e.to;q++){const last=q===e.to,[cx,cy]=xy(e.s,e.i,q);
+    mv.q.push({x:last?t[e.s][e.i][0]:cx-7.5,z:last?t[e.s][e.i][1]:cy-7.5,d:.2,h:.45});mt+=.2}
+  mv.tx=t[e.s][e.i][0];mv.tz=t[e.s][e.i][1];
+  PC.forEach((a,s)=>a.forEach((p,i)=>{if(p===mv)return;const x=t[s][i][0],z=t[s][i][1];
+    if(Math.hypot(p.tx-x,p.tz-z)>.01){const cap=e.cap.some(c=>c[0]===s&&c[1]===i);p.delay=mt+.05;p.q.push({x,z,d:cap?.6:.25,h:cap?1.8:.3});p.tx=x;p.tz=z}}))}
+function stepPiece(p,dt){let y=0;
+  if(p.delay>0)p.delay-=dt;
+  else{if(!p.cur&&p.q.length){const n=p.q.shift();p.cur={ax:p.x,az:p.z,bx:n.x,bz:n.z,t:0,d:n.d,h:n.h}}
+    if(p.cur){const c=p.cur;c.t+=dt;const k=Math.min(1,c.t/c.d);p.x=c.ax+(c.bx-c.ax)*k;p.z=c.az+(c.bz-c.az)*k;y=Math.sin(Math.PI*k)*c.h;
+      const dx=c.bx-c.ax,dz=c.bz-c.az;if(dx*dx+dz*dz>.01)p.face=Math.atan2(dx,dz);if(k>=1){p.cur=null;p.sq=.35}}}
+  if(p.legal)y+=Math.abs(Math.sin(T*6))*.3;
+  p.sq*=1-Math.min(1,dt*10);const g=p.g,k=.85;g.position.set(p.x,y+(Math.abs(p.x)>1.6&&Math.abs(p.z)>1.6?.3:.17),p.z);g.scale.set(k*(1+.25*p.sq),k*(1-.35*p.sq),k*(1+.25*p.sq));
+  const d=((p.face-g.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI;g.rotation.y+=d*Math.min(1,dt*12)}
+
+// ===== camera: chuồng của người chơi nằm ở góc dưới bên trái =====
+const seatAngle=s=>(90+([225,315,45,135][s]-135))*Math.PI/180;
+let camA=seatAngle(3);
+function loop(now){const dt=Math.min((now-loop.l)/1000||0,.05);loop.l=now;T+=dt;
+  if(phase==='play'||phase==='over'){const d=((seatAngle(mySeat)-camA+Math.PI*3)%(Math.PI*2))-Math.PI;camA+=d*Math.min(1,dt*3)}else camA+=dt*.12;
+  const asp=innerWidth/innerHeight,D=Math.max(20,19.8/asp)*1.08,el=.98;
+  C.position.set(D*Math.cos(el)*Math.cos(camA),D*Math.sin(el),D*Math.cos(el)*Math.sin(camA));C.lookAt(0,-.3,0);
+  PC.forEach(a=>a.forEach(p=>stepPiece(p,dt)));
+  yardMat.forEach((m,s)=>{const k=phase==='play'&&G.turn===s&&G.winner<0?.25+.2*Math.sin(T*4):0;m.emissive.copy(baseCol[s]).multiplyScalar(k)});
+  if(dieAnim){const a=dieAnim;a.t+=dt;const k=Math.min(1,a.t/a.d);
+    if(k<.7){die.rotation.x+=a.sp[0]*dt;die.rotation.y+=a.sp[1]*dt;die.rotation.z+=a.sp[2]*dt}else die.quaternion.slerp(a.q,Math.min(1,.2+(k-.7)/.3*.5));
+    die.position.y=.78+Math.abs(Math.sin(k*Math.PI*2.5))*(1-k)*2.4;if(k>=1){die.quaternion.copy(a.q);die.position.y=.78;dieAnim=null}}
+  R.render(S,C);requestAnimationFrame(loop)}
+
+// chọn ngựa: chạm gần ngựa nào (đang nhấp nhô) thì đi ngựa đó
+R.domElement.addEventListener('pointerdown',e=>{
+  if(phase!=='play'||G.phase!=='move'||G.turn!==mySeat)return;
+  let best=-1,bd=70;const v=new THREE.Vector3();
+  PC[mySeat].forEach((p,i)=>{if(!G.legal.includes(i))return;v.set(p.x,.6,p.z).project(C);
+    const d=Math.hypot((v.x+1)/2*innerWidth-e.clientX,(1-v.y)/2*innerHeight-e.clientY);if(d<bd){bd=d;best=i}});
+  if(best>=0)send({t:'move',i:best})});
+
+// ===== giao diện =====
+function chips(){const b=$('bar');b.textContent='';
+  for(let s=0;s<4;s++){const c=document.createElement('div'),d=document.createElement('span'),t=document.createElement('span');
+    c.className='chip'+(G.turn===s&&G.winner<0&&phase==='play'?' on':'');d.className='dot';d.style.background=CL[s];
+    t.textContent=nm(s)+(seats[s]&&seats[s].bot?' 🤖':'')+(s===mySeat&&phase==='play'?' (bạn)':'')+' · '+G.pos[s].filter(p=>p===56).length+'/4';
+    c.append(d,t);b.appendChild(c)}}
+function ui(){chips();
+  const mine=phase==='play'&&G.turn===mySeat&&G.winner<0,can=mine&&G.phase==='roll'&&Date.now()>=lock;
+  $('roll').style.display=phase==='play'?'inline-block':'none';$('roll').disabled=!can;$('roll').style.opacity=can?1:.45;
+  $('msg').textContent=phase!=='play'||G.winner>=0?'':mine?(G.phase==='roll'?'Đến lượt bạn – tung xúc xắc!':'Chạm vào ngựa đang nhấp nhô để đi'):'Lượt của '+nm(G.turn)+'…';
+  PC.forEach((a,s)=>a.forEach((p,i)=>{p.legal=mine&&G.phase==='move'&&s===mySeat&&G.legal.includes(i);p.ring.visible=p.legal}));
+  turnRing.material.color.setHex(CH[G.turn])}
+let tt=0;function toast(s){const t=$('toast');t.textContent=s;t.style.opacity=1;clearTimeout(tt);tt=setTimeout(()=>t.style.opacity=0,2400)}
+function onG(m){G=m.g;const e=m.ev;
+  if(!e)snap();
+  else if(e.k==='roll'){rollDie(e.r);lock=Date.now()+1000;setTimeout(ui,1050);toast(nm(e.s)+' tung được '+e.r+(e.skip?' – không đi được':''))}
+  else if(e.k==='move'){onMove(e);if(e.cap.length)toast(nm(e.s)+' đá ngựa '+e.cap.map(c=>nm(c[0])).join(', ')+'!')}
+  ui();
+  if(phase==='play'&&G.turn===mySeat&&G.phase==='move'&&G.winner<0&&G.legal.length===1){const i=G.legal[0];
+    setTimeout(()=>{if(G.phase==='move'&&G.turn===mySeat)send({t:'move',i})},1300)}}
+function showOver(w){phase='over';setTimeout(()=>{if(phase!=='over')return;$('ot').textContent='🏆 '+nm(w)+' thắng!';
+  $('ob').textContent=offline?'Chơi lại':'Về phòng chờ';$('ob').style.display=offline||isHost?'inline-block':'none';show('over',1)},1800)}
+
+// ===== phòng chờ + mạng =====
+const wsurl=(code,x)=>(location.protocol==='https:'?'wss://':'ws://')+location.host+'/__game/co-ca-ngua/ws?room='+code+x;
+function enterLobby(){phase='lobby';show('menu',0);show('over',0);show('lobby',1);$('rc').textContent=roomCode;ui()}
+function renderLobby(){const pl=$('pl');pl.textContent='';
+  players.forEach(p=>{const d=document.createElement('div');d.textContent=(p.id===hostId?'👑 ':'🙂 ')+p.name+(p.id===myId?' (bạn)':'');pl.appendChild(d)});
+  const ok=players.length>=2;$('st').style.display=isHost?'inline-block':'none';$('st').disabled=!ok;$('st').style.opacity=ok?1:.5;
+  $('lw').textContent=isHost?(ok?'Bấm Bắt đầu – ghế trống sẽ do máy chơi thay (tối đa 4 người)':'Cần ít nhất 2 người để bắt đầu – đang ghép người chơi…'):'Đợi chủ phòng bấm Bắt đầu…'}
+function leave(){qn=0;if(ws){try{ws.onclose=null;ws.close()}catch(e){}ws=null}if(match){match.stop();match=null}offline=false;phase='menu';
+  seats=[0,1,2,3].map(s=>({name:CN[s]}));G=newGame();snap();drawTags();show('lobby',0);show('over',0);show('menu',1);ui()}
+function onMsg(m){
+  if(m.t==='hello'){myId=m.id;qn=0}
+  else if(m.t==='err'){if(m.retry&&qn>0&&qn<20){qn++;try{ws.onclose=null;ws.close()}catch(e){}openQuick();return}qn=0;$('mm').textContent=m.m;if(ws)ws.close()}
+  else if(m.t==='state'){players=m.players;hostId=m.host;isHost=m.host===myId;if(m.phase==='lobby'&&phase!=='lobby')enterLobby();renderLobby()}
+  else if(m.t==='start'){seats=m.seats;mySeat=Math.max(0,seats.findIndex(s=>s.id===myId));phase='play';show('menu',0);show('lobby',0);show('over',0);G=newGame();snap();drawTags();ui()}
+  else if(m.t==='g')onG(m);
+  else if(m.t==='over')showOver(m.winner)}
+function openSock(code,x){$('mm').textContent='Đang kết nối…';let opened=false;
+  try{ws=new WebSocket(wsurl(code,x))}catch(e){$('mm').textContent='Chưa có server – hãy chơi với máy';qn=0;return}
+  ws.onopen=()=>{opened=true;ws.send(JSON.stringify({t:'join',name:myName}))};
+  ws.onmessage=e=>onMsg(JSON.parse(e.data));
+  ws.onclose=()=>{if(!opened){$('mm').textContent='Không kết nối được server – thử chơi với máy';qn=0}else if(phase!=='menu'){toast('Mất kết nối');leave()}}}
+function openQuick(){roomCode='ngẫu nhiên';openSock('PUB'+qn,'&create=1&pub=1')}
+const getName=()=>$('nm').value.trim()||('Bạn'+(Math.random()*99|0));
+function connect(create){myName=getName();
+  const code=create?Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.random()*24|0]).join(''):$('cd_in').value.trim().toUpperCase();
+  if(code.length<4){$('mm').textContent='Nhập mã phòng 4 ký tự';return}
+  roomCode=code;openSock(code,create?'&create=1':'')}
+function startSolo(){myName=getName();offline=true;myId='me';if(match)match.stop();
+  match=new Match(onMsg,[true,false,false,false]);
+  onMsg({t:'start',seats:[{name:myName,id:'me'},{name:'Máy 1',bot:1},{name:'Máy 2',bot:1},{name:'Máy 3',bot:1}]});match.start()}
+$('roll').onclick=()=>{$('roll').disabled=true;send({t:'roll'})};
+$('bq').onclick=()=>{myName=getName();qn=1;openQuick()};
+$('bc').onclick=()=>connect(true);$('bj').onclick=()=>connect(false);$('bs').onclick=startSolo;
+$('st').onclick=()=>send({t:'start'});$('lv').onclick=leave;$('om').onclick=leave;
+$('ob').onclick=()=>offline?startSolo():send({t:'lobby'});
+snap();drawTags();ui();show('menu',1);loop.l=performance.now();requestAnimationFrame(loop);
+</script></body></html>
