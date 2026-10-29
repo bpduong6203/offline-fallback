@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {Engine,execute,createState,snapshot,RoomService} from '../src/monopoly-service.generated.js';
+import {Engine,execute,createState,snapshot} from '../src/monopoly-legacy.generated.js';
+import {RoomService} from '../src/monopoly-service.generated.js';
 const setup=(n=2)=>{const e=new Engine(createState('ABCDEF'),()=>.2,1000);for(let i=0;i<n;i++)e.join('Người '+i);e.s.players.forEach(p=>p.ready=true);command(e,e.s.host,'start');return e;};
 function command(e,id,type,payload={},commandId=crypto.randomUUID()){e.s=execute(e.s,id,{type,payload,commandId,roomId:e.s.code,expectedVersion:e.s.version},e.now,e.rng);}
 test('salary forward once, backward none, direct jail none',()=>{const e=setup(),p=e.active[0];p.pos=39;e.move(p,1);assert.equal(p.cash,1700);e.move(p,-3);assert.equal(p.cash,1700);e.jail(p);assert.equal(p.pos,10);assert.equal(p.cash,1700);});

@@ -1,27 +1,19 @@
-# Luật MebiMonopoly
+# Luật Tỷ Phú Mebi
 
-Đơn vị quy đổi: 1 đơn vị engine = 1.000 trứng. Các ô nhập đấu giá/giao dịch dùng số trứng thực tế; server tiếp tục lưu đơn vị nguyên để giữ tương thích phòng hiện có. Ba ô đắt nhất: MebiFarm (400.000 trứng), Mebisoft (350.000 trứng), MebiEco (320.000 trứng).
+Luật hiện hành: **mebi-tour-v2**, schema **2**. Xem [bảng đối chiếu có nguồn và mức độ xác minh](../docs/business-tour-rules.md), cấu hình trong `tour-data.ts`.
 
-40 ô, 1.500.000 trứng/người, Xuất phát 200.000 trứng/vòng đi tiến. Đi lùi và đi thẳng vào tù không nhận lương. Hai xúc xắc server; đôi được tiếp tục sau giải quyết ô, ba đôi liên tiếp vào tù trước lần di chuyển thứ ba. Ra tù bằng đôi không có lượt thêm. Trả 50.000 trứng hoặc thẻ trước tung; lần thử thứ ba thất bại phải trả 50.000 trứng rồi đi theo tổng vừa tung, chờ giải quyết nợ trước nếu thiếu tiền.
+- 32 ô Việt Nam, 20 thành phố theo 8 nhóm, 4 điểm du lịch, Xuất phát, Hoang đảo, Lễ hội Việt, Du lịch Việt, 3 May mắn, Quỹ thành phố.
+- 1 đơn vị = 1.000 trứng. Khởi đầu 1.500.000 trứng, qua Xuất phát +300.000 trứng. Đi lùi/đi thẳng đến Hoang đảo không nhận thưởng vòng.
+- Mebisoft 400.000 > Mebifarm 360.000 > Mebieco 320.000 trứng, giá/thuê cấp cuối cũng thuộc nhóm cao nhất.
+- Đôi thêm lượt; ba đôi liên tiếp đến Hoang đảo trước lần di chuyển thứ ba. Rời đảo bằng đôi không thêm lượt. Tối đa ba lần thử; lần ba được rời, hoặc trả 200.000 trứng/dùng thẻ trước tung.
+- Mua/xây khi dừng trên ô. Từ chối mua thì bỏ qua, không đấu giá. Vòng đầu tối đa cấp 2; sau một vòng tối đa cấp 3. Khi quay lại ô đã có cấp 3 được xây Khách sạn (cấp 4), không cần trọn nhóm hoặc xây đều, không giới hạn kho công trình.
+- Trọn nhóm tăng phí ×2. Điểm du lịch có phí 25.000/50.000/100.000/200.000 trứng theo số điểm đang sở hữu.
+- Trả phí ghé thăm đối thủ trước; sau thanh toán có thể mua lại giá ×2 vốn đất+công trình. Hai khoản được hiển thị riêng. Khách sạn và điểm du lịch không được mua lại.
+- Lễ hội chọn thành phố sở hữu, phí ×2; tổ chức lại khi đang hiệu lực tăng thêm một tới tối đa ×5. Hiệu lực 8 lần hoàn tất lượt, reset multiplier khi hết hạn.
+- Du lịch: ở lượt sau trả 50.000 trứng một lần, chọn ô mua được chưa có chủ hoặc của mình. Thiếu phí thì tung thường. Đến nơi tiếp tục xử lý ô, đi tiến qua Xuất phát vẫn nhận thưởng.
+- Quỹ thành phố thu 10% vốn tài sản đang sở hữu, làm tròn lên. Thẻ riêng 12 lá, xáo server; thẻ rời đảo giữ ngoài bộ tới khi dùng/phá sản.
+- Thiếu trứng: phase nợ 120s, chỉ thanh lý cả địa điểm nhận 50% vốn hoặc thanh toán. Không vay âm/thế chấp/đổi đất. Hết giờ bán theo ID tăng dần rồi trả đủ/phá sản. Tiền còn lại trả chủ nợ nếu có; tài sản về ngân hàng.
+- Thắng ngay khi đủ 3 nhóm màu (Triple Monopoly), mọi ô mua được trên 1 cạnh gồm điểm du lịch (Side Monopoly), 4 điểm du lịch (Tourist Monopoly), hoặc đối thủ phá sản. Ba ô cạnh nhau không phải Triple Monopoly. Kiểm tra ngay sau mua/mua lại, dừng mọi bước còn lại khi thắng.
+- Giới hạn trận 30 phút, hết giờ xếp cash+vốn tài sản, bằng nhau ưu tiên ghế nhỏ. Đây là biến thể của Tỷ Phú Mebi, không khẳng định là luật chính thức Business Tour.
 
-Giá và bảng thuê theo `data.ts`. Nhóm màu đầy đủ gấp đôi thuê đất trống. Ga 25 × 2^(số ga−1). Tiện ích ×4 xúc xắc, có cả hai ×10. Thẻ ga gần nhất gấp đôi tiền thuê, thẻ tiện ích tung mới và ×10. Thế chấp không thu thuê. Người trong tù vẫn nhận thuê. Bãi đỗ xe không thưởng.
-
-Mua trực tiếp khi đủ tiền, từ chối/thiếu tiền đưa ra đấu giá. Tất cả người chưa phá sản đều được bid, kể cả người từ chối. Giá đầu 10.000 trứng, tăng ít nhất 10.000 trứng, không vượt tiền mặt. 15 giây sau bid hợp lệ, giới hạn cứng 90 giây kể từ mở phiên. Không quản lý tài sản/giao dịch trong phiên. Mất kết nối không hủy bid. Không có bid thì ngân hàng giữ đất.
-
-Xây cần trọn nhóm không thế chấp; xây đều, bán đều; 4 nhà rồi khách sạn. Ngân hàng 32 nhà/12 khách sạn, nâng khách sạn trả 4 nhà; hạ khách sạn cần 4 nhà khả dụng. Giá bán bằng nửa xây. Khi thiếu nhà để hạ khách sạn và không thể huy động tiền khác, thanh lý tự động sẽ phá sản; không tạo nhà vô hạn. Quản lý được trước tung hoặc sau giải quyết ô trong lượt mình, hoặc bán/thế chấp khi chính mình đang nợ. Không xây/chuộc khi nợ.
-
-Thế chấp nhận nửa giá đất, phải bán hết công trình trong nhóm. Chuộc `ceil(giá đất/2 × 1,1)`. Giao dịch đất thế chấp: bên nhận trả ngay `ceil(giá đất × 0,05)` (10% tiền gốc thế chấp), giữ thế chấp; khi chuộc sau đó vẫn trả gốc +10%. Không chuyển đất có công trình trong nhóm. Giao dịch tiền/đất/thẻ là atomic, hai phía được kiểm tra lại lúc nhận; một đề nghị/phòng, tối đa 30 giây và không quá lượt. Sửa bằng hủy rồi tạo đề nghị ID mới, cần chấp nhận lại. Đề nghị hủy khi kết thúc lượt, có nợ hoặc một bên bỏ cuộc.
-
-Hai bộ 16 thẻ, Fisher–Yates phía server. Thẻ thường trả cuối bộ; thẻ ra tù giữ bên ngoài, quay lại cuối bộ khi dùng/phá sản cho ngân hàng. Thẻ trả/nhận từng người giải quyết theo ghế, từng nghĩa vụ một; không ghi tiền âm. Thiếu tiền chuyển phase nợ, không tung/kết thúc lượt. Sau huy động tiền bấm Thanh toán; một nghĩa vụ chỉ ghi nhận một lần.
-
-Phá sản cho người chơi: bán công trình về ngân hàng nửa giá xây, chuyển tiền/tài sản/thẻ cho chủ nợ. Đất thế chấp giữ nguyên; chủ nợ phải trả phí chuyển quyền 10% tiền thế chấp, cũng có thể vào phase nợ. Phá sản ngân hàng: trả công trình, trả thẻ, đưa đất vào hàng đợi đấu giá theo số ô tăng dần. Khi chỉ còn một người sống, kết thúc ngay, không tiếp tục đấu giá. Xếp hạng theo thứ tự phá sản; thời lượng và tổng thu/chi trong kết quả.
-
-## Timer và reconnect
-
-Deadline tuyệt đối lưu trong snapshot: mua 30s, chờ tung 60s, quản lý 60s, nợ 120s. Hết chờ tung server tự tung, hết mua chuyển đấu giá, hết quản lý kết thúc lượt hợp lệ. Nợ hết giờ: bán công trình theo level giảm dần rồi số ô tăng dần (chỉ hạ khách sạn nếu có nhà), thế chấp theo số ô tăng dần, trả đủ ngay khi có thể, nếu vẫn thiếu thì phá sản. Mỗi khoản nợ tiếp theo có deadline mới, không cộng dồn vô hạn cho cùng một nghĩa vụ. Alarm chạy cả khi không có client online.
-
-Ưu tiên mỗi tick: đóng phòng sau 30 phút tất cả offline → xử lý người hết thời gian reconnect → hết đề nghị trade → deadline phase hiện tại. Lobby giữ ghế 60s, trong trận 120s; không đổi ghế/màu khi có người rời. Chủ lobby rời hẳn chuyển quyền cho ghế nhỏ nhất. Nếu toàn bộ người chơi offline, giữ danh tính tối đa 30 phút thay vì loại toàn bộ ở 120s; timer lượt vẫn chạy. Người đã phá sản có thể xem, không thao tác kinh tế. Host mở trận mới với người còn kết nối; giữ danh tính/ghế/màu, reset tài sản và ready.
-
-## So với repo tham khảo
-
-Tham khảo dữ liệu giá/thuê, loại thẻ và cách tính rent/build của intrepidcoder/monopoly, không mang DOM/jQuery/global state sang. Tên địa điểm, SVG/CSS, nhạc và code kiến trúc mới. Giữ một bộ luật rõ ràng: đấu giá đồng thời theo server deadline thay vì vòng bid UI; không cho số dư âm; hàng đợi nghĩa vụ, version/dedup, token reconnect và persistence/alarm. Bổ sung kiểm tra xây/bán đều và kho nhà khi hạ khách sạn.
+Timer server: tung 60s, lựa chọn 30s, complete 30s, nợ 120s. Hết giờ lựa chọn thì bỏ qua, du lịch tự chọn ID hợp lệ nhỏ nhất, hoàn tất lượt tự chuyển. Reconnect không reset thời gian hoặc phát lại tiền/animation cũ. Chi tiết xử lý snapshot v1 và ưu tiên timer có trong tài liệu đối chiếu.

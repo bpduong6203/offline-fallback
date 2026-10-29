@@ -6,7 +6,7 @@ export function localMonopoly(server,{directory=new URL('../.monopoly-local/',im
  const rooms=new Map(),wss=new WebSocketServer({noServer:true,maxPayload:8192});let chain=Promise.resolve();
  const serial=fn=>{const task=chain.then(fn);chain=task.catch(()=>{});return task;};
  async function room(code){if(rooms.has(code))return rooms.get(code);await mkdir(directory,{recursive:true});const file=new URL(code+'.json',directory);let state;try{state=JSON.parse(await readFile(file,'utf8'));for(const p of state.players)if(p.connected){p.connected=false;p.offline=Date.now();p.ready=false;}state.allOffline ||= Date.now();}catch(e){if(e.code!=='ENOENT')throw e;state=createState(code);}
-  const service=new RoomService(state,async s=>{const tmp=new URL(code+'.tmp',directory);await writeFile(tmp,JSON.stringify(s));await rename(tmp,file);},async()=>{});rooms.set(code,service);onRoom(service);return service;
+  const service=new RoomService(state,async s=>{const tmp=new URL(code+'.tmp',directory);await writeFile(tmp,JSON.stringify(s));await rename(tmp,file);},async()=>{});rooms.set(code,service);onRoom(service,serial);return service;
  }
  const timer=setInterval(()=>serial(async()=>{for(const service of rooms.values())await service.tick();}).catch(console.error),1000);timer.unref();
  // Load persisted rooms so timers run even before any client reconnects.

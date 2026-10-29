@@ -1,41 +1,57 @@
-# MebiMonopoly
+# Tỷ Phú Mebi
 
-Game Cờ Tỷ Phú online 2–4 người, tiếng Việt, tại `/ty-phu` (alias `/__game/mebi-monopoly`). Nút trên trang fallback dùng cùng `tab tab-link` với các game sẵn có. Không triển khai tự động.
+Game online 2–4 người tại `/ty-phu`, map Việt Nam 32 ô, lấy cảm hứng từ Business Tour. Tên hiển thị mới áp dụng ở title, header, bàn cờ, luật và nút thư viện. Đường dẫn/module `mebi-monopoly` và namespace `MONOPOLY` được giữ để tương thích URL và storage; đây là tên kỹ thuật, không phải tên trên UI.
 
-## Chạy local
+## Chạy
 
-Node 20+, `npm.cmd install`, `npm.cmd run build`, rồi `npm.cmd run dev`. Mở `http://localhost:5173/ty-phu`. Thiết bị cùng LAN mở `http://<IP-máy-chạy-server>:5173/ty-phu`; cho phép TCP 5173 qua firewall khi cần. Một người tạo phòng, gửi mã sáu ký tự hoặc link mời; mỗi người chọn nhân vật và sẵn sàng, chủ phòng bắt đầu. Không có bot hoặc hot-seat.
+Node 20+, `npm.cmd install`, `npm.cmd run build`, `npm.cmd run dev`. Mở `http://localhost:5173/ty-phu`. Thiết bị khác cùng LAN mở `http://<IP-máy-server>:5173/ty-phu`; cho phép cổng 5173 nếu firewall chặn. Tạo phòng, gửi mã sáu ký tự hoặc link, chọn nhân vật và sẵn sàng. Chủ phòng bắt đầu khi có ít nhất hai người và tất cả sẵn sàng.
 
-Frontend TypeScript được esbuild đóng thành HTML độc lập. `data.ts` chứa bàn cờ, thẻ, cấu hình luật. `engine.ts` độc lập UI/network, dùng RNG server có thể inject khi test. `service.ts` dùng chung giữa Node và Durable Object. Hai module `src/monopoly-*.generated.js` và HTML được sinh khi build; không sửa trực tiếp.
+## Bộ luật hiện hành
 
-Node local ghi snapshot bằng temp-file + rename vào `.monopoly-local/` (gitignored). Startup đọc các phòng và khởi động timer kể cả chưa có client. Chỉ chạy một process local với cùng thư mục lưu trữ. Không dùng Node server này thay cho hệ thống nhiều instance production.
+`mebi-tour-v2`, schema 2. Mua/xây tại điểm dừng, mua lại sau trả phí, khách sạn và điểm du lịch chặn mua lại. Có Hoang đảo, du lịch chọn điểm đến ở lượt sau, lễ hội có thời hạn, thẻ may mắn, thanh lý khi nợ và bốn kiểu thắng. Trận tối đa 30 phút, hết giờ xét tổng tài sản. Không đấu giá, thế chấp, xây đều hoặc giao dịch tự do trong v2.
 
-## Cloudflare Worker
+Ba bất động sản đắt nhất: **Mebisoft 400.000 trứng → Mebifarm 360.000 trứng → Mebieco 320.000 trứng**. Một đơn vị engine tương đương 1.000 trứng; trên bàn viết gọn `K`. Không dùng VND hoặc tiền thật.
 
-`worker.js` phục vụ HTML và chuyển `/api/monopoly/:code/*` tới namespace `MONOPOLY`. `MonopolyRoom` là một Durable Object cho mỗi mã phòng. Binding và migration SQLite `v7` đã khai báo trong `wrangler.toml`; giữ nguyên mọi migration cũ. Build trước khi dùng Wrangler. Để chạy đúng môi trường Worker với storage/alarm: `npx.cmd wrangler dev --ip 0.0.0.0 --port 8787` (cần Wrangler được cài hoặc cho phép tải qua npx). Sau khi dừng rồi chạy lại, dùng cùng storage local của Wrangler để giữ phòng.
+Nguồn, mức độ xác minh, thông số biến thể và đối chiếu v1/v2: [docs/business-tour-rules.md](../docs/business-tour-rules.md). Đây là bản lấy cảm hứng, không phải mô phỏng chính xác mọi mode/phiên bản Business Tour.
 
-Mọi fetch, message, disconnect và alarm đi qua hàng đợi serial. Snapshot bao gồm state, deck bí mật, command dedup và deadline tuyệt đối được lưu trước broadcast. Alarm kiểm tra deadline mỗi giây. WebSocket thường giữ isolate sống; restart isolate đánh dấu kết nối cũ offline, người chơi xác thực lại bằng token để khôi phục. Không reset deadline lượt. Token chỉ trả trong response tạo/join và truyền qua message xác thực, không đưa vào URL, log hoặc snapshot công khai. Production cần HTTPS/WSS.
+## Cấu trúc
 
-Session trong `sessionStorage` theo tab, cài đặt cá nhân và tên trong localStorage. Tải lại cùng tab khôi phục danh tính. Không chuyển phiên giữa trình duyệt/thiết bị; link mời chỉ để join, không mang token. Không xóa dữ liệu trình duyệt nếu cần reconnect.
+- `tour-data.ts`: map, `boardPosition`, giá, cấp xây, phí, mua lại, sự kiện và timer.
+- `tour-engine.ts`: luật server độc lập UI/network, RNG có thể inject khi test. `engine.ts`/`data.ts` là entry của luật hiện hành.
+- `tour-ui.ts`, `tour.css`, `landmarks.ts`: HUD, camera zoom/pan và mô hình SVG nguyên bản; `main.ts` là client entry.
+- `service.ts`: phiên/token, rate limit, command version/dedup, persist trước broadcast.
+- `src/monopoly-room.ts`: hàng đợi serial của Durable Object, storage và alarm.
+- `legacy-engine.ts`, `legacy-data.ts`: regression lịch sử v1; `monopoly-legacy.generated.js` chỉ phục vụ test, không import vào Worker hoặc game.
 
-Worker giới hạn create 10/phút/IP, join/resume 30/phút/IP qua một DO limiter; service giới hạn 20 command/10 giây/người, 30 auth/10 giây/phòng. Node local dùng giới hạn service; không có limiter theo IP ở local. Command có roomId, commandId, expectedVersion. Lệnh trùng được bỏ qua; state cũ bị từ chối và gửi snapshot mới, người dùng có thể thử lại. Server không nhận kết quả xúc xắc từ client.
+Build tạo HTML độc lập và các module `*.generated.js`; sửa source rồi build, không sửa generated trực tiếp.
+
+## Multiplayer và lưu trữ
+
+Giữ cùng API `/api/monopoly/:code/*`. Token ngẫu nhiên cấp từ server, xác thực trong WebSocket message, không đưa vào URL/log/snapshot công khai. Lệnh có roomId, commandId, expectedVersion; lệnh stale bị từ chối và gửi snapshot mới để thử lại. Không cho client gửi kết quả dice, giá đất hoặc quyền sở hữu.
+
+Cloudflare dùng binding `MONOPOLY`, migration SQLite `v7` hiện có trong `wrangler.toml`. Không tạo namespace hoặc migration mới. Snapshot gồm schema/ruleset, phase context, deck bí mật, dedup và deadline tuyệt đối; alarm chạy cả khi offline. Khi isolate restart, socket cũ đánh dấu offline và client reconnect bằng token. Không reset deadline.
+
+Node local dùng cùng service, lưu `.monopoly-local/` bằng temp-file + rename; startup khôi phục phòng và timer. Chỉ chạy một process local cho thư mục storage này. SessionStorage giữ token theo tab, localStorage chỉ giữ tên/cài đặt. Reload giữ ghế/màu/nhân vật; link mời không chuyển token sang thiết bị khác.
+
+Lobby giữ chỗ 60s, trong trận 120s; nếu tất cả offline giữ danh tính tối đa 30 phút và timer vẫn chạy. Chủ phòng rời sảnh chuyển quyền ghế nhỏ nhất. Trận cũ đang chạy chuyển sang màn giải thích `legacy`, giữ snapshot gốc private; chủ phòng bấm **Mở sảnh luật mới** để chủ động bắt đầu lại. Sảnh/đã kết thúc cũ chuyển về sảnh và hủy ready. Không âm thầm đổi tài sản v1 sang v2.
+
+Limiter Worker giữ cấu hình hiện có: create 10/phút/IP, join/resume 30/phút/IP; command 20/10 giây/người. Local chỉ có giới hạn service. Chạy Worker giả lập với Wrangler khi cần kiểm tra binding/alarm thật: `npx.cmd wrangler dev --ip 0.0.0.0 --port 8787`. Không có deploy tự động.
 
 ## Kiểm tra
 
-```sh
+```powershell
 npm.cmd run build
 npm.cmd run check:monopoly
 npm.cmd test
 npm.cmd run test:monopoly:browser
 ```
 
-Browser test dùng Chrome/Edge headless và bốn browser context độc lập. Test tạo/join/ready/start, mua, thuê, đấu giá, trade, reload reconnect và mobile. Các tình huống kinh tế được chuẩn bị trực tiếp trong process test qua tham chiếu service, không có endpoint seed/fixture trong production. Test lưu ảnh tại `dist/mebi-monopoly/{desktop,mobile}-qa.png`. Unit/integration test bao gồm giả lập storage và restart DO; không thay cho việc xác nhận hạ tầng Cloudflare thật.
+Browser test dùng bốn context độc lập, create/join/ready/start, mua/xây/thu phí/mua lại, lễ hội, du lịch, reload và restart backend ở phase chọn điểm đến, hoàn tất Tourist Monopoly, reconnect kết quả và rematch. Các fixture được inject trực tiếp từ process test; không có endpoint seed production. Có kiểm tra 32 vị trí riêng, bàn vuông, nhãn và viewport ở 1440/1024/760/390/320px, zoom reset. Screenshot nằm tại `dist/mebi-monopoly/{desktop,mobile,lobby}-qa.png`.
 
-## Giới hạn cần biết
+Engine test kiểm tra mọi kiểu thắng, số dư không âm, luật sai phase và 12 trận mô phỏng seed chạy đến kết quả. Test DO dùng storage giả lập cho cạnh tranh ghế/nhân vật và restart. Chỉ báo pass sau khi thật sự chạy.
 
-- Chưa xác nhận trên Cloudflare thật, thiết bị di động vật lý hoặc mạng Internet công khai. Không tự deploy.
-- Đồ họa SVG/CSS nguyên bản, không WebGL. Có xúc xắc lắc, token đi ô, lật thẻ, chuyển tiền, nhấn sáng khi xây/mua và token nhảy mừng. Hiệu ứng 2D tối giản; không có bộ động tác riêng cho từng nhân vật. Nhạc nền là giai điệu synth tối giản.
-- Âm nhạc và font ngoài cần tương tác/mạng tương ứng; font hệ thống vẫn dùng được nếu Google Fonts không tải.
-- Room code đã đóng không được tái sử dụng; storage snapshot không tự xóa để phục vụ điều tra/khôi phục. Cần chính sách lưu trữ khi vận hành lâu dài. Limiter tập trung phù hợp quy mô nhỏ.
+## Asset và giới hạn
 
-Luật chi tiết, timer và khác biệt tham khảo: [RULES.md](RULES.md). Nguồn và giấy phép: [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md).
+SVG địa điểm, ba khu thương hiệu, nhân vật, CSS và nhạc synth là nguyên bản, không dùng asset từ Business Tour. Wordmark Mebisoft/Mebifarm/Mebieco không phải logo chính thức. Giấy phép thuật toán v1: [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md). Không thay đổi R2 trong lần cập nhật này.
+
+Bản này có 2.5D SVG/CSS, không dùng WebGL. Animation nhân vật dùng chuyển động đơn giản theo sự kiện, chưa phải hệ skeletal 3D riêng cho từng nhân vật. Mobile overview ưu tiên tên và giá; zoom/pan hoặc bottom sheet để đọc chi tiết. Chưa xác minh trên Cloudflare thật, mạng công khai hoặc thiết bị di động vật lý. Storage archive không tự xóa; vận hành lâu dài cần chính sách retention. Không tự deploy.
