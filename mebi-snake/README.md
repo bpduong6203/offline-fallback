@@ -18,7 +18,7 @@ Di chuột để lái; giữ chuột trái/Space để boost. Mobile dùng joyst
 
 ## Cấu trúc và config
 
-- `config.js`: 30 Hz simulation, 15 Hz snapshots, 10 slot, radius 5.400, speed 175, boost ×1,6; mass 25–650, spawn 60, length cap 2.240, food 850/cap 1.800.
+- `config.js`: 30 Hz simulation, 15 Hz snapshots, 10 slot, radius 3.600, speed 175, boost ×1,6; mass 25–650, spawn 60, length cap 2.240, food 850/cap 1.800.
 - `math.js`: góc ngắn nhất, quay giới hạn, arc-length body, swept segment collision, spatial grid.
 - `engine.js`: authority tiền năng lượng/ăn/boost/collision/spawn/death; không phụ thuộc transport/render.
 - `service.js`: session, socket replacement, timeout, scheduler, ACK/backpressure, matcher serial.
@@ -72,7 +72,7 @@ Artifacts: `dist/mebi-snake/{menu,playing,mobile,result}-qa.png`, `load-test.jso
 
 Kết quả đo cụ thể: [VALIDATION.md](VALIDATION.md).
 
-Điều chỉnh kích thước: bán kính 5.400 (đường kính 10.800, gấp 3 bản đầu); mỗi mass tăng 2,2 chiều dài thay vì 3,3 (tăng trưởng còn 2/3). Base length 156 giữ chiều dài xuất phát 288 ở mass 60.
+Điều chỉnh kích thước: bán kính 3.600 (đường kính 7.200, bằng 2/3 kích thước 5.400 trước đó); mỗi mass tăng 2,2 chiều dài thay vì 3,3 (tăng trưởng còn 2/3). Base length 156 giữ chiều dài xuất phát 288 ở mass 60.
 
 
 ## Bot tự động trong đấu trường
