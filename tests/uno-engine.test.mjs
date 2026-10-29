@@ -1,0 +1,258 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  createDeck,
+  shuffleDeck,
+  getCardColor,
+  getCardType,
+  getCardValue,
+  getCardScore,
+  getCardDetails,
+  isValidPlay,
+  UnoGame
+} from '../uno/engine.js';
+
+test('createDeck creates exactly 108 standard UNO cards', () => {
+  const deck = createDeck();
+  assert.equal(deck.length, 108);
+
+  // Check counts per color
+  const colors = { red: 0, yellow: 0, green: 0, blue: 0, black: 0 };
+  const types = { number: 0, skip: 0, reverse: 0, draw2: 0, wild: 0, draw4: 0 };
+
+  for (const id of deck) {
+    colors[getCardColor(id)]++;
+    types[getCardType(id)]++;
+  }
+
+  // 25 cards of each color (19 numbers: 1 zero + 2 of each 1-9, plus 2 skips + 2 revs + 2 draw2)
+  assert.equal(colors.red, 25);
+  assert.equal(colors.yellow, 25);
+  assert.equal(colors.green, 25);
+  assert.equal(colors.blue, 25);
+  // 8 black wild cards (4 Wild + 4 Wild Draw 4)
+  assert.equal(colors.black, 8);
+
+  assert.equal(types.wild, 4);
+  assert.equal(types.draw4, 4);
+  assert.equal(types.skip, 8); // 2 per color
+  assert.equal(types.reverse, 8);
+  assert.equal(types.draw2, 8);
+  assert.equal(types.number, 76); // 108 - 8 - 24 = 76
+});
+
+test('card properties mapping and scoring', () => {
+  // Red 0
+  assert.equal(getCardColor(0), 'red');
+  assert.equal(getCardType(0), 'number');
+  assert.equal(getCardValue(0), 0);
+  assert.equal(getCardScore(0), 0);
+
+  // Red Skip (col 10, row 0)
+  assert.equal(getCardColor(10), 'red');
+  assert.equal(getCardType(10), 'skip');
+  assert.equal(getCardValue(10), null);
+  assert.equal(getCardScore(10), 20);
+
+  // Yellow Reverse (col 11, row 1 -> ID 25)
+  assert.equal(getCardColor(25), 'yellow');
+  assert.equal(getCardType(25), 'reverse');
+  assert.equal(getCardScore(25), 20);
+
+  // Green Draw 2 (col 12, row 2 -> ID 40)
+  assert.equal(getCardColor(40), 'green');
+  assert.equal(getCardType(40), 'draw2');
+  assert.equal(getCardScore(40), 20);
+
+  // Wild (col 13, row 0 -> ID 13)
+  assert.equal(getCardColor(13), 'black');
+  assert.equal(getCardType(13), 'wild');
+  assert.equal(getCardScore(13), 50);
+
+  // Wild Draw 4 (col 13, row 4 -> ID 69 in 112-grid, row >= 4)
+  const draw4Id = 13 + 14 * 4; // 69 in 112 grid
+  assert.equal(getCardColor(draw4Id), 'black');
+  assert.equal(getCardType(draw4Id), 'draw4');
+  assert.equal(getCardScore(draw4Id), 50);
+
+  const details = getCardDetails(0);
+  assert.equal(details.spriteX, 1);
+  assert.equal(details.spriteY, 1);
+});
+
+test('isValidPlay correctly checks play conditions', () => {
+  // Red 5
+  const red5 = 5;
+  // Red 7
+  const red7 = 7;
+  // Blue 5
+  const blue5 = 14 * 3 + 5; // 47
+  // Green 9
+  const green9 = 14 * 2 + 9; // 37
+  // Wild
+  const wild = 13;
+  // Wild Draw 4
+  const draw4 = 13 + 14 * 4;
+
+  // Matching color (Red 7 on Red 5, activeColor 'red')
+  assert.equal(isValidPlay(red7, red5, 'red'), true);
+
+  // Matching number (Blue 5 on Red 5, activeColor 'red')
+  assert.equal(isValidPlay(blue5, red5, 'red'), true);
+
+  // Non-matching card (Green 9 on Red 5, activeColor 'red')
+  assert.equal(isValidPlay(green9, red5, 'red'), false);
+
+  // Wild and Draw 4 can always be played
+  assert.equal(isValidPlay(wild, red5, 'red'), true);
+  assert.equal(isValidPlay(draw4, red5, 'red'), true);
+
+  // Matching action type (Blue Skip on Red Skip)
+  const redSkip = 10;
+  const blueSkip = 14 * 3 + 10;
+  assert.equal(isValidPlay(blueSkip, redSkip, 'yellow'), true);
+});
+
+test('UnoGame deals 7 cards to each player and initializes state', () => {
+  // Use a custom deck with standard number cards to verify 7-card deal without action card triggers
+  const customDeck = [];
+  for (let i = 0; i < 50; i++) customDeck.push(i % 10); // numbers 0-9
+  const game = new UnoGame({
+    players: [
+      { id: 0, name: 'Alice' },
+      { id: 1, name: 'Bob' },
+      { id: 2, name: 'Charlie' }
+    ],
+    customDeck
+  });
+
+  assert.equal(game.players.length, 3);
+  assert.equal(game.players[0].hand.length, 7);
+  assert.equal(game.players[1].hand.length, 7);
+  assert.equal(game.players[2].hand.length, 7);
+  assert.equal(game.discardPile.length >= 1, true);
+  assert.ok(['red', 'yellow', 'green', 'blue'].includes(game.activeColor));
+  assert.equal(game.ended, false);
+});
+
+test('UnoGame handles 2-player Reverse rule (acts as Skip)', () => {
+  // Controlled deck: Player 0 has a Red Reverse
+  const redRev = 11;
+  const game = new UnoGame({
+    players: [{ id: 0, name: 'P1' }, { id: 1, name: 'P2' }]
+  });
+
+  // Setup state
+  game.currentTurn = 0;
+  game.direction = 1;
+  game.activeColor = 'red';
+  game.discardPile = [0]; // Red 0 on top
+  game.players[0].hand = [redRev, 1]; // Reverse and Red 1
+
+  const res = game.playCard(0, redRev);
+  assert.equal(res.success, true);
+  // In 2 players, Reverse skips P2, so P1 gets another turn!
+  assert.equal(game.currentTurn, 0);
+  assert.equal(game.players[0].hand.length, 1);
+});
+
+test('UnoGame handles Draw 2 effect and turn skipping', () => {
+  const redDraw2 = 12;
+  const game = new UnoGame({
+    players: [{ id: 0, name: 'P1' }, { id: 1, name: 'P2' }, { id: 2, name: 'P3' }]
+  });
+
+  game.currentTurn = 0;
+  game.direction = 1;
+  game.activeColor = 'red';
+  game.discardPile = [0];
+  game.players[0].hand = [redDraw2, 1];
+  const p2InitCount = game.players[1].hand.length;
+
+  const res = game.playCard(0, redDraw2);
+  assert.equal(res.success, true);
+  // P2 drew 2 cards and was skipped
+  assert.equal(game.players[1].hand.length, p2InitCount + 2);
+  // Turn advances to P3 (index 2)
+  assert.equal(game.currentTurn, 2);
+});
+
+test('UnoGame handles UNO calling and penalty catching', () => {
+  const game = new UnoGame({
+    players: [{ id: 0, name: 'Alice' }, { id: 1, name: 'Bob' }]
+  });
+
+  game.currentTurn = 0;
+  game.activeColor = 'red';
+  game.discardPile = [0];
+  // Alice has 2 cards and plays 1 without calling UNO
+  game.players[0].hand = [1, 2];
+
+  const res1 = game.playCard(0, 1, null, false);
+  assert.equal(res1.success, true);
+  assert.equal(game.players[0].hand.length, 1);
+  assert.equal(res1.unoPenaltyWindow, true);
+  assert.equal(game.unoPenaltyWindow.playerId, 0);
+
+  // Bob catches Alice's forgotten UNO!
+  const catchRes = game.catchUno(1, 0);
+  assert.equal(catchRes.caught, true);
+  // Alice receives 2 penalty cards
+  assert.equal(game.players[0].hand.length, 3);
+  assert.equal(game.unoPenaltyWindow, null);
+});
+
+test('UnoGame detects victory and calculates winner score', () => {
+  const game = new UnoGame({
+    players: [{ id: 0, name: 'Winner' }, { id: 1, name: 'Loser' }]
+  });
+
+  game.currentTurn = 0;
+  game.activeColor = 'red';
+  game.discardPile = [0];
+  game.players[0].hand = [1]; // Red 1
+  // Loser has Wild (50) and Draw 2 (20) and Number 5 (5) = 75 points
+  game.players[1].hand = [13, 12, 5];
+
+  const res = game.playCard(0, 1, null, true);
+  assert.equal(res.success, true);
+  assert.equal(res.gameOver, true);
+  assert.equal(game.ended, true);
+  assert.equal(game.winner.id, 0);
+  assert.equal(res.roundScore, 75);
+});
+
+test('UnoGame getStateForPlayer implements anti-cheat hand masking', () => {
+  const game = new UnoGame({
+    players: [{ id: 0, name: 'P1' }, { id: 1, name: 'P2' }]
+  });
+
+  const stateForP1 = game.getStateForPlayer(0);
+  // P1 sees their own hand
+  assert.ok(Array.isArray(stateForP1.players[0].hand));
+  assert.equal(stateForP1.players[0].hand.length, game.players[0].hand.length);
+  // P1 DOES NOT see P2's hand (anti-cheat: null)
+  assert.equal(stateForP1.players[1].hand, null);
+  assert.equal(stateForP1.players[1].cardCount, game.players[1].hand.length);
+});
+
+test('UnoGame recycles discard pile when draw pile is exhausted', () => {
+  const game = new UnoGame({
+    players: [{ id: 0, name: 'P1' }, { id: 1, name: 'P2' }]
+  });
+
+  // Empty draw pile and put 10 cards in discard pile
+  game.drawPile = [];
+  game.discardPile = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  assert.equal(game.drawPile.length, 0);
+
+  // Trigger draw
+  game.currentTurn = 0;
+  const drawRes = game.drawCard(0);
+  assert.equal(drawRes.success, true);
+
+  // Top card remains on discard pile, rest recycled into draw pile
+  assert.equal(game.discardPile.length, 1);
+  assert.equal(game.discardPile[0], 10);
+  assert.equal(game.drawPile.length > 0, true);
+});

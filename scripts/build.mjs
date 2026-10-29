@@ -3,6 +3,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {buildStickman} from './build-stickman.mjs';
 import {buildTienLen} from './build-tienlen.mjs';
+import {buildUno} from './build-uno.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 export async function build(){
   const seen=new Set(),modules=[];
@@ -29,6 +30,7 @@ export async function build(){
   console.log(`Built Bomb Arena (${Buffer.byteLength(html)} bytes)`);
   await buildStickman();
   await buildTienLen();
+  await buildUno();
   return html;
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))await build();

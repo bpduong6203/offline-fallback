@@ -6,6 +6,8 @@ import bangBang from './src/page/games/Bang_Bang.html';
 import bombArena from './src/page/games/bomb-arena.generated.js';
 import stickmanFight from './src/page/games/stickman-fight.generated.js';
 import tienLen from './src/page/games/tien-len.generated.js';
+import uno from './src/page/games/uno.generated.js';
+import { handleAssetRequest } from './src/asset-handler.js';
 
 // Durable Object phải được export từ file entry
 export { PoolRoom } from './src/pool-room.js';
@@ -14,12 +16,16 @@ export { BombRoom } from './src/bomb-room.js';
 export { StickmanRoom } from './src/stickman-room.js';
 export { BangBangQueue } from './src/bang-bang-queue.js';
 export { TienLenRoom } from './src/tienlen-room.js';
+export { UnoRoom } from './src/uno-room.js';
 
 const OFFLINE_STATUS = new Set([502, 503, 504, 521, 522, 523, 524, 530]);
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (url.pathname.startsWith('/__assets/')) {
+      return handleAssetRequest(request, env);
+    }
     if (url.pathname === '/__game/bang-bang-ws') {
       const origin = request.headers.get('Origin');
       if (origin) {
@@ -39,6 +45,10 @@ export default {
     if (['/tien-len', '/tien-len/', '/__game/tien-len'].includes(url.pathname)) {
       if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
       return new Response(request.method === 'HEAD' ? null : tienLen, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
+    }
+    if (['/uno', '/uno/', '/__game/uno'].includes(url.pathname)) {
+      if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+      return new Response(request.method === 'HEAD' ? null : uno, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
     }
     if (['/stickman-fight', '/stickman-fight/', '/__game/stickman-fight'].includes(url.pathname)) {
       if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
