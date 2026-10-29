@@ -110,7 +110,8 @@ export function requiresGameLogin(url) {
   const path = url.pathname;
   return path.startsWith('/__game/') || path.startsWith('/api/monopoly/') || [
     '/ty-phu', '/ty-phu/', '/chibi-rush', '/chibi-rush/',
-    '/tien-len', '/tien-len/', '/uno', '/uno/', '/stickman-fight', '/stickman-fight/'
+    '/tien-len', '/tien-len/', '/uno', '/uno/', '/stickman-fight', '/stickman-fight/',
+    '/tower-city', '/tower-city/'
   ].includes(path);
 }
 
