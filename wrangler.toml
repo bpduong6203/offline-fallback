@@ -102,3 +102,16 @@ class_name = "PartyCatsRoom"
 [[migrations]]
 tag = "v10"
 new_sqlite_classes = ["PartyCatsRoom"]
+
+# MebiRan.io: one authoritative simulation per arena, one serial matchmaker.
+[[durable_objects.bindings]]
+name = "SNAKE"
+class_name = "SnakeArena"
+
+[[durable_objects.bindings]]
+name = "SNAKE_MATCH"
+class_name = "SnakeMatchmaker"
+
+[[migrations]]
+tag = "v11"
+new_sqlite_classes = ["SnakeArena", "SnakeMatchmaker"]

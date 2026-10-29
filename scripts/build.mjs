@@ -4,6 +4,7 @@ import path from 'node:path';
 import {buildStickman} from './build-stickman.mjs';
 import {buildTienLen} from './build-tienlen.mjs';
 import {buildUno} from './build-uno.mjs';
+import {buildSnake} from './build-snake.mjs';
 import {buildMonopoly} from './build-monopoly.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 export async function build(){
@@ -33,6 +34,7 @@ export async function build(){
   await buildTienLen();
   await buildUno();
   await buildMonopoly();
+  await buildSnake();
   try {
     let tc = '';
     try { tc = await readFile(path.join(root, 'Tower City.html'), 'utf8'); } catch {}

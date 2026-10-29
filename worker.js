@@ -1,3 +1,6 @@
+import snakeHtml from './src/page/games/mebi-snake.generated.js';
+import {routeSnake} from './src/snake-router.js';
+export {SnakeArena,SnakeMatchmaker} from './src/snake-room.js';
 // Cloudflare Worker: khi server local / Tunnel tắt -> hiện trang chờ có mini game (Flappy Bug, Bi-a, Caro, Ma sói).
 import { renderOffline } from './src/page/render.js';
 import { handleGameSocket } from './src/game-socket.js';
@@ -32,6 +35,7 @@ const OFFLINE_STATUS = new Set([502, 503, 504, 521, 522, 523, 524, 530]);
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    const snakeResponse=await routeSnake(request,env,snakeHtml);if(snakeResponse)return snakeResponse;
     if (url.pathname.startsWith('/api/auth/')) return handleAuthRequest(request, env);
     if (requiresGameLogin(url) && !(await requireGameLogin(request, env))) {
       if ((request.headers.get('Upgrade') || '').toLowerCase() !== 'websocket' && ['GET', 'HEAD'].includes(request.method)) {

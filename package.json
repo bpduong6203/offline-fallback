@@ -13,6 +13,8 @@
     "upload:assets": "node scripts/upload-assets.mjs",
     "test:monopoly:browser": "node scripts/monopoly-browser-check.mjs",
     "simulate:monopoly": "node scripts/monopoly-simulate.mjs",
+    "test:snake:browser": "node scripts/snake-browser-check.mjs",
+    "test:snake:load": "node scripts/snake-load-test.mjs",
     "check:monopoly": "tsc -p mebi-monopoly/tsconfig.json"
   },
   "devDependencies": {
