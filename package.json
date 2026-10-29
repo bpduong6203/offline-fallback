@@ -12,6 +12,7 @@
     "test:uno:browser": "node scripts/uno-browser-check.mjs",
     "upload:assets": "node scripts/upload-assets.mjs",
     "test:monopoly:browser": "node scripts/monopoly-browser-check.mjs",
+    "simulate:monopoly": "node scripts/monopoly-simulate.mjs",
     "check:monopoly": "tsc -p mebi-monopoly/tsconfig.json"
   },
   "devDependencies": {

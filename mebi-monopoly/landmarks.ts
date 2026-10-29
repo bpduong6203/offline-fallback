@@ -24,3 +24,10 @@ export function landmark(kind:string,level=0){
  const building=level===4?`${house(30,31,'#b29ed7')}<path d="M36 24h22v10H36Z" fill="#e8c67b"/>`:level>0?house(43,40-level*3,'#eac18f'):'';
  return `<svg viewBox="0 0 100 80" aria-hidden="true"><ellipse cx="50" cy="71" rx="37" ry="6" fill="#35576c" opacity=".1"/>${arts[kind]||arts.town}${building}</svg>`;
 }
+
+export function buildingMarker(level:number){
+ if(level<=0)return '';
+ const house='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v10H4Z" fill="#f6d59a" stroke="#ab8054" stroke-width="1.4"/><path d="m2 11 10-9 10 9-2 2-8-7-8 7Z" fill="#e78b6b"/><path d="M10 15h5v6h-5Z" fill="#80ada4"/><path d="M6 13h3v3H6m10-3h3v3h-3" fill="#fffdf0"/></svg>';
+ const hotel='<svg viewBox="0 0 28 28" aria-hidden="true"><rect x="5" y="5" width="18" height="21" rx="2" fill="#b7a4e2" stroke="#7e6baf" stroke-width="1.4"/><path d="M3 5h22V2H3Z" fill="#eac784"/><path d="M9 9v6m10-6v6m-10-3h10M12 20h5v6h-5" stroke="#fff8df" stroke-width="2"/></svg>';
+ return `<span class="building-marker ${level===4?'is-hotel':''}" role="img" aria-label="${level===4?'Khách sạn':level+' nhà'}">${level===4?hotel:Array.from({length:level},()=>house).join('')}<strong>${level===4?'KS':level}</strong></span>`;
+}

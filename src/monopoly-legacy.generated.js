@@ -71,7 +71,8 @@ var DECKS = [[
 // mebi-monopoly/currency.ts
 var EGGS_PER_UNIT = 1e3;
 var toEggs = (units) => units * EGGS_PER_UNIT;
-var formatMoney = (units) => new Intl.NumberFormat("vi-VN").format(toEggs(units)) + " tr\u1EE9ng";
+var moneyFormat = new Intl.NumberFormat("vi-VN");
+var formatMoney = (units) => moneyFormat.format(toEggs(units)) + " tr\u1EE9ng";
 
 // mebi-monopoly/legacy-engine.ts
 var requireThat = (ok, message = "Thao t\xE1c kh\xF4ng h\u1EE3p l\u1EC7") => {
