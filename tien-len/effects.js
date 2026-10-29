@@ -1,4 +1,4 @@
-import { EGG_ICON_DATA_URL } from './egg-asset.js';
+import { EGG_ICON_URL } from './egg-asset.js';
 
 export class EffectsManager {
   constructor(container) {
@@ -54,7 +54,7 @@ export class EffectsManager {
     const rect = element.getBoundingClientRect();
     const floater = document.createElement('div');
     floater.className = `vfx-floater ${isGain ? 'gain' : 'loss'}`;
-    floater.innerHTML = `${isGain ? '+' : '-'}${Math.abs(amount).toLocaleString('vi-VN')} <img src="${EGG_ICON_DATA_URL}" class="egg-currency-img" alt="Hộp trứng"> Hộp`;
+    floater.innerHTML = `${isGain ? '+' : '-'}${Math.abs(amount).toLocaleString('vi-VN')} <img src="${EGG_ICON_URL}" class="egg-currency-img" alt="Hộp trứng"> Hộp`;
 
     floater.style.left = `${rect.left + rect.width / 2}px`;
     floater.style.top = `${rect.top}px`;

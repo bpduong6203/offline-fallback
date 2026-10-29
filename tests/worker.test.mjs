@@ -10,6 +10,23 @@ const source=(await readFile(entry,'utf8'))
   .replace("import bangBang from './src/page/games/Bang_Bang.html';",`const bangBang=${JSON.stringify(bangBangHtml)};`)
   .replace(/from '(\.\/[^']+)'/g,(_,relative)=>`from '${new URL(relative,entry).href}'`);
 const worker=(await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).default;
+
+test('Worker handles R2 image requests before origin fallback and denies uploads',async()=>{
+ const env={IMAGES:{get:async()=>null}};
+ assert.equal((await worker.fetch(new Request('https://example.test/__assets/images/missing.webp'),env)).status,404);
+ assert.equal((await worker.fetch(new Request('https://example.test/__assets/images/egg.webp',{method:'PUT'}),env)).status,405);
+ assert.equal((await worker.fetch(new Request('https://example.test/__assets/private/file.webp'),env)).status,400);
+});
+
+test('Worker serves MebiMonopoly, matches launcher style, guards room API origin',async()=>{
+ for(const route of ['/ty-phu','/ty-phu/','/__game/mebi-monopoly']){
+  const r=await worker.fetch(new Request('https://example.test'+route));assert.equal(r.status,200);assert.match(await r.text(),/<title>MebiMonopoly<\/title>/);
+  assert.equal((await worker.fetch(new Request('https://example.test'+route,{method:'POST'}))).status,405);
+ }
+ assert.equal((await worker.fetch(new Request('https://example.test/api/monopoly/ABCDEF/join',{method:'POST',headers:{Origin:'https://other.test'}}))).status,403);
+ assert.equal((await worker.fetch(new Request('https://example.test/api/monopoly/000000/join',{method:'POST'}))).status,400);
+ const {renderOffline}=await import('../src/page/render.js');assert.match(await renderOffline(new Request('https://example.test/',{headers:{Accept:'text/html'}})).text(),/class="tab tab-link" href="\/ty-phu"/);
+});
 test('Worker serves isolated Stickman routes and rejects writes',async()=>{
   for(const route of ['/stickman-fight','/stickman-fight/','/__game/stickman-fight']){
     const response=await worker.fetch(new Request('https://example.test'+route));assert.equal(response.status,200);assert.match(await response.text(),/Stickman Showdown/);

@@ -1,4 +1,4 @@
-import base64
+import hashlib
 from PIL import Image
 import os
 
@@ -12,11 +12,12 @@ im.thumbnail((160, 160), Image.Resampling.LANCZOS)
 im.save(out_webp, 'WEBP', quality=92)
 
 with open(out_webp, 'rb') as f:
-    b64 = base64.b64encode(f.read()).decode('utf-8')
+    digest = hashlib.sha256(f.read()).hexdigest()[:12]
 
-js_content = f'// Auto-generated egg currency asset\nexport const EGG_ICON_DATA_URL = "data:image/webp;base64,{b64}";\n'
+asset_url = f'/__assets/images/tien-len/egg-icon.{digest}.webp'
+js_content = f'// Generated asset URL; upload the matching WebP before deploying.\nexport const EGG_ICON_URL = "{asset_url}";\n'
 
 with open(out_js, 'w', encoding='utf-8') as f:
     f.write(js_content)
 
-print(f"Generated {out_js} ({len(b64)} chars base64)")
+print(f"Generated {out_js}: {asset_url}. Upload {out_webp} to the matching R2 key before deploying.")

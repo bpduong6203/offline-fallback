@@ -132,6 +132,12 @@ try {
   assert.equal(parseInt(eggBalance, 10) >= 0, true, 'Egg balance should be numeric');
   const hasEggIcon = await evaluate('!!document.querySelector(".egg-currency-img")');
   assert.equal(hasEggIcon, true, 'Egg currency icon should be rendered');
+  for (let i = 0; i < 40; i++) {
+    if (await evaluate('document.querySelector(".egg-currency-img").complete && document.querySelector(".egg-currency-img").naturalWidth > 0')) break;
+    await wait(100);
+  }
+  assert.equal(await evaluate('document.querySelector(".egg-currency-img").naturalWidth > 0'), true, 'Egg image bytes must load through asset route');
+  assert.match(await evaluate('document.querySelector(".egg-currency-img").getAttribute("src")'), /^\/__assets\/images\/tien-len\/egg-icon\.[a-f0-9]{12}\.webp$/);
 
   // 3. Click "Về Menu" button
   await evaluate('document.getElementById("btnMenu").click()');

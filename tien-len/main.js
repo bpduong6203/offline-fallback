@@ -10,7 +10,7 @@ import { sounds } from './audio.js';
 import { EffectsManager } from './effects.js';
 import { NetworkClient } from './network.js';
 import { UIManager } from './ui.js';
-import { EGG_ICON_DATA_URL } from './egg-asset.js';
+import { EGG_ICON_URL } from './egg-asset.js';
 
 class TienLenGameApp {
   constructor() {
@@ -140,7 +140,7 @@ class TienLenGameApp {
     // Render Egg Currency Icon & Balance
     const iconWrap = document.getElementById('headerEggIconWrap');
     if (iconWrap) {
-      iconWrap.innerHTML = `<img src="${EGG_ICON_DATA_URL}" class="egg-currency-img" alt="Hộp trứng">`;
+      iconWrap.innerHTML = `<img src="${EGG_ICON_URL}" class="egg-currency-img" alt="Hộp trứng">`;
     }
     const eggBalEl = document.getElementById('userEggBalance');
     if (eggBalEl) {
@@ -779,8 +779,8 @@ class TienLenGameApp {
       }
 
       const changeText = p.rank === 1
-        ? `+15 <img src="${EGG_ICON_DATA_URL}" class="egg-currency-img" alt="Hộp trứng"> Hộp trứng`
-        : `${changeAmount} <img src="${EGG_ICON_DATA_URL}" class="egg-currency-img" alt="Hộp trứng"> Hộp trứng`;
+        ? `+15 <img src="${EGG_ICON_URL}" class="egg-currency-img" alt="Hộp trứng"> Hộp trứng`
+        : `${changeAmount} <img src="${EGG_ICON_URL}" class="egg-currency-img" alt="Hộp trứng"> Hộp trứng`;
 
       scoreSummaryHtml += `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:8px 12px;background:rgba(255,255,255,0.05);border-radius:10px">
