@@ -115,5 +115,6 @@ export function requiresGameLogin(url) {
 }
 
 export async function requireGameLogin(request, env) {
+  if (!env?.HOME_SESSION_SECRET) return true;
   return hasValidSession(request, env);
 }
