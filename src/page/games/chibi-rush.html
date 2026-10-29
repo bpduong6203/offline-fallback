@@ -47,9 +47,11 @@
         position: fixed;
         inset: 0;
         display: block;
+        z-index: 0;
       }
       .card {
         position: fixed;
+        z-index: 10;
         background: var(--card);
         border-radius: 18px;
         padding: 10px 16px;
@@ -137,6 +139,7 @@
       }
       #cdn {
         position: fixed;
+        z-index: 10;
         top: 32%;
         left: 50%;
         transform: translate(-50%, -50%);
@@ -977,7 +980,7 @@
         const dt = Math.min((now - last) / 1000, 0.05);
         last = now;
         if (go) T += dt;
-        if (!done) update(dt);
+        if (!done && phase !== "menu") update(dt);
         // hoạt ảnh nhân vật
         const spd = Math.hypot(P.vx, P.vz);
         P.anim += dt * spd * 1.4;
