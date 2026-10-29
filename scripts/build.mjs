@@ -33,6 +33,10 @@ export async function build(){
   await buildTienLen();
   await buildUno();
   await buildMonopoly();
+  try {
+    const tc = await readFile(path.join(root, 'tower-city.html'), 'utf8');
+    await writeFile(path.join(root, 'src/page/games/tower-city.html'), tc);
+  } catch {}
   return html;
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))await build();

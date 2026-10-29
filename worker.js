@@ -13,6 +13,7 @@ import { handleAuthRequest, requireGameLogin, requiresGameLogin } from './src/au
 import monopoly from './src/page/games/mebi-monopoly.generated.js';
 import chibiRush from './src/page/games/chibi-rush.html';
 import partyCats from './src/page/games/party-cats.html';
+import towerCity from './src/page/games/tower-city.html';
 export { MonopolyRoom } from './src/monopoly-room.generated.js';
 export { ChibiRushRoom } from './src/chibi-rush-room.js';
 export { PartyCatsRoom } from './src/party-cats-room.js';
@@ -70,6 +71,10 @@ export default {
       const room = (url.searchParams.get('room') || 'main').toLowerCase().slice(0, 24);
       if (!room) return new Response('Mã phòng không hợp lệ', { status: 400 });
       return env.PARTYCATS.get(env.PARTYCATS.idFromName(room)).fetch(request);
+    }
+    if (['/tower-city', '/tower-city/', '/__game/tower-city'].includes(url.pathname)) {
+      if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+      return new Response(request.method === 'HEAD' ? null : towerCity, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
     }
     if (url.pathname === '/__game/chibi-rush/ws') {
       const origin = request.headers.get('Origin');
