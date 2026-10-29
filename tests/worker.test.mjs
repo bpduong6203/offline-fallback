@@ -4,8 +4,10 @@ import {readFile} from 'node:fs/promises';
 // Node does not import Wrangler's HTML text modules. Adapt only that import in memory.
 const entry=new URL('../worker.js',import.meta.url);
 const html=await readFile(new URL('../src/page/games/Mini_Motorways.html',import.meta.url),'utf8');
+const bangBangHtml=await readFile(new URL('../src/page/games/Bang_Bang.html',import.meta.url),'utf8');
 const source=(await readFile(entry,'utf8'))
   .replace("import miniMotorways from './src/page/games/Mini_Motorways.html';",`const miniMotorways=${JSON.stringify(html)};`)
+  .replace("import bangBang from './src/page/games/Bang_Bang.html';",`const bangBang=${JSON.stringify(bangBangHtml)};`)
   .replace(/from '(\.\/[^']+)'/g,(_,relative)=>`from '${new URL(relative,entry).href}'`);
 const worker=(await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).default;
 test('Worker serves isolated Stickman routes and rejects writes',async()=>{

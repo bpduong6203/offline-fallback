@@ -13,6 +13,7 @@ export const body = (hostname) => `  </style>
       <button class="tab on" data-g="flappy" aria-pressed="true">Flappy</button>
       <!-- <button class="tab" data-g="pool">🎱 Bi-a</button> -->
       <button class="tab" data-g="caro" aria-pressed="false">Caro</button>
+      <button class="tab" data-g="2048" aria-pressed="false">🔢 2048</button>
       <button class="tab" data-g="wolf" aria-pressed="false">🐺 Ma sói</button>
       <button class="tab" data-g="played" aria-pressed="false">YOU GOT PLAYED</button>
       <button class="tab" data-g="motorways" aria-pressed="false">🚗 Mini Motorways</button>
@@ -51,6 +52,23 @@ export const body = (hostname) => `  </style>
       </div>
       <button class="mini" id="cBack" hidden style="width:100%;margin-bottom:8px">Thoát về menu</button>
       <div class="pmsg" id="cMsg"></div>
+    </div>
+    <div class="poolui" id="game2048ui" hidden>
+      <div id="g2048Menu">
+        <div class="row">
+          <button class="mini" id="g2048New">🔄 Ván mới</button>
+          <button class="mini" id="g2048Undo">↩ Hoàn tác</button>
+          <button class="mini" id="g2048Theme">🥚 Đổi Theme</button>
+          <button class="mini" id="g2048Mode">Chế độ: Đơn</button>
+        </div>
+        <div class="row" id="g2048OnlineRow">
+          <button class="mini" id="g2048Create">Tạo phòng 1v1</button>
+          <input id="g2048Code" maxlength="4" placeholder="MÃ PHÒNG" autocomplete="off">
+          <button class="mini" id="g2048Join">Vào phòng</button>
+        </div>
+      </div>
+      <button class="mini" id="g2048Back" hidden style="width:100%;margin-bottom:8px">Thoát về chơi đơn</button>
+      <div class="pmsg" id="g2048Msg"></div>
     </div>
     <div class="poolui" id="swordui" hidden>
       <div id="sMenu">

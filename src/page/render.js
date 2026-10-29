@@ -11,6 +11,7 @@ import { clientCaro } from './client/caro.js';
 import { clientSword } from './client/sword.js';
 import { clientWolf } from './client/wolf-ui.js';
 import { clientPlayed } from './client/played.js';
+import { client2048 } from './client/game-2048.js';
 import { clientMain } from './client/main.js';
 
 export function renderOffline(request) {
@@ -33,7 +34,7 @@ export function renderOffline(request) {
 
   // Ghép trang từ các module nhỏ (head, CSS, body, các đoạn script theo game).
   const html = head(hostname) + styleBase + styleWolf + styleSword + stylePlayed + body(hostname) +
-    clientCore + clientFlappy + clientPool + clientCaro + clientSword + clientWolf + clientPlayed + clientMain;
+    clientCore + clientFlappy + clientPool + clientCaro + client2048 + clientSword + clientWolf + clientPlayed + clientMain;
 
 
   return new Response(html, {
