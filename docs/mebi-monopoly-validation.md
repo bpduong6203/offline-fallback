@@ -21,3 +21,12 @@ Các kiểm tra trên chạy local, storage DO giả lập và Node WebSocket th
 Bỏ thu nhỏ bàn theo chiều cao; bàn desktop tối đa 1.120 px. Font và tranh trung tâm tính theo kích thước chính bàn cờ. Sảnh không còn cuộn riêng/cắt nhân vật, nhật ký nằm dưới bàn và ẩn thanh hành động trống của sảnh.
 
 Browser đã kiểm tra thêm sảnh một người ở 1920×980, 1440×900, 1366×768, 1024×768, 760×844, 390×844 và 320×844: nội dung trung tâm nằm đủ trong ô, không tràn ngang, không cắt nhân vật. Luồng bốn người và hiệu ứng xúc xắc tiếp tục qua. Ảnh đối chiếu sảnh: `dist/mebi-monopoly/lobby-{1920,390}-qa.png`.
+
+
+## Luật Mebi tùy chỉnh — 30/10/2026
+
+Ruleset mebi-tour-mebi-v2 / schema 4: giá đất x2, rent cơ bản 25% giá đất, thanh lý 2/3 giá thực mua, đôi/1+6 cho lượt thưởng (ba lần vào tù), động đất chọn một mục tiêu, máy bay luôn sang vòng kế qua START, mua lại nâng ngay, tự chuyển lượt sau 3,5 giây. Thay icon nhà nhiều mẫu/màu và khách sạn riêng, không đổi layout bàn lớn.
+
+TypeScript qua. Node tests toàn project: **196/196 qua** (`--test-concurrency=1 --test-timeout=10000`); bộ rules/current DO/custom gồm **36 test qua**. Browser bốn context qua, kiểm tra mua/thuê/mua lại theo giá mới và nâng cấp ngay, máy bay/reload/restart backend, không còn nút end-turn, icon 1/2/3 nhà/KS, 32 ô riêng ở 1440/1366/1024/760/390/320 px. Không runtime exception.
+
+Trận đang chạy luật cũ giữ archive và yêu cầu chủ phòng mở sảnh luật mới; không thay tiền/giá giữa trận. Replay cũ được chặn bằng ruleset. Chưa deploy hoặc kiểm tra Cloudflare production.

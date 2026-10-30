@@ -25,9 +25,12 @@ export function landmark(kind:string,level=0){
  return `<svg viewBox="0 0 100 80" aria-hidden="true"><ellipse cx="50" cy="71" rx="37" ry="6" fill="#35576c" opacity=".1"/>${arts[kind]||arts.town}${building}</svg>`;
 }
 
-export function buildingMarker(level:number){
+export function buildingMarker(level:number,variant=0){
  if(level<=0)return '';
- const house='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v10H4Z" fill="#f6d59a" stroke="#ab8054" stroke-width="1.4"/><path d="m2 11 10-9 10 9-2 2-8-7-8 7Z" fill="#e78b6b"/><path d="M10 15h5v6h-5Z" fill="#80ada4"/><path d="M6 13h3v3H6m10-3h3v3h-3" fill="#fffdf0"/></svg>';
- const hotel='<svg viewBox="0 0 28 28" aria-hidden="true"><rect x="5" y="5" width="18" height="21" rx="2" fill="#b7a4e2" stroke="#7e6baf" stroke-width="1.4"/><path d="M3 5h22V2H3Z" fill="#eac784"/><path d="M9 9v6m10-6v6m-10-3h10M12 20h5v6h-5" stroke="#fff8df" stroke-width="2"/></svg>';
- return `<span class="building-marker ${level===4?'is-hotel':''}" role="img" aria-label="${level===4?'Khách sạn':level+' nhà'}">${level===4?hotel:Array.from({length:level},()=>house).join('')}<strong>${level===4?'KS':level}</strong></span>`;
+ const palettes=[['#e98e72','#ffe0ad','#69a999'],['#778ed0','#d8e6fc','#e8b36b'],['#75aa91','#e6efca','#be8d66'],['#ae86bd','#f0d9ec','#76aab6']];
+ const villa=(i:number)=>{const [roof,wall,door]=palettes[(variant+i)%palettes.length],kind=(variant+i)%3;
+  const art=kind===0?`<path d="M4 13 16 4l12 9v17H4Z" fill="${wall}"/><path d="m1 13 15-12 15 12-3 3L16 7 4 16Z" fill="${roof}"/><path d="M7 18h5v5H7m13-5h5v5h-5" fill="#fffdf1"/>`:kind===1?`<path d="M4 8h20v22H4Z" fill="${wall}"/><path d="M19 16h10v14H19Z" fill="${door}"/><path d="M2 6h24v4H2m15 8h14v3H17" fill="${roof}"/><path d="M8 13h4v5H8m8-5h4v5h-4M8 21h4v5H8" fill="#fffdf1"/>`:`<path d="M3 15h26v15H3Z" fill="${wall}"/><path d="m1 15 8-8h14l8 8-2 3H3Z" fill="${roof}"/><path d="M9 9V4h4v6" fill="${door}"/><path d="M6 20h5v5H6m15-5h5v5h-5" fill="#fffdf1"/>`;
+  return `<svg viewBox="0 0 32 34" aria-hidden="true"><ellipse cx="16" cy="31" rx="15" ry="2" fill="#35576c" opacity=".13"/>${art}<path d="M14 22h5v8h-5Z" fill="${door}"/><path d="M3 30h27" stroke="#8a9276" stroke-width="1.5"/></svg>`;};
+ const hotel='<svg viewBox="0 0 36 38" aria-hidden="true"><ellipse cx="18" cy="35" rx="17" ry="2" fill="#35576c" opacity=".15"/><path d="M4 13h28v21H4Z" fill="#cfb9e8"/><path d="M10 6h16v28H10Z" fill="#a48bd0"/><path d="M8 4h20v4H8m-6 4h32v4H2" fill="#e7bd6b"/><path d="m18 0 1.3 2.7 3 .4-2.2 2.1.5 3-2.6-1.4-2.6 1.4.5-3-2.2-2.1 3-.4Z" fill="#ffe39a"/><path d="M13 11h3v4h-3m7-4h3v4h-3m-10 4h3v4h-3m7-4h3v4h-3M6 19h2v4H6m22-4h2v4h-2M6 26h2v4H6m22-4h2v4h-2" fill="#fff8db"/><path d="M14 28a4 4 0 0 1 8 0v6h-8Z" fill="#67799f"/><path d="M1 34h34" stroke="#8f8aa1" stroke-width="2"/></svg>';
+ return `<span class="building-marker ${level===4?'is-hotel':''}" role="img" aria-label="${level===4?'Khách sạn':level+' nhà'}">${level===4?hotel:Array.from({length:level},(_,i)=>villa(i)).join('')}<strong>${level===4?'KS':level}</strong></span>`;
 }

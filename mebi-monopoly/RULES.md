@@ -1,31 +1,17 @@
 # Luật Tỷ Phú Mebi
 
-Ruleset **mebi-tour-spec-v1**, schema **3**, map **vietnam-32-v1**. Theo [đặc tả người dùng cung cấp](../docs/business-tour-game-algorithms.md); map/bảng giá là preset Mebi, không tuyên bố giống 100% Business Tour.
+Ruleset **mebi-tour-mebi-v2**, schema **4**. Áp dụng tùy chỉnh người dùng ngày 30/10/2026, thay các điểm khác với đặc tả gốc trước đó. Map vẫn 32 ô Việt Nam, 2–4 người, một đơn vị = 1.000 trứng, khởi đầu 2.000.000 trứng.
 
-- 2–4 người, thêm máy trong sảnh; thứ tự lượt xáo trộn, ghế/màu/nhân vật giữ nguyên. Một đơn vị = **1.000 trứng**.
-- Khởi đầu **2.000.000 trứng**; qua START bằng xúc xắc +**300.000 trứng**. Teleport/thẻ di chuyển/về START mặc định không thưởng.
-- Mua đất + **1 hoặc 2 nhà** trong một giao dịch. Ghé lại đất của mình sau vòng mới nâng **một cấp**; cấp 3 ba nhà, cấp 4 khách sạn. Không xây từ xa.
-- Trả thuê trước, rồi tùy chọn mua lại **2× vốn đất và xây**, giữ cấp. Khách sạn, du lịch, lá chắn chặn mua lại. Thuế **floor(10% tiền mặt)**.
-- Đổ đôi **không thêm lượt**; không có ba đôi vào đảo. Ba lần thử đảo không đôi: tự thoát ở **đầu lượt sau**. Trả 200.000 trứng/dùng thẻ trước khi tung cũng thoát.
-- Du lịch chọn đích **ngay lượt hiện tại**: đất chưa có chủ hoặc của mình. Trừ vé 50.000 trứng sau khi xác nhận hợp lệ; bỏ qua/hết giờ không mất vé.
-- Ô Lễ hội Việt dùng kênh giải vô địch, thẻ lễ hội dùng kênh lễ hội. Mỗi kênh ×2 trong tám lượt kết thúc, MAX trong một kênh; hai kênh nhân riêng và làm tròn xuống. Mất điện: không thuê/nâng cấp tới khi chủ qua START kế tiếp (preset Mebi).
-- Thẻ hạ cấp, động đất, bảo vệ, mất điện, sinh nhật, du lịch, rời đảo. Hotel chống hạ cấp; lá chắn tiêu hao khi chặn phá. Hạ đất cấp 0 trả ngân hàng.
-- Thiếu tiền xử lý nợ, thanh lý 50% vốn từng tài sản rồi thanh toán/phá sản. Sinh nhật thu lần lượt theo ghế; người nợ có thể khác người có lượt.
-- Thắng: **trọn cạnh → ba nhóm đúng ba ô → đủ bốn du lịch → đối thủ phá sản → đối thủ rời trận**. Nhóm hai ô không tính bộ ba. Không giới hạn thời gian trận mặc định.
-- Tung/chọn 30 giây, nợ 120 giây. Hết giờ bỏ qua lựa chọn hoặc tự tung. Server quyết định tiền/xúc xắc/thẻ; retry không thu hai lần.
+- Giá đất **gấp đôi** bản trước; giá xây nhà giữ nguyên. Mebisoft 800.000, Mebifarm 720.000, Mebieco 640.000 trứng.
+- Phí đạp đất cơ bản = **1/4 giá đất**, ở mọi cấp và cả du lịch; không còn phí du lịch theo số điểm sở hữu. Mất điện/lễ hội/giải vô địch vẫn điều chỉnh phí theo hiệu ứng hiện có.
+- Thanh lý **floor(2/3 vốn đã mua và nâng cấp còn lại)**, làm tròn xuống theo đơn vị 1.000 trứng. Mua lại ghi riêng giá thực đã trả làm cơ sở thanh lý; công trình bị phá giảm phần vốn xây tương ứng.
+- Tung **đôi hoặc 1+6 / 6+1 được tung tiếp**. Ba lần thưởng liên tiếp trong cùng lượt đưa vào tù trước di chuyển lần ba. Roll thường chấm dứt chuỗi. Ra đôi/1+6 để thoát đảo cũng được lượt thưởng; vẫn giữ trả phí/thẻ rời đảo và ba lần thử thất bại tự thoát đầu lượt sau.
+- Mua đất kèm 1/2 nhà nguyên tử. Nâng bình thường một cấp mỗi lần ghé sau vòng mới. **Mua lại được nâng ngay một cấp**, không cần đợi vòng mới; đủ tiền và công trình không bị mất điện. Cấp 4 là khách sạn; khách sạn/du lịch/lá chắn vẫn chặn mua lại.
+- **Động đất mở chọn một thành phố đối thủ có nhà** để phá một cấp, không phá toàn bàn. Không chọn đất trống hoặc khách sạn. Lá chắn chặn lần phá và tiêu hao một lượt bảo vệ. Không có mục tiêu thì hoàn tất an toàn.
+- Máy bay chỉ đến ô mua được chưa có chủ hoặc của mình, không tới ô đặc biệt/đất đối thủ. Luôn sang vòng kế tiếp qua START, nhận 300.000 trứng, trừ vé 50.000 trứng khi xác nhận hợp lệ. Công thức số bước `board.length - currentPosition + targetId`; ví dụ sân bay 24 → Vũng Tàu 23 là 31 bước, qua START một lần; → Mebisoft 31 là 39 bước. Thẻ dịch chuyển khác giữ quy tắc riêng, không tự thưởng START.
+- **Không cần nút kết thúc lượt**: xử lý mua/xây/chọn hiệu ứng xong sẽ tự chuyển sau khoảng 3,5 giây hiển thị. Tung tiếp nếu có thưởng. Các lựa chọn vẫn có hạn 30 giây, nợ 120 giây; không bỏ qua lựa chọn hoặc khoản nợ đang chờ.
+- Thắng vẫn theo trọn cạnh / ba nhóm đúng ba thành phố / đủ du lịch / phá sản / đối thủ rời. Thuế vẫn floor(10% tiền mặt), sinh nhật xử lý nợ tuần tự, không nhận cash/ownership/dice từ client.
 
-## Bản lưu, UI và kiểm tra
+Trận đang chạy bằng luật cũ không đổi giá giữa trận; giữ bản lưu riêng và chủ phòng chọn **Mở sảnh luật mới**. Replay kiểm tra phiên bản ruleset, không chạy replay cũ bằng luật mới. Routes, bản đồ lớn và cấu hình Cloudflare/R2 giữ nguyên. Icon nhà có biệt thự/mái bằng/nhà phố nhiều màu, khách sạn riêng; vẫn hiển thị đúng số nhà và KS.
 
-Trận cũ được giữ riêng; chủ phòng mở sảnh luật mới, không tự đổi kinh tế giữa trận. Replay JSON chỉ tải sau khi kết thúc; không lộ token, seed hoặc bộ bài tương lai trong snapshot đang chơi. Lịch sử chia phần và lưu atomically trong Durable Object.
-
-Xúc xắc khối 3D sáu mặt, tung/nảy/đổ bóng, dừng đúng kết quả server. Giảm chuyển động/bỏ qua/tải lại chỉ đổi trình bày. Nhà có 1/2/3 biểu tượng + số; khách sạn có biểu tượng + KS. Bàn desktop rộng tối đa 1.120 px theo không gian ngang, không ép vừa chiều cao; cho phép cuộn dọc và zoom/pan để đọc chi tiết.
-
-```powershell
-npm.cmd run build
-npm.cmd run check:monopoly
-npm.cmd test
-npm.cmd run test:monopoly:browser
-npm.cmd run simulate:monopoly -- --matches 10000 --seed 1
-```
-
-Simulator dùng cùng engine/validator, báo ghế/kiểu thắng, lượt, cashflow, thẻ, đảo, ROI vào `dist/mebi-monopoly/simulation.json`. Giới hạn 2.000 lệnh/trận; **budgetReached** là chưa kết thúc trong ngân sách, không coi là thắng hay deadlock. Không thêm luật hết giờ để ép kết quả. Có thể chạy đến 100.000 seed với `--matches 100000`.
+Kiểm tra: `npm.cmd run check:monopoly`, build Monopoly, `node --test tests/tour-rules.test.mjs tests/mebi-monopoly-custom.test.mjs tests/monopoly-room.test.mjs`, `npm.cmd run test:monopoly:browser`. Chưa deploy Cloudflare.

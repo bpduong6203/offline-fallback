@@ -8,9 +8,9 @@ Node 20+, `npm.cmd install`, `npm.cmd run build`, `npm.cmd run dev`. Mở `http:
 
 ## Bộ luật hiện hành
 
-`mebi-tour-spec-v1`, schema 3, theo MD người dùng cung cấp. Khởi đầu 2 triệu trứng; mua đất + 1/2 nhà atomically; nâng một cấp mỗi lần ghé sau vòng mới; thuế theo tiền mặt; đôi không thêm lượt; du lịch ngay lượt hiện tại. Năm kiểu thắng, không giới hạn thời gian trận mặc định. Chi tiết tại [RULES.md](RULES.md).
+`mebi-tour-mebi-v2`, schema 4, theo các tùy chỉnh Mebi mới. Khởi đầu 2 triệu trứng; mua đất + 1/2 nhà atomically; nâng một cấp mỗi lần ghé sau vòng mới; thuế theo tiền mặt; đôi/1+6 được tung tiếp, ba lần liên tiếp vào tù; du lịch ngay lượt hiện tại. Năm kiểu thắng, không giới hạn thời gian trận mặc định. Chi tiết tại [RULES.md](RULES.md).
 
-Ba bất động sản đắt nhất: **Mebisoft 400.000 trứng → Mebifarm 360.000 trứng → Mebieco 320.000 trứng**. Một đơn vị engine tương đương 1.000 trứng; trên bàn viết gọn `K`. Không dùng VND hoặc tiền thật.
+Ba bất động sản đắt nhất: **Mebisoft 800.000 trứng → Mebifarm 720.000 trứng → Mebieco 640.000 trứng**. Một đơn vị engine tương đương 1.000 trứng; trên bàn viết gọn `K`. Không dùng VND hoặc tiền thật.
 
 Đặc tả nguồn và preset: [docs/business-tour-rules.md](../docs/business-tour-rules.md). Đây là bản lấy cảm hứng, không phải mô phỏng chính xác mọi mode/phiên bản Business Tour.
 
@@ -59,3 +59,5 @@ Bản này có 2.5D SVG/CSS, không dùng WebGL. Animation nhân vật dùng chu
 Simulator báo rõ `completed` và `budgetReached` sau ngân sách 2.000 lệnh, không gộp trận chưa kết thúc vào thắng. Báo cáo tại `dist/mebi-monopoly/simulation.json`. Replay server được chia phần qua `storage.ts` trong transaction Durable Object; seed và token không có trong snapshot công khai.
 
 Kết quả kiểm tra và giới hạn mô phỏng: [docs/mebi-monopoly-validation.md](../docs/mebi-monopoly-validation.md).
+
+Lượt tự chuyển sau khi xử lý xong (hiệu ứng khoảng 3,5 giây); động đất chọn một nhà đối thủ; máy bay luôn qua START; mua lại được nâng ngay một cấp; phí cơ bản 1/4 giá đất; thanh lý 2/3 số tiền đã mua.

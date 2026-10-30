@@ -30,8 +30,8 @@ var SCHEMA_VERSION, RULESET, MAP_VERSION, RULES, COLORS, PREMIUM, rows, SIDE_LEN
 var init_tour_data = __esm({
   "mebi-monopoly/tour-data.ts"() {
     "use strict";
-    SCHEMA_VERSION = 3;
-    RULESET = "mebi-tour-spec-v1";
+    SCHEMA_VERSION = 4;
+    RULESET = "mebi-tour-mebi-v2";
     MAP_VERSION = "vietnam-32-v1";
     RULES = {
       cash: 2e3,
@@ -44,8 +44,10 @@ var init_tour_data = __esm({
       choiceMs: 3e4,
       manageMs: 3e4,
       debtMs: 12e4,
-      doubleExtraTurn: false,
-      threeDoublesToIsland: false,
+      autoEndMs: 3500,
+      doubleExtraTurn: true,
+      oneSixExtraTurn: true,
+      threeDoublesToIsland: true,
       maxDoubles: 3,
       initialBuildChoices: [1, 2],
       requireNewLapToUpgrade: true,
@@ -57,13 +59,13 @@ var init_tour_data = __esm({
       buybackPreserveLevel: true,
       buybackRentPolicy: "RENT_FIRST",
       takeoverMultiplier: 2,
-      resaleRatio: 0.5,
+      resaleRatio: 2 / 3,
       monopolyMultiplier: 1,
       festivalMultiplier: 2,
       festivalMax: 2,
       festivalTurns: 8,
       eventStackPolicy: "MAX",
-      moveBonus: { DICE: true, TELEPORT: false, CARD_MOVE: false, GO_TO_START: false },
+      moveBonus: { DICE: true, TELEPORT: false, FLIGHT: true, CARD_MOVE: false, GO_TO_START: false },
       tripleGroups: 3,
       touristCount: 4,
       matchMs: 0,
@@ -75,7 +77,7 @@ var init_tour_data = __esm({
       shuffleTurnOrder: true
     };
     COLORS = ["#3B82F6", "#F97316", "#8B5CF6", "#22C55E"];
-    PREMIUM = [{ key: "mebisoft", name: "Mebisoft", price: 400, asset: "tech" }, { key: "mebifarm", name: "Mebifarm", price: 360, asset: "farm" }, { key: "mebieco", name: "Mebieco", price: 320, asset: "eco" }];
+    PREMIUM = [{ key: "mebisoft", name: "Mebisoft", price: 800, asset: "tech" }, { key: "mebifarm", name: "Mebifarm", price: 720, asset: "farm" }, { key: "mebieco", name: "Mebieco", price: 640, asset: "eco" }];
     rows = [
       ["start", "Xu\u1EA5t ph\xE1t", "start", null, 0, "start"],
       ["ha-giang", "H\xE0 Giang", "city", 1, 60, "mountain"],
@@ -116,8 +118,8 @@ var init_tour_data = __esm({
     round = (n) => Math.ceil(n / 5) * 5;
     BOARD = rows.map(([key, name, tileType, groupId, price, landmarkAsset], id) => {
       const boardPosition = id <= SIDE_LENGTH ? { x: SIDE_LENGTH - id, y: SIDE_LENGTH } : id <= SIDE_LENGTH * 2 ? { x: 0, y: SIDE_LENGTH * 2 - id } : id <= SIDE_LENGTH * 3 ? { x: id - SIDE_LENGTH * 2, y: 0 } : { x: SIDE_LENGTH, y: id - SIDE_LENGTH * 3 };
-      const premium = PREMIUM.find((p) => p.key === key), purchasePrice = premium?.price ?? price;
-      return { id, key, name: premium?.name ?? name, tileType, groupId, patternId: groupId, sideWinEligible: purchasePrice > 0, purchasePrice, constructionCosts: tileType === "city" ? [0, round(purchasePrice * 0.3), round(purchasePrice * 0.45), round(purchasePrice * 0.6), round(purchasePrice * 1.2)] : [], rentByLevel: tileType === "city" ? [round(purchasePrice * 0.08), round(purchasePrice * 0.25), round(purchasePrice * 0.5), purchasePrice, round(purchasePrice * 1.8)] : [], takeoverRules: { allowed: tileType === "city", blockedAtLevel: RULES.hotelLevel, multiplier: RULES.takeoverMultiplier }, landmarkAsset: premium?.asset ?? landmarkAsset, boardPosition, side: Math.min(3, Math.floor(id / SIDE_LENGTH)), color: bands[groupId ?? 0] };
+      const premium = PREMIUM.find((p) => p.key === key), purchasePrice = premium?.price ?? price * 2, buildPrice = purchasePrice / 2;
+      return { id, key, name: premium?.name ?? name, tileType, groupId, patternId: groupId, sideWinEligible: purchasePrice > 0, purchasePrice, constructionCosts: tileType === "city" ? [0, round(buildPrice * 0.3), round(buildPrice * 0.45), round(buildPrice * 0.6), round(buildPrice * 1.2)] : [], rentByLevel: tileType === "city" ? Array(5).fill(Math.floor(purchasePrice / 4)) : [Math.floor(purchasePrice / 4)], takeoverRules: { allowed: tileType === "city", blockedAtLevel: RULES.hotelLevel, multiplier: RULES.takeoverMultiplier }, landmarkAsset: premium?.asset ?? landmarkAsset, boardPosition, side: Math.min(3, Math.floor(id / SIDE_LENGTH)), color: bands[groupId ?? 0] };
     });
     tileByKey = (key) => BOARD.find((t) => t.key === key);
     GROUPS = [...new Set(BOARD.flatMap((t) => t.groupId === null ? [] : [t.groupId]))].map((id) => BOARD.filter((t) => t.groupId === id).map((t) => t.id));
@@ -138,7 +140,7 @@ var init_tour_data = __esm({
       { text: "M\u1EDF l\u1EC5 h\u1ED9i t\u1EA1i m\u1ED9t th\xE0nh ph\u1ED1 s\u1EDF h\u1EEFu", type: "festival" },
       { text: "Th\u01B0\u1EDFng s\xE1ng ki\u1EBFn xanh: nh\u1EADn 150.000 tr\u1EE9ng", type: "cash", value: 150 },
       { text: "H\u1EA1 m\u1ED9t c\u1EA5p th\xE0nh ph\u1ED1 \u0111\u1ED1i th\u1EE7", type: "downgrade", value: 1 },
-      { text: "\u0110\u1ED9ng \u0111\u1EA5t: h\u1EA1 m\u1ED9t c\u1EA5p c\xE1c th\xE0nh ph\u1ED1 ch\u01B0a \u0111\u01B0\u1EE3c b\u1EA3o v\u1EC7", type: "earthquake", value: 1 },
+      { text: "\u0110\u1ED9ng \u0111\u1EA5t: ch\u1ECDn m\u1ED9t th\xE0nh ph\u1ED1 \u0111\u1ED1i th\u1EE7 \u0111\u1EC3 ph\xE1 m\u1ED9t c\u1EA5p", type: "earthquake", value: 1 },
       { text: "L\xE1 ch\u1EAFn: b\u1EA3o v\u1EC7 m\u1ED9t th\xE0nh ph\u1ED1 kh\u1ECFi m\u1ED9t l\u1EA7n ph\xE1 ho\u1EB7c mua l\u1EA1i", type: "shield", value: 1 },
       { text: "M\u1EA5t \u0111i\u1EC7n: t\u1EAFt ph\xED m\u1ED9t th\xE0nh ph\u1ED1 t\u1EDBi khi ch\u1EE7 \u0111\u1EA5t qua Xu\u1EA5t ph\xE1t", type: "disable", value: 1 },
       { text: "Sinh nh\u1EADt: nh\u1EADn 20.000 tr\u1EE9ng t\u1EEB m\u1ED7i ng\u01B0\u1EDDi ch\u01A1i kh\xE1c", type: "birthday", value: 20 },
@@ -237,7 +239,7 @@ function upgradeState(old) {
   s.allOffline = old.allOffline || 0;
   s.legacySnapshot = structuredClone(old);
   s.phase = ["lobby", "ended"].includes(old.phase) ? "lobby" : "legacy";
-  s.migrationNotice = s.phase === "legacy" ? "Lu\u1EADt \u0111\xE3 \u0111\u1ED5i theo \u0111\u1EB7c t\u1EA3 1.0. B\u1EA3n l\u01B0u c\u0169 \u0111\u01B0\u1EE3c gi\u1EEF ri\xEAng; ch\u1EE7 ph\xF2ng c\u1EA7n m\u1EDF s\u1EA3nh lu\u1EADt m\u1EDBi." : "\u0110\xE3 c\u1EADp nh\u1EADt lu\u1EADt theo \u0111\u1EB7c t\u1EA3 1.0. Vui l\xF2ng s\u1EB5n s\xE0ng l\u1EA1i.";
+  s.migrationNotice = s.phase === "legacy" ? "Lu\u1EADt Mebi \u0111\xE3 \u0111\u01B0\u1EE3c c\u1EADp nh\u1EADt. B\u1EA3n l\u01B0u c\u0169 \u0111\u01B0\u1EE3c gi\u1EEF ri\xEAng; ch\u1EE7 ph\xF2ng c\u1EA7n m\u1EDF s\u1EA3nh lu\u1EADt m\u1EDBi." : "\u0110\xE3 c\u1EADp nh\u1EADt lu\u1EADt Mebi m\u1EDBi. Vui l\xF2ng s\u1EB5n s\xE0ng l\u1EA1i.";
   return s;
 }
 function snapshot(s) {
@@ -407,7 +409,7 @@ var init_spec_engine = __esm({
         if (!a.owner) return 0;
         const owner = this.player(a.owner);
         if (a.disabledUntilStartPasses > owner.laps) return 0;
-        const base = t.tileType === "tourist" ? RULES.touristRents[TOURISTS.filter((j) => this.s.properties[j].owner === a.owner).length] : t.rentByLevel[a.level];
+        const base = Math.floor(t.purchasePrice / 4);
         const festival = a.festivalUntil > this.s.turnCount ? a.festival * 1e4 : 1e4, championship = a.championshipUntil > this.s.turnCount ? a.championshipBps : 1e4;
         return Math.floor(base * festival / 1e4 * championship / 1e4);
       }
@@ -428,7 +430,7 @@ var init_spec_engine = __esm({
       maxLevel(p, i) {
         const a = this.s.properties[i];
         if (a.level >= RULES.hotelLevel || a.disabledUntilStartPasses > p.laps) return a.level;
-        if (RULES.requireNewLapToUpgrade && p.laps <= a.lastUpgradeLap) return a.level;
+        if (RULES.requireNewLapToUpgrade && p.laps <= a.lastUpgradeLap && !this.s.context?.takeoverUpgrade) return a.level;
         return a.level + 1;
       }
       legalDestinations(p) {
@@ -439,7 +441,7 @@ var init_spec_engine = __esm({
       }
       eventTargets(p) {
         const kind = this.s.eventChoice?.kind;
-        return BOARD.filter((t) => t.tileType === "city" && (kind === "shield" ? this.s.properties[t.id].owner === p.id : !!this.s.properties[t.id].owner && this.s.properties[t.id].owner !== p.id)).map((t) => t.id);
+        return BOARD.filter((t) => t.tileType === "city" && (kind !== "earthquake" || this.s.properties[t.id].level > 0 && this.s.properties[t.id].level < RULES.hotelLevel) && (kind === "shield" ? this.s.properties[t.id].owner === p.id : !!this.s.properties[t.id].owner && this.s.properties[t.id].owner !== p.id)).map((t) => t.id);
       }
       decisions(p) {
         const i = p.pos, t = BOARD[i], levels = t.tileType === "city" ? RULES.initialBuildChoices : [0];
@@ -481,7 +483,9 @@ var init_spec_engine = __esm({
         if (a === b) this.log(`${p.name} \u0111\u1ED5 \u0111\xF4i`, "doubles", { id: p.id });
         if (p.onIsland) {
           this.s.extra = false;
-          if (a === b) {
+          if (a === b || (a === 1 && b === 6 || a === 6 && b === 1)) {
+            this.s.extra = true;
+            this.s.doubles = 1;
             p.onIsland = false;
             p.island = 0;
             p.islandFailedTurns = 0;
@@ -494,8 +498,9 @@ var init_spec_engine = __esm({
           }
           return;
         }
-        this.s.extra = RULES.doubleExtraTurn && a === b;
-        this.s.doubles = a === b ? this.s.doubles + 1 : 0;
+        const bonus = a === b || RULES.oneSixExtraTurn && (a === 1 && b === 6 || a === 6 && b === 1);
+        this.s.extra = RULES.doubleExtraTurn && bonus;
+        this.s.doubles = bonus ? this.s.doubles + 1 : 0;
         if (RULES.threeDoublesToIsland && this.s.doubles >= RULES.maxDoubles) return this.island(p);
         this.move(p, a + b);
         this.land(p);
@@ -557,7 +562,8 @@ var init_spec_engine = __esm({
         this.drainPayments();
       }
       complete() {
-        if (this.s.phase !== "ended") this.phase("complete", RULES.manageMs);
+        if (this.s.context) this.s.context.takeoverUpgrade = false;
+        if (this.s.phase !== "ended") this.phase("complete", RULES.autoEndMs);
       }
       offerTravel(p) {
         if (!this.legalDestinations(p).length || p.cash < RULES.travel) return this.complete();
@@ -607,8 +613,10 @@ var init_spec_engine = __esm({
           this.log(`${BOARD[i].name} tr\u1EDF v\u1EC1 ng\xE2n h\xE0ng`, "liquidate", { tile: i });
           return;
         }
+        const oldInvestment = a.investment;
         a.level = Math.max(0, a.level - steps);
         a.investment = BOARD[i].purchasePrice + BOARD[i].constructionCosts.slice(1, a.level + 1).reduce((a2, b) => a2 + b, 0);
+        a.resaleBasis = Math.max(BOARD[i].purchasePrice, (a.resaleBasis || oldInvestment) - (oldInvestment - a.investment));
         this.log(`${BOARD[i].name} h\u1EA1 c\xF2n ${a.level} nh\xE0`, "downgrade", { tile: i, level: a.level });
       }
       card(p, depth = 0) {
@@ -636,10 +644,6 @@ var init_spec_engine = __esm({
           case "travel":
             return this.offerTravel(p);
           case "earthquake":
-            for (const t of BOARD) if (t.tileType === "city") this.downgrade(t.id, c.value || 1);
-            this.checkAnyWin();
-            if (this.s.phase !== "ended") this.complete();
-            return;
           case "shield":
           case "disable":
           case "downgrade":
@@ -671,7 +675,7 @@ var init_spec_engine = __esm({
         check(t.tileType === "city" ? RULES.initialBuildChoices.includes(initialLevel) : initialLevel === 0, "C\u1EA5p mua ban \u0111\u1EA7u kh\xF4ng h\u1EE3p l\u1EC7");
         const cost = this.purchaseCost(t.id, initialLevel);
         this.debit(p, cost);
-        Object.assign(a, { owner: p.id, level: initialLevel, investment: cost, lastUpgradeLap: p.laps });
+        Object.assign(a, { owner: p.id, level: initialLevel, investment: cost, resaleBasis: cost, lastUpgradeLap: p.laps });
         this.log(`${p.name} mua ${t.name} \xB7 ${initialLevel} nh\xE0`, "purchase", { tile: t.id, id: p.id, level: initialLevel });
         if (initialLevel) this.log(`${t.name} \u0111\xE3 x\xE2y ${initialLevel} nh\xE0`, "build", { tile: t.id, id: p.id, level: initialLevel, initial: true });
         if (!this.checkWin(p)) this.complete();
@@ -684,6 +688,7 @@ var init_spec_engine = __esm({
         const cost = this.constructionCost(i, level);
         this.debit(p, cost);
         a.level = level;
+        a.resaleBasis = (a.resaleBasis || a.investment) + cost;
         a.investment += cost;
         a.lastUpgradeLap = p.laps;
         this.log(`${p.name} x\xE2y ${level === 4 ? "Kh\xE1ch s\u1EA1n" : level + " nh\xE0"} t\u1EA1i ${BOARD[i].name}`, "build", { tile: i, id: p.id, level });
@@ -697,6 +702,7 @@ var init_spec_engine = __esm({
         this.credit(this.player(owner), cost);
         const disabledRemaining = Math.max(0, a.disabledUntilStartPasses - this.player(owner).laps);
         a.owner = p.id;
+        a.resaleBasis = cost;
         a.lastUpgradeLap = p.laps;
         a.disabledUntilStartPasses = p.laps + disabledRemaining;
         if (!RULES.buybackPreserveLevel) {
@@ -704,13 +710,17 @@ var init_spec_engine = __esm({
           a.investment = BOARD[i].purchasePrice;
         }
         this.log(`${p.name} mua l\u1EA1i ${BOARD[i].name}: ${formatMoney(cost)}`, "takeover", { tile: i, id: p.id, previousOwner: owner, amount: cost });
-        if (!this.checkWin(p)) this.complete();
+        if (!this.checkWin(p)) {
+          this.s.context = { ...this.s.context, tile: i, takeoverUpgrade: true };
+          if (a.level < this.maxLevel(p, i)) this.phase("construct");
+          else this.complete();
+        }
       }
       chooseDestination(p, i) {
         check(this.s.phase === "destination" && this.legalDestinations(p).includes(i), "\u0110i\u1EC3m \u0111\u1EBFn kh\xF4ng h\u1EE3p l\u1EC7");
         this.debit(p, RULES.travel);
         this.log(`${p.name} tr\u1EA3 v\xE9 ${formatMoney(RULES.travel)}`, "payment", { from: p.id, to: null, amount: RULES.travel });
-        this.move(p, (i - p.pos + BOARD.length) % BOARD.length, "TELEPORT");
+        this.move(p, BOARD.length - p.pos + i, "FLIGHT", true);
         this.log(`${p.name} ho\xE0n t\u1EA5t chuy\u1EBFn du l\u1ECBch`, "travel", { id: p.id, to: i });
         this.land(p);
       }
@@ -739,11 +749,15 @@ var init_spec_engine = __esm({
         this.s.eventChoice = null;
         if (!this.checkAnyWin()) this.complete();
       }
+      resaleValue(i) {
+        const a = this.s.properties[i];
+        return Math.floor((a.resaleBasis || a.investment) * RULES.resaleRatio);
+      }
       liquidate(p, i) {
         check(this.s.phase === "debt" && this.s.debt?.from === p.id, "Ch\u1EC9 thanh l\xFD khi \u0111ang n\u1EE3");
         const a = this.s.properties[this.tile(i).id];
         check(a.owner === p.id, "B\u1EA1n kh\xF4ng s\u1EDF h\u1EEFu \xF4 n\xE0y");
-        const amount = Math.floor(a.investment * RULES.resaleRatio);
+        const amount = this.resaleValue(i);
         this.credit(p, amount);
         this.s.properties[i] = emptyProperty();
         this.log(`${p.name} thanh l\xFD ${BOARD[i].name}: ${formatMoney(amount)}`, "liquidate", { tile: i, id: p.id });
@@ -902,7 +916,7 @@ var init_spec_engine = __esm({
             this.s.deck = shuffle(CARDS.flatMap((c2, i) => Array(c2.weight || 1).fill(i)), () => this.draw());
             this.s.turn = this.s.turnOrder[0];
             this.beginTurn(this.player(this.s.turn));
-            this.log("B\u1EAFt \u0111\u1EA7u T\u1EF7 Ph\xFA Mebi \xB7 \u0111\u1EB7c t\u1EA3 1.0");
+            this.log("B\u1EAFt \u0111\u1EA7u T\u1EF7 Ph\xFA Mebi \xB7 lu\u1EADt Mebi m\u1EDBi");
           } else throw Error("L\u1EC7nh s\u1EA3nh kh\xF4ng h\u1EE3p l\u1EC7");
         } else {
           check(!p.out && id === (this.s.debt?.from || this.s.turn), "Ch\u01B0a \u0111\u1EBFn l\u01B0\u1EE3t b\u1EA1n");
