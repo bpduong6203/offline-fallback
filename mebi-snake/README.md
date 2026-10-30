@@ -38,7 +38,7 @@ Skin chỉ đổi màu/hoạ tiết, không đổi hitbox hoặc tốc độ. Đ
 
 Client gửi seq/góc/boost; ACK snapshot và ping chỉ là control messages. Server không tin vị trí, tốc độ, timestamp, điểm hoặc lệnh tạo thức ăn. Pending input được coalesce về mới nhất, chặn seq cũ. Prediction chỉ di chuyển presentation, không cộng năng lượng hoặc rơi boost-food. Reconciliation bỏ input đã ACK, replay phần chưa ACK theo timestep giới hạn và làm mềm sai lệch nhỏ; sai lệch >100 world units đồng bộ ngay.
 
-Remote interpolation buffer thích ứng 80–180 ms, khởi đầu khoảng 100 ms; nội suy đầu trên snapshot history rồi dựng thân theo arc-length, không easing từng segment. Extrapolation ngắn tối đa 100 ms, thiếu snapshot hiển thị kết nối yếu. Detail body/food cull theo interest radius 1.500; metadata tối thiểu của 10 rắn còn lại vẫn gửi. Food spawn/despawn/value delta, full baseline trong interest mỗi 2 giây để sửa mất delta ở tầng ứng dụng. Minimap chỉ vẽ bản thân.
+Ở xa dùng remote interpolation buffer thích ứng 80–180 ms, khởi đầu khoảng 100 ms; đầu đối thủ trong khoảng 200 units ưu tiên snapshot mới nhất + ước lượng one-way RTT, extrapolation giới hạn 150 ms, chuyển tiếp mềm trong 200–500 units; nội suy đầu trên snapshot history rồi dựng thân theo arc-length, không easing từng segment. Extrapolation ngắn tối đa 100 ms, thiếu snapshot hiển thị kết nối yếu. Detail body/food cull theo interest radius 1.500; metadata tối thiểu của 10 rắn còn lại vẫn gửi. Food spawn/despawn/value delta, full baseline trong interest mỗi 2 giây để sửa mất delta ở tầng ứng dụng. Minimap chỉ vẽ bản thân.
 
 Snapshot có cửa sổ ACK khoảng 400 ms; client chậm thì ngừng thêm snapshot tới khi nhận ACK, không xếp vô hạn frame cũ. Node còn kiểm tra bufferedAmount; Cloudflare không phụ thuộc vào việc runtime có thuộc tính đó. Scheduler fixed timestep 30 Hz, catch-up tối đa 4 bước, đếm overruns. **Thông số mục tiêu không đồng nghĩa đã đạt Hz/FPS thực tế**; xem report load và browser.
 
@@ -82,3 +82,10 @@ Mỗi arena chọn số bot từ **1 đến 4** khi khởi tạo và duy trì s�
 Bot xuất hiện sau khi người đầu tiên vào chơi, spawn an toàn gần người chơi, tìm thức ăn/di chuyển quanh khu vực có người, tránh biên/thân/đầu rắn, boost khi phù hợp. AI chỉ chọn hướng và boost từ geometry hiện tại; movement, giới hạn quay, tiêu hao mass, protection, food và collision dùng chung simulation. Bot chết thả thức ăn bình thường, bot mới thay thế ngay; spawn không an toàn thì thử lại tick sau, không có miễn va chạm đặc biệt. Người cuối rời/hết slot thì bot được dọn và không giữ arena sống quá idle timeout.
 
 Thông số `botMin`, `botMax`, `botThinkTicks` ở `config.js`; AI ở `bots.js`. Không có nút tạo bot hoặc tham gia matchmaking cho bot.
+
+
+## Va chạm sát đầu
+
+Hitbox đầu dùng **85% bán kính hình vẽ**, áp dụng cả đầu–đầu và đầu–thân; bán kính thân và biên giữ nguyên. Va chạm hai đầu tính theo chuyển động tương đối liên tục trong tick nên vẫn bắt được boost cắt qua giữa hai frame. Đầu đã vượt qua và đang tách xa không bị kết luận va chạm đầu trễ. Vùng cổ được cắt chính xác theo arc-length, kể cả raw segment dài, để không coi đoạn sát đầu là thân đối thủ.
+
+Đầu đối thủ ở gần được hiển thị sát thời điểm hiện tại hơn thay vì luôn trễ 80–180 ms so với rắn bản thân đã prediction; cả đường thân được dựng từ cùng đường đi. Đây là giảm sai lệch presentation, không cho client quyết định chết hoặc bỏ collision server. RTT/jitter cao vẫn có thể gây sai lệch ngắn; không tuyên bố tái hiện được chính xác tình huống ảnh chỉ có màn kết quả.

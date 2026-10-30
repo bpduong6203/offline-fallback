@@ -4,6 +4,9 @@ export const turn=(a,b,limit)=>a+Math.max(-limit,Math.min(limit,angleDelta(a,b))
 export const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 export const lengthFor=mass=>Math.min(C.maxLength,C.baseLength+mass*C.lengthPerMass);
 export const radiusFor=mass=>10+Math.sqrt(mass)*.18;
+export const headRadiusFor=mass=>radiusFor(mass)*C.headHitboxScale;
+// Continuous relative motion, with no delayed collision while heads separate.
+export function headContact(a0,a1,b0,b1,radius){const x=a0.x-b0.x,y=a0.y-b0.y,vx=a1.x-a0.x-b1.x+b0.x,vy=a1.y-a0.y-b1.y+b0.y,c=x*x+y*y-radius*radius,dot=x*vx+y*vy;if(c<=0)return dot>0?null:0;const speed=vx*vx+vy*vy;if(speed<1e-12||dot>=0)return null;const disc=dot*dot-speed*c;if(disc<0)return null;const t=(-dot-Math.sqrt(disc))/speed;return t>=0&&t<=1?t:null;}
 export function integrate(s,angle,boost,dt){const rate=C.turnRate/(1+Math.max(0,s.mass-C.startMass)/1500);const heading=turn(s.angle,angle,rate*dt);s.angle=Math.atan2(Math.sin(heading),Math.cos(heading));const speed=C.speed*(boost?C.boost:1);s.x+=Math.cos(s.angle)*speed*dt;s.y+=Math.sin(s.angle)*speed*dt;return s;}
 export function samplePath(path,length,spacing=C.bodySpacing){if(!path.length)return [];const out=[{...path[0]}];let traversed=0,next=spacing;for(let i=1;i<path.length&&traversed<length;i++){const a=path[i-1],b=path[i],d=distance(a,b);if(d<1e-8)continue;while(next<=Math.min(traversed+d,length)){const f=(next-traversed)/d;out.push({x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f});next+=spacing;}if(traversed+d>=length){const f=(length-traversed)/d;out.push({x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f});break;}traversed+=d;}return out;}
 export function trimPath(path,length){let total=0;for(let i=1;i<path.length;i++){total+=distance(path[i-1],path[i]);if(total>length+C.bodySpacing*2){path.length=i+1;break;}}}
