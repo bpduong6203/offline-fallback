@@ -2,7 +2,7 @@ export const SCHEMA_VERSION=4, RULESET='mebi-tour-mebi-v2', MAP_VERSION='vietnam
 export const RULES={
  cash:2000,salary:300,bail:200,travel:50,tax:.1,taxRateBps:1000,
  rollMs:30000,choiceMs:30000,manageMs:30000,debtMs:120000,
- autoEndMs:3500,doubleExtraTurn:true,oneSixExtraTurn:true,threeDoublesToIsland:true,maxDoubles:3,
+ autoEndMs:3500,moveStepMs:125,doubleExtraTurn:true,oneSixExtraTurn:true,threeDoublesToIsland:true,maxDoubles:3,
  initialBuildChoices:[1,2],requireNewLapToUpgrade:true,maxHouseLevel:3,hotelLevel:4,
  islandAttempts:3,buybackEnabled:true,buybackMultiplierBps:20000,buybackPreserveLevel:true,buybackRentPolicy:'RENT_FIRST',
  takeoverMultiplier:2,resaleRatio:2/3,monopolyMultiplier:1,

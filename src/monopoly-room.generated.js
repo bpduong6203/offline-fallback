@@ -45,6 +45,7 @@ var init_tour_data = __esm({
       manageMs: 3e4,
       debtMs: 12e4,
       autoEndMs: 3500,
+      moveStepMs: 125,
       doubleExtraTurn: true,
       oneSixExtraTurn: true,
       threeDoublesToIsland: true,
@@ -563,7 +564,7 @@ var init_spec_engine = __esm({
       }
       complete() {
         if (this.s.context) this.s.context.takeoverUpgrade = false;
-        if (this.s.phase !== "ended") this.phase("complete", RULES.autoEndMs);
+        if (this.s.phase !== "ended") this.phase("complete", Math.max(RULES.autoEndMs, (this.s.movementUntil || 0) - this.now));
       }
       offerTravel(p) {
         if (!this.legalDestinations(p).length || p.cash < RULES.travel) return this.complete();
@@ -720,7 +721,9 @@ var init_spec_engine = __esm({
         check(this.s.phase === "destination" && this.legalDestinations(p).includes(i), "\u0110i\u1EC3m \u0111\u1EBFn kh\xF4ng h\u1EE3p l\u1EC7");
         this.debit(p, RULES.travel);
         this.log(`${p.name} tr\u1EA3 v\xE9 ${formatMoney(RULES.travel)}`, "payment", { from: p.id, to: null, amount: RULES.travel });
-        this.move(p, BOARD.length - p.pos + i, "FLIGHT", true);
+        const steps = BOARD.length - p.pos + i;
+        this.s.movementUntil = this.now + steps * RULES.moveStepMs + 1e3;
+        this.move(p, steps, "FLIGHT", true);
         this.log(`${p.name} ho\xE0n t\u1EA5t chuy\u1EBFn du l\u1ECBch`, "travel", { id: p.id, to: i });
         this.land(p);
       }
@@ -844,6 +847,7 @@ var init_spec_engine = __esm({
       }
       next() {
         if (this.checkAnyWin()) return;
+        this.s.movementUntil = 0;
         const order = this.s.turnOrder.length ? this.s.turnOrder : this.active.map((p) => p.id);
         if (!this.s.extra || this.player(this.s.turn).out) {
           let i = order.indexOf(this.s.turn);
@@ -1006,7 +1010,7 @@ var init_spec_engine = __esm({
       }
       botStep() {
         const p = this.s.players.find((p2) => p2.id === (this.s.debt?.from || this.s.turn));
-        if (this.s.closed || !p?.bot || ["lobby", "legacy", "ended"].includes(this.s.phase)) return false;
+        if (this.s.closed || this.now < (this.s.movementUntil || 0) || !p?.bot || ["lobby", "legacy", "ended"].includes(this.s.phase)) return false;
         const action = chooseBotAction(snapshot(this.s), p.id, p.difficulty);
         this.command(p.id, { ...action, commandId: `bot:${this.s.version}`, roomId: this.s.code, expectedVersion: this.s.version });
         return true;

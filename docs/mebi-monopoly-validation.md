@@ -30,3 +30,8 @@ Ruleset mebi-tour-mebi-v2 / schema 4: giá đất x2, rent cơ bản 25% giá đ
 TypeScript qua. Node tests toàn project: **196/196 qua** (`--test-concurrency=1 --test-timeout=10000`); bộ rules/current DO/custom gồm **36 test qua**. Browser bốn context qua, kiểm tra mua/thuê/mua lại theo giá mới và nâng cấp ngay, máy bay/reload/restart backend, không còn nút end-turn, icon 1/2/3 nhà/KS, 32 ô riêng ở 1440/1366/1024/760/390/320 px. Không runtime exception.
 
 Trận đang chạy luật cũ giữ archive và yêu cầu chủ phòng mở sảnh luật mới; không thay tiền/giá giữa trận. Replay cũ được chặn bằng ruleset. Chưa deploy hoặc kiểm tra Cloudflare production.
+
+
+## Di chuyển thật qua từng ô khi dùng máy bay
+
+Loại FLIGHT khỏi nhánh bỏ qua di chuyển; dùng cùng đường đi từng ô 125 ms như xúc xắc và bỏ hiệu ứng bay thẳng. Thêm movementUntil để auto-end/bot không cắt ngang đường đi. Browser bật hiệu ứng và theo dõi vị trí quân: xác nhận đủ dãy 25…31 → 0 → 1…31 (39 ô) sau restart/reconnect, rồi mới cho mua đất. Unit kiểm tra tới khách sạn của mình vẫn chờ hành trình kết thúc trước chuyển lượt. TypeScript và kiểm tra browser bốn context qua.

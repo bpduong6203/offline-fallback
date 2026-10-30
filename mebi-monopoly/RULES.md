@@ -15,3 +15,5 @@ Ruleset **mebi-tour-mebi-v2**, schema **4**. Áp dụng tùy chỉnh người d�
 Trận đang chạy bằng luật cũ không đổi giá giữa trận; giữ bản lưu riêng và chủ phòng chọn **Mở sảnh luật mới**. Replay kiểm tra phiên bản ruleset, không chạy replay cũ bằng luật mới. Routes, bản đồ lớn và cấu hình Cloudflare/R2 giữ nguyên. Icon nhà có biệt thự/mái bằng/nhà phố nhiều màu, khách sạn riêng; vẫn hiển thị đúng số nhà và KS.
 
 Kiểm tra: `npm.cmd run check:monopoly`, build Monopoly, `node --test tests/tour-rules.test.mjs tests/mebi-monopoly-custom.test.mjs tests/monopoly-room.test.mjs`, `npm.cmd run test:monopoly:browser`. Chưa deploy Cloudflare.
+
+Máy bay nay di chuyển quân lần lượt theo đường bàn cờ, **125 ms mỗi ô**, không nhảy thẳng tới đích. Lượt tự kết thúc được giữ đủ thời gian cho hành trình dài; bot cũng chờ chuyển động hoàn tất. Giảm chuyển động/bỏ qua hiệu ứng vẫn có thể bỏ phần trình diễn.
