@@ -4,6 +4,7 @@ import path from 'node:path';
 import {buildStickman} from './build-stickman.mjs';
 import {buildTienLen} from './build-tienlen.mjs';
 import {buildUno} from './build-uno.mjs';
+import {buildXiDach} from './build-xidach.mjs';
 import {buildSnake} from './build-snake.mjs';
 import {buildMonopoly} from './build-monopoly.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
@@ -33,6 +34,7 @@ export async function build(){
   await buildStickman();
   await buildTienLen();
   await buildUno();
+  await buildXiDach();
   await buildMonopoly();
   await buildSnake();
   try {

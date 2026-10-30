@@ -1,5 +1,9 @@
 # Offline Fallback Games
 
+## Xì Dách · Bàn Trứng
+
+Game mới tại `/xi-dach`: 1–8 người thật và bot nhà cái riêng, cược/quỹ trứng do server quản lý. Chạy `npm.cmd run dev`, mở `http://localhost:5173/xi-dach`. Xem [hướng dẫn, luật, kiến trúc và kiểm thử](xi-dach/README.md). Chạy kiểm tra giao diện bằng `npm.cmd run test:xidach:browser`.
+
 Cloudflare Worker hiển thị trang chờ kèm mini game khi máy chủ gốc (origin), máy chủ local hoặc Cloudflare Tunnel không truy cập được. Người dùng có thể chơi trong lúc chờ kết nối khôi phục; các phòng online được Worker xử lý độc lập với origin.
 
 ## Cách hoạt động

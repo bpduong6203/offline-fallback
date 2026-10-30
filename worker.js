@@ -11,6 +11,8 @@ import bombArena from './src/page/games/bomb-arena.generated.js';
 import stickmanFight from './src/page/games/stickman-fight.generated.js';
 import tienLen from './src/page/games/tien-len.generated.js';
 import uno from './src/page/games/uno.generated.js';
+import xiDach from './src/page/games/xi-dach.generated.js';
+export { XiDachRoom } from './src/xi-dach-room.js';
 import { handleAssetRequest } from './src/asset-handler.js';
 import { handleAuthRequest, requireGameLogin, requiresGameLogin } from './src/auth.js';
 import monopoly from './src/page/games/mebi-monopoly.generated.js';
@@ -44,6 +46,18 @@ export default {
         return Response.redirect(new URL('/', url), 302);
       }
       return new Response('Login required', { status: 401, headers: { 'Cache-Control': 'no-store' } });
+    }
+    if (['/xi-dach', '/xi-dach/', '/__game/xi-dach'].includes(url.pathname)) {
+      if (!['GET','HEAD'].includes(request.method)) return new Response('Method Not Allowed', {status:405,headers:{Allow:'GET, HEAD'}});
+      return new Response(request.method==='HEAD'?null:xiDach,{headers:{'Content-Type':'text/html; charset=UTF-8','Cache-Control':'no-store'}});
+    }
+    if (url.pathname === '/__game/xi-dach/ws') {
+      if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') return new Response('Cần WebSocket',{status:426});
+      const origin=request.headers.get('Origin');
+      if(origin){try{if(new URL(origin).origin!==url.origin)return new Response('Forbidden',{status:403});}catch{return new Response('Forbidden',{status:403});}}
+      const room=url.searchParams.get('room');
+      if(!/^[A-HJ-NP-Z2-9]{6}$/.test(room||''))return new Response('Mã phòng không hợp lệ',{status:400});
+      return env.XIDACH.get(env.XIDACH.idFromName(room)).fetch(request);
     }
     if (url.pathname === '/__assets' || url.pathname.startsWith('/__assets/')) {
       const resp = await serveImage(request, env, ctx);

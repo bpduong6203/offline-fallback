@@ -124,3 +124,12 @@ class_name = "CoCaNguaRoom"
 [[migrations]]
 tag = "v12"
 new_sqlite_classes = ["CoCaNguaRoom"]
+
+# Xì Dách: eight human seats and one server dealer, persistent egg escrow.
+[[durable_objects.bindings]]
+name = "XIDACH"
+class_name = "XiDachRoom"
+
+[[migrations]]
+tag = "v13"
+new_sqlite_classes = ["XiDachRoom"]

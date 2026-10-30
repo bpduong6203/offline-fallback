@@ -1,4 +1,5 @@
 import {localSnake} from './local-snake.mjs';
+import {localXiDach} from './local-xidach.mjs';
 import {buildSnake} from './build-snake.mjs';
 import {createServer} from 'node:http';
 import {WebSocketServer} from 'ws';
@@ -21,6 +22,7 @@ export function localServer(getHtml,monopolyOptions={}){
   const getBangQueue=mode=>{let q=bangQueues.get(mode);if(!q){q={engine:new BangBangEngine(),timer:null};bangQueues.set(mode,q);}return q;};
   const server=createServer(async(req,res)=>{
     const path=req.url?.split('?')[0];
+    if(await xidach.http(req,res))return;
     if(await snake.http(req,res))return;
     if(['/snake','/snake/'].includes(path)){if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);res.end();return;}const html=await buildSnake();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);return;}
     if(await localAssets(req,res))return;
@@ -55,6 +57,7 @@ export function localServer(getHtml,monopolyOptions={}){
     try{const html=await getHtml();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}
   });
   server.on('upgrade',(req,socket,head)=>{
+    if(xidach.upgrade(req,socket,head))return;
     if(snake.upgrade(req,socket,head))return;
     if(monopoly.upgrade(req,socket,head))return;
     const url=new URL(req.url,'http://'+req.headers.host),code=(url.searchParams.get('room')||'').toUpperCase(),create=url.searchParams.get('action')==='create';
@@ -101,6 +104,7 @@ export function localServer(getHtml,monopolyOptions={}){
     });
   });
   const snake=localSnake();
+  const xidach=localXiDach();
   const monopoly=localMonopoly(server,monopolyOptions);
-  return {server,snake,close:async()=>{snake.close();await monopoly.close();for(const queue of bangQueues.values())clearInterval(queue.timer);for(const room of rooms.values())clearInterval(room.timer);for(const ws of wss.clients)ws.terminate();wss.close();await new Promise(resolve=>server.close(resolve));}};
+  return {server,snake,close:async()=>{xidach.close();snake.close();await monopoly.close();for(const queue of bangQueues.values())clearInterval(queue.timer);for(const room of rooms.values())clearInterval(room.timer);for(const ws of wss.clients)ws.terminate();wss.close();await new Promise(resolve=>server.close(resolve));}};
 }

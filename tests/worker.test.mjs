@@ -19,6 +19,22 @@ const source=(await readFile(entry,'utf8'))
   .replace(/from '(\.\/[^']+)'/g,(_,relative)=>`from '${new URL(relative,entry).href}'`);
 const worker=(await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).default;
 
+test('Worker serves Xì Dách and validates login, room and socket origin',async()=>{
+ for(const route of ['/xi-dach','/xi-dach/','/__game/xi-dach']){
+  const response=await worker.fetch(new Request('https://example.test'+route));assert.equal(response.status,200);assert.match(await response.text(),/Xì Dách · Bàn Trứng/);
+  assert.equal((await worker.fetch(new Request('https://example.test'+route,{method:'HEAD'}))).status,200);
+  assert.equal((await worker.fetch(new Request('https://example.test'+route,{method:'POST'}))).status,405);
+  assert.equal((await worker.fetch(new Request('https://example.test'+route),{HOME_SESSION_SECRET:'test'})).status,302);
+ }
+ const ws='https://example.test/__game/xi-dach/ws?room=ABC234';
+ assert.equal((await worker.fetch(new Request(ws))).status,426);
+ assert.equal((await worker.fetch(new Request(ws,{headers:{Upgrade:'websocket',Origin:'https://evil.test'}}))).status,403);
+ assert.equal((await worker.fetch(new Request(ws,{headers:{Upgrade:'websocket'}}),{HOME_SESSION_SECRET:'test'})).status,401);
+ assert.equal((await worker.fetch(new Request(ws.replace('ABC234','invalid'),{headers:{Upgrade:'websocket'}}))).status,400);
+ const env={XIDACH:{idFromName:room=>{assert.equal(room,'ABC234');return room;},get:()=>({fetch:async()=>new Response('socket target')})}};
+ assert.equal(await (await worker.fetch(new Request(ws,{headers:{Upgrade:'websocket'}}),env)).text(),'socket target');
+});
+
 test('Worker handles R2 image requests before origin fallback and denies uploads',async()=>{
  const env={IMAGES:{get:async()=>null}};
  assert.equal((await worker.fetch(new Request('https://example.test/__assets/images/missing.webp'),env)).status,404);

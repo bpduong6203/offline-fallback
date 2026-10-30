@@ -27,6 +27,7 @@ export const body = (hostname) => `  </style>
       <a class="tab tab-link" href="/ty-phu"><span class="game-icon">▦</span><span><b>Tỷ Phú Mebi</b><small>Cờ tỷ phú online 2–4 người</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/tien-len"><span class="game-icon">🃏</span><span><b>Tiến Lên</b><small>Chơi bài cùng bạn bè</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/uno"><span class="game-icon">🌈</span><span><b>UNO</b><small>Đấu bài sắc màu 2-4 người</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
+      <a class="tab tab-link" href="/xi-dach"><span class="game-icon">🥚</span><span><b>Xì Dách</b><small>1–8 người · Nhà cái bot · Trứng ảo</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/stickman-fight"><span class="game-icon">🥊</span><span><b>Stickman Showdown</b><small>Đối kháng người que</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/__game/bomb-arena"><span class="game-icon">✹</span><span><b>Bomb Arena</b><small>Đặt bom tranh đấu</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       </nav>
