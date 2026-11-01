@@ -133,3 +133,12 @@ class_name = "XiDachRoom"
 [[migrations]]
 tag = "v13"
 new_sqlite_classes = ["XiDachRoom"]
+
+# Chùa Mebi: realtime shared temple, sharded into eight rooms.
+[[durable_objects.bindings]]
+name = "TEMPLE"
+class_name = "ChuaMebiRoom"
+
+[[migrations]]
+tag = "v14"
+new_sqlite_classes = ["ChuaMebiRoom"]

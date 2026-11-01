@@ -20,10 +20,12 @@ import chibiRush from './src/page/games/chibi-rush.html';
 import partyCats from './src/page/games/party-cats.html';
 import towerCity from './src/page/games/tower-city.html';
 import coCaNgua from './src/page/games/co-ca-ngua.html';
+import chuaMebi from './src/page/games/chua-mebi.html';
 export { MonopolyRoom } from './src/monopoly-room.generated.js';
 export { ChibiRushRoom } from './src/chibi-rush-room.js';
 export { PartyCatsRoom } from './src/party-cats-room.js';
 export { CoCaNguaRoom } from './src/co-ca-ngua/room.js';
+export { ChuaMebiRoom } from './src/mebi-temple-room.js';
 
 // Durable Object phải được export từ file entry
 export { PoolRoom } from './src/pool-room.js';
@@ -106,6 +108,20 @@ export default {
       const room = (url.searchParams.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
       if (!room) return new Response('Mã phòng không hợp lệ', { status: 400 });
       return env.COCA.get(env.COCA.idFromName(room)).fetch(request);
+    }
+    if (['/chua-mebi', '/chua-mebi/'].includes(url.pathname)) {
+      if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+      return new Response(request.method === 'HEAD' ? null : chuaMebi, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
+    }
+    if (url.pathname === '/__game/chua-mebi/ws') {
+      if ((request.headers.get('Upgrade') || '').toLowerCase() !== 'websocket') return new Response('Cần WebSocket', { status: 426 });
+      const origin = request.headers.get('Origin');
+      if (origin) {
+        try { if (new URL(origin).host !== url.host) return new Response('Forbidden', { status: 403 }); }
+        catch { return new Response('Forbidden', { status: 403 }); }
+      }
+      const shard = Math.max(1, Math.min(8, parseInt(url.searchParams.get('r'), 10) || 1));
+      return env.TEMPLE.get(env.TEMPLE.idFromName('temple' + shard)).fetch(request);
     }
     const decodedPath = decodeURIComponent(url.pathname).toLowerCase();
     if (['/tower-city', '/tower-city/', '/__game/tower-city', '/tower city', '/tower city.html', '/tower-city.html'].includes(decodedPath)) {
