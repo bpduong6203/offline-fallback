@@ -1644,7 +1644,7 @@
           const n = lines.length,
             step = 470 / n;
           lines.forEach((t, i) => {
-            let fs = n <= 2 ? 84 : 56;
+            let fs = n <= 2 ? 84 : n <= 4 ? 64 : 58;
             do {
               x.font = "800 " + fs + "px system-ui,sans-serif";
               fs -= 2;
@@ -1654,10 +1654,10 @@
           return new THREE.CanvasTexture(c);
         };
         [
-          [-11.6, ["NAM MÔ", "A DI", "ĐÀ", "PHẬT"]],
-          [-5.4, ["TỪ", "BI"]],
-          [5.4, ["HỶ", "XẢ"]],
-          [11.6, ["BÌNH", "AN", "HẠNH", "PHÚC"]],
+          [-11.6, ["TÂM", "AN", "VẠN", "SỰ", "AN"]],
+          [-5.4, ["TÂM", "LÀNH", "VẠN", "SỰ", "LÀNH"]],
+          [5.4, ["TÂM", "THIỆN", "SỐNG", "DÀI", "LÂU"]],
+          [11.6, ["TÂM", "AN", "VẠN", "SỰ", "AN"]],
         ].forEach(([x, l]) => {
           put(
             hall,
