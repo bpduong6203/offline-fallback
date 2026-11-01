@@ -2117,26 +2117,14 @@
         if (playing) return;
         offline = true;
         ws = null;
-        [
-          ["Thiện", -4.5, -2.5, 0xa8d8ff, 1],
-          ["Minh Tâm", 5, -3.8, 0xc9b6f2, 2],
-          ["An", -1.8, -13, 0xffd9a0, 0],
-          ["Hạnh", 7.5, 5, 0xffc2b0, 1],
-        ].forEach(([n, x, z, c, l], i) => {
-          addOther({ id: "n" + i, x, z, s: 1, f: 0, col: c, look: l, name: n });
-          const o = others.get("n" + i);
-          o.npc = 1;
-          o.f = o.tf = faceBud(o);
-          o.nb = 12 + i * 7;
-        });
         enter();
-      }
+      } // không còn nhân vật bot: mất kết nối thì ngồi một mình
       function enter() {
         if (playing) return;
         playing = true;
         $("start").style.display = "none";
         $("mode").textContent = offline
-          ? "Chế độ một mình (có vài người bạn ngồi cùng)"
+          ? "Chế độ một mình (chưa kết nối được)"
           : "Đang ngồi cùng mọi người";
       }
       $("go").onclick = () => {
