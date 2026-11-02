@@ -1,3 +1,4 @@
+import {localChat} from './local-chat.mjs';
 import {localSnake} from './local-snake.mjs';
 import {localXiDach} from './local-xidach.mjs';
 import {buildSnake} from './build-snake.mjs';
@@ -18,9 +19,11 @@ import {localAssets} from './local-assets.mjs';
 import {getMimeType, isValidAssetKey} from '../src/asset-handler.js';
 
 export function localServer(getHtml,monopolyOptions={}){
+  const chat=localChat();
   const rooms=new Map(),wss=new WebSocketServer({noServer:true,maxPayload:512}),bangQueues=new Map();
   const getBangQueue=mode=>{let q=bangQueues.get(mode);if(!q){q={engine:new BangBangEngine(),timer:null};bangQueues.set(mode,q);}return q;};
   const server=createServer(async(req,res)=>{
+    chat.decorate(res);if(await chat.http(req,res))return;
     const path=req.url?.split('?')[0];
     if(await xidach.http(req,res))return;
     if(await snake.http(req,res))return;

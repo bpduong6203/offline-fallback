@@ -31,7 +31,7 @@ npm.cmd run dev
 
 Mở **http://localhost:5173/xi-dach**, nhập tên và bấm **Vào chơi ngay**. Server tự xếp tối đa 8 người mỗi phòng, không kể bot nhà cái; người thứ 9 sang phòng mới. Tải lại trang giữ nguyên ghế bằng token đã lưu. Không còn giao diện tạo phòng hoặc nhập mã phòng.
 
-Bàn tự mở cược trong 90 giây; khi tất cả đã cược, thời gian còn lại rút xuống tối đa 10 giây. Hủy cược hoặc có người mới vào sẽ khôi phục hạn cược ban đầu. Mỗi lượt thao tác có 90 giây. Khi tất cả người chơi hoàn thành lượt, đếm ngược 10 giây rồi nhà cái xử lý và quyết toán. Nếu không ai cược, bàn tự mở đợt cược tiếp theo. Bài của bạn, đồng hồ và nút cược/rút/dằn luôn được ghim ở cạnh dưới màn hình trên desktop/mobile.
+Bàn tự mở cược trong 60 giây; khi tất cả đã cược, thời gian còn lại rút xuống tối đa 10 giây. Hủy cược hoặc có người mới vào sẽ khôi phục hạn cược ban đầu. Mỗi lượt thao tác có 60 giây. Khi tất cả người chơi hoàn thành lượt, đếm ngược 10 giây rồi nhà cái xử lý và quyết toán. Nếu không ai cược, bàn tự mở đợt cược tiếp theo. Bài của bạn, đồng hồ và nút cược/rút/dằn luôn được ghim ở cạnh dưới màn hình trên desktop/mobile.
 
 Trên LAN mở `http://<IP-máy-chạy-server>:5173/xi-dach`; cần máy chủ cho phép kết nối cổng 5173. Các tab cùng hồ sơ trình duyệt dùng chung cookie ví và token ghế; dùng cửa sổ riêng tư/hồ sơ khác cho người chơi thứ hai. Local server giữ dữ liệu trong RAM, chỉ giữ qua refresh/reconnect, không giữ khi khởi động lại tiến trình.
 

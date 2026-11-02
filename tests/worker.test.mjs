@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {localMerit} from '../scripts/local-merit.mjs';
+import {injectChatHtml} from '../src/shared-chat.js';
 // Node does not import Wrangler's HTML text modules. Adapt only that import in memory.
 const entry=new URL('../worker.js',import.meta.url);
 const html=await readFile(new URL('../src/page/games/Mini_Motorways.html',import.meta.url),'utf8');
@@ -21,6 +22,23 @@ const source=(await readFile(entry,'utf8'))
   .replace("import towerCity from './src/page/games/tower-city.html';",`const towerCity=${JSON.stringify(towerCityHtml)};`)
   .replace(/from '(\.\/[^']+)'/g,(_,relative)=>`from '${new URL(relative,entry).href}'`);
 const worker=(await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).default;
+
+test('shared chat is injected across repo game pages and served independently from game rooms',async()=>{
+ for(const path of ['/snake','/xi-dach','/ty-phu','/chua-mebi','/uno','/tien-len','/stickman-fight','/party-cats','/chibi-rush','/co-ca-ngua','/tower-city','/__game/bomb-arena','/__game/mini-motorways']){
+  const response=await worker.fetch(new Request('https://example.test'+path));assert.equal(response.status,200);assert.ok((await response.text()).includes('src="/shared-chat.js"'),path);
+ }
+ const script=await worker.fetch(new Request('https://example.test/shared-chat.js'));assert.equal(script.status,200);assert.match(script.headers.get('Content-Type'),/javascript/);
+ const response=await worker.fetch(new Request('https://example.test/api/chat'));assert.equal(response.status,503);
+});
+test('chat decorates the repo fallback but leaves healthy upstream HTML unchanged',async()=>{
+ const original=globalThis.fetch;
+ try{
+  globalThis.fetch=async()=>new Response('Down',{status:502});
+  const offline=await worker.fetch(new Request('https://example.test/',{headers:{Accept:'text/html'}}));assert.equal(offline.status,503);assert.ok((await offline.text()).includes('src="/shared-chat.js"'));
+  globalThis.fetch=async()=>new Response('<html><body>Upstream</body></html>',{headers:{'Content-Type':'text/html'}});
+  assert.equal(await (await worker.fetch(new Request('https://example.test/'))).text(),'<html><body>Upstream</body></html>');
+ }finally{globalThis.fetch=original;}
+});
 
 test('same Worker serves Xi Dach, merit.js and shared merit API',async t=>{
  const env=localMerit();t.after(()=>env.close());
@@ -127,7 +145,7 @@ test('Worker serves Tower City routes and rejects writes',async()=>{
   assert.match(await renderOffline(new Request('https://example.test/',{headers:{Accept:'text/html'}})).text(),/class="tab tab-link" href="\/tower-city"/);
 });
 test('existing Mini Motorways route and fallback page remain available',async()=>{
-  const response=await worker.fetch(new Request('https://example.test/__game/mini-motorways'));assert.equal(response.status,200);assert.equal(await response.text(),html);
+  const response=await worker.fetch(new Request('https://example.test/__game/mini-motorways'));assert.equal(response.status,200);assert.equal(await response.text(),injectChatHtml(html));
   const {renderOffline}=await import('../src/page/render.js');
   const fallback=renderOffline(new Request('https://example.test/',{headers:{Accept:'text/html'}}));
   assert.equal(fallback.status,503);assert.match(await fallback.text(),/href="\/__game\/bomb-arena"/);

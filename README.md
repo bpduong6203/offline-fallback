@@ -1,5 +1,15 @@
 # Offline Fallback Games
 
+## Chat chung toàn repo
+
+Worker tự thêm nút **Chat chung** vào các trang game của repo và trang fallback. Các trang/subdomain do cùng Worker phục vụ dùng chung một kênh; HTML của origin đang hoạt động được giữ nguyên. Cửa sổ chat thu gọn ở cạnh phải, dùng Shadow DOM để tách giao diện và chặn sự kiện bàn phím trong ô nhập lan sang điều khiển game.
+
+`/shared-chat.js` tải widget; `/api/chat` đọc/gửi tin qua Durable Object `SharedChatRoom`, binding `CHAT`, migration `v16` trong `wrangler.toml`. Cần triển khai Worker với cấu hình này để bật chat trên production. Không dùng ví MERIT để lưu tin nhắn; cookie ẩn danh hiện có chỉ xác định người gửi để chống gửi quá nhanh. Khi bật mật khẩu trang chủ, chat cũng yêu cầu phiên đăng nhập đó.
+
+Khi mở chat, lịch sử cập nhật mỗi 3 giây; đóng chat hoặc ẩn tab sẽ dừng polling. Server giữ 100 tin gần nhất, tên tối đa 24 ký tự, nội dung tối đa 300 ký tự và chờ ít nhất 2 giây giữa hai tin của cùng danh tính. Lịch sử lưu phía Worker; server local dùng RAM. Tên hiển thị do người dùng chọn. Lỗi gửi giữ lại bản nháp để thử lại, nội dung tin được render bằng text để tránh chạy HTML.
+
+Kiểm tra: `npm.cmd test`, `npm.cmd run test:xidach:browser` (gửi/nhận giữa Xì Dách và UNO, mobile, phím chơi game).
+
 ## Xì Dách · Bàn Trứng
 
 Game mới tại `/xi-dach`: 1–8 người thật và bot nhà cái riêng, cược/quỹ trứng do server quản lý. Chạy `npm.cmd run dev`, mở `http://localhost:5173/xi-dach`. Xem [hướng dẫn, luật, kiến trúc và kiểm thử](xi-dach/README.md). Chạy kiểm tra giao diện bằng `npm.cmd run test:xidach:browser`.

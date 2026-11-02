@@ -22,7 +22,7 @@ try{
   let seq=0;const pending=new Map(),errors=[];
   socket.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);clearTimeout(p.timer);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);}});
   const send=(method,params={},sessionId)=>new Promise((resolve,reject)=>{const id=++seq;const timer=setTimeout(()=>{pending.delete(id);reject(new Error('CDP timeout '+method));},15000);pending.set(id,{resolve,reject,timer});socket.send(JSON.stringify({id,method,params,sessionId}));});
-  async function page(mobile=false){
+  async function page(mobile=false,route='/xi-dach'){
     const {browserContextId}=await send('Target.createBrowserContext');const {targetId}=await send('Target.createTarget',{url:'about:blank',browserContextId});const {sessionId}=await send('Target.attachToTarget',{targetId,flatten:true});
     await send('Page.enable',{},sessionId);await send('Runtime.enable',{},sessionId);
     if(mobile)await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true},sessionId);
@@ -30,7 +30,7 @@ try{
     await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__snap=null;window.__welcome=null;window.__errors=[];const Native=window.WebSocket;window.WebSocket=class extends Native{constructor(...args){super(...args);this.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.type==='snapshot')window.__snap=m.state;if(m.type==='welcome')window.__welcome=m;if(m.type==='error')window.__errors.push(m.message);});}};`},sessionId);
     const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},sessionId);if(r.exceptionDetails)throw new Error(r.exceptionDetails.text);return r.result.value;};
     const click=selector=>evaluate(`(()=>{const b=document.querySelector(${JSON.stringify(selector)});if(!b||b.disabled)return false;b.click();return true;})()`);
-    await send('Page.navigate',{url:base+'/xi-dach'},sessionId);await until(()=>evaluate(`document.querySelectorAll('#avatars button').length===8`),'client ready');
+    await send('Page.navigate',{url:base+route},sessionId);await until(()=>evaluate(route==='/xi-dach'?`document.querySelectorAll('#avatars button').length===8`:`!!document.getElementById('mebi-shared-chat')?.shadowRoot`),'client ready');
     return {sessionId,evaluate,click,send:(method,params)=>send(method,params,sessionId)};
   }
   const a=await page(),b=await page(true);
@@ -84,6 +84,25 @@ try{
   await a.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1080,deviceScaleFactor:1,mobile:false});
   const desktop=await a.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});await writeFile(new URL('../dist/xi-dach/desktop-check.png',import.meta.url),Buffer.from(desktop.data,'base64'));
   for(const p of [a,b]){assert.deepEqual(await p.evaluate('window.__errors'),[]);assert.equal(await p.evaluate(`document.body.innerText.includes('chip')`),false);}
+  const c=await page(false,'/uno');
+  for(const p of [a,c]){
+    await p.send('Page.bringToFront');
+    await until(()=>p.evaluate("!!document.getElementById('mebi-shared-chat')?.shadowRoot"),'chat mounted');
+    await p.evaluate("document.getElementById('mebi-shared-chat').shadowRoot.getElementById('launch').click()");
+    await until(()=>p.evaluate("!document.getElementById('mebi-shared-chat').shadowRoot.getElementById('send').disabled"),'chat connected');
+  }
+  const sendChat=(p,name,text)=>p.evaluate(`(()=>{const r=document.getElementById('mebi-shared-chat').shadowRoot;r.getElementById('name').value=${JSON.stringify(name)};r.getElementById('text').value=${JSON.stringify(text)};r.querySelector('form').requestSubmit();})()`);
+  await sendChat(a,'Xi Dach','<img src=x onerror=alert(1)> Across games');
+  await until(()=>c.evaluate("document.getElementById('mebi-shared-chat').shadowRoot.getElementById('messages').textContent.includes('Across games')"),'UNO receives Xi Dach chat');
+  assert.equal(await c.evaluate("document.getElementById('mebi-shared-chat').shadowRoot.getElementById('messages').querySelector('img')===null"),true,'message is plain text');
+  await sendChat(c,'UNO','Reply from UNO');await a.send('Page.bringToFront');
+  await until(()=>a.evaluate("document.getElementById('mebi-shared-chat').shadowRoot.getElementById('messages').textContent.includes('Reply from UNO')"),'Xi Dach receives UNO reply');
+  await b.send('Page.bringToFront');await b.evaluate("document.getElementById('mebi-shared-chat').shadowRoot.getElementById('launch').click()");
+  assert.equal(await b.evaluate("(()=>{const p=document.getElementById('mebi-shared-chat').shadowRoot.getElementById('panel').getBoundingClientRect();return p.left>=0&&p.right<=innerWidth&&p.bottom<=innerHeight;})()"),true,'mobile chat fits viewport');
+  await b.evaluate("window.__chatKeys=0;window.addEventListener('keydown',()=>window.__chatKeys++);document.getElementById('mebi-shared-chat').shadowRoot.getElementById('text').dispatchEvent(new KeyboardEvent('keydown',{key:'w',code:'KeyW',bubbles:true,composed:true}));");
+  assert.equal(await b.evaluate('window.__chatKeys'),0,'typing in chat must not trigger game controls');
+  for(const p of [a,b,c])await p.evaluate("document.getElementById('mebi-shared-chat').shadowRoot.getElementById('close').click()");
+  await a.send('Page.bringToFront');console.log('PASS shared chat across Xi Dach and UNO, mobile layout and isolated keyboard events');
   const beforeLoan=await a.evaluate('window.MebiMerit.get()');
   assert.equal(await a.click('#borrowMerit'),true);
   await until(()=>a.evaluate('window.MebiMerit.getDebt()===100'),'loan applied');

@@ -1,5 +1,5 @@
 // Shared, pure Vietnamese Xì Dách rules. Currency values are actual integer eggs.
-export const RULES = Object.freeze({maxPlayers:8, initialBalance:100000, initialFund:10000000, minBet:10, maxBet:10000, betUnit:10, playerStand:16, botStand:17, maxCards:5, bettingMs:90000, turnMs:90000, readyMs:10000, resultMs:8000, botDelayMs:800, dealMs:900, showdownMs:700});
+export const RULES = Object.freeze({maxPlayers:8, initialBalance:100000, initialFund:10000000, minBet:10, maxBet:10000, betUnit:10, playerStand:16, botStand:17, maxCards:5, bettingMs:60000, turnMs:60000, readyMs:10000, resultMs:8000, botDelayMs:800, dealMs:900, showdownMs:700});
 export const HAND_NAMES = ['Quắc', 'Bài thường', 'Ngũ linh', 'Xì dách', 'Xì bàn'];
 export function score(cards) {
   let totals = [0];

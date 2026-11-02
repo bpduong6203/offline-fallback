@@ -28,19 +28,19 @@ test('matchmaker persists room rollover and never allocates more than eight seat
 });
 test('empty betting window reopens automatically without host controls',()=>{
   const e=new XiDachEngine('ABC234');e.join({name:'One',auto:true},100);
-  e.tick(90100);assert.equal(e.state.phase,'BETTING');assert.equal(e.state.deadline,180100);
+  e.tick(60100);assert.equal(e.state.phase,'BETTING');assert.equal(e.state.deadline,120100);
 });
-test('90 second timers shorten to 10 seconds once everyone bets, cancel restores deadline',()=>{
+test('60 second timers shorten to 10 seconds once everyone bets, cancel restores deadline',()=>{
   const e=new XiDachEngine('ABC234');
   const ids=[e.join({name:'One',auto:true},100),e.join({name:'Two',auto:true},100)];
-  assert.equal(e.state.deadline,90100);
-  action(e,ids[0],'bet',{amount:1000},200);assert.equal(e.state.deadline,90100);
+  assert.equal(e.state.deadline,60100);
+  action(e,ids[0],'bet',{amount:1000},200);assert.equal(e.state.deadline,60100);
   action(e,ids[1],'bet',{amount:1000},300);assert.equal(e.state.deadline,10300);
   action(e,ids[1],'bet',{amount:2000},400);assert.equal(e.state.deadline,10300);
-  action(e,ids[1],'cancel',{},500);assert.equal(e.state.deadline,90100);
+  action(e,ids[1],'cancel',{},500);assert.equal(e.state.deadline,60100);
   action(e,ids[1],'bet',{amount:1000},600);assert.equal(e.state.deadline,10600);
   e.tick(10600);e.player(ids[0]).cards=cards(10,6);e.player(ids[0]).done=false;e.player(ids[1]).cards=cards(10,6);e.player(ids[1]).done=false;e.state.dealer=cards(10,7);
-  e.tick(e.state.deadline);assert.equal(e.state.deadline,101500);
+  e.tick(e.state.deadline);assert.equal(e.state.deadline,71500);
   action(e,ids[0],'stand',{},12000);action(e,ids[1],'stand',{},13000);
   assert.equal(e.state.phase,'READY_END');assert.equal(e.state.deadline,23000);
   assert.equal(e.tick(22999),false);e.tick(23000);assert.equal(e.state.phase,'DEALER_TURN');

@@ -151,3 +151,12 @@ class_name = "MebiMeritProfile"
 [[migrations]]
 tag = "v15"
 new_sqlite_classes = ["MebiMeritProfile"]
+
+# Global shared chat, independent of game rooms and merit balances.
+[[durable_objects.bindings]]
+name = "CHAT"
+class_name = "SharedChatRoom"
+
+[[migrations]]
+tag = "v16"
+new_sqlite_classes = ["SharedChatRoom"]

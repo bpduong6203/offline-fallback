@@ -1,3 +1,6 @@
+import {handleChat,withSharedChat} from './src/shared-chat.js';
+import {SHARED_CHAT_CLIENT} from './src/shared-chat-client.js';
+export {SharedChatRoom} from './src/shared-chat-room.js';
 import snakeHtml from './src/page/games/mebi-snake.generated.js';
 import {routeSnake} from './src/snake-router.js';
 export {SnakeArena,SnakeMatchmaker} from './src/snake-room.js';
@@ -40,9 +43,11 @@ export { UnoRoom } from './src/uno-room.js';
 const OFFLINE_STATUS = new Set([502, 503, 504, 521, 522, 523, 524, 530]);
 import {MERIT_CLIENT_SCRIPT,handleMeritRequest,getMeritIdentity} from './src/mebi-merit-api.js';
 
-export default {
+const app = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if(url.pathname==='/shared-chat.js')return new Response(request.method==='HEAD'?null:SHARED_CHAT_CLIENT,{headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store'}});
+    if(url.pathname==='/api/chat')return handleChat(request,env);
     const snakeResponse=await routeSnake(request,env,snakeHtml);if(snakeResponse)return snakeResponse;
     if (url.pathname.startsWith('/api/auth/')) return handleAuthRequest(request, env);
     if (url.pathname === '/api/merit' || url.pathname === '/api/merit/reward') return handleMeritRequest(request, env);
@@ -220,11 +225,20 @@ export default {
     try {
       const response = await fetch(request);
       if (OFFLINE_STATUS.has(response.status)) {
-        return renderOffline(request);
+        return withSharedChat(renderOffline(request));
       }
       return response;
     } catch (error) {
-      return renderOffline(request);
+      return withSharedChat(renderOffline(request));
     }
+  }
+};
+
+export default {
+  async fetch(request,env,ctx){
+    const response=await app.fetch(request,env,ctx);
+    const path=new URL(request.url).pathname.replace(/\/$/,'');
+    const repoPage=path.startsWith('/__game/')||['/snake','/xi-dach','/ty-phu','/chibi-rush','/party-cats','/co-ca-ngua','/chua-mebi','/tower-city','/tower city','/tower city.html','/tower-city.html','/tien-len','/uno','/stickman-fight'].includes(decodeURIComponent(path).toLowerCase());
+    return request.method==='GET'&&repoPage&&response.ok?withSharedChat(response):response;
   }
 };
