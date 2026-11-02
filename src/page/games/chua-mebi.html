@@ -158,6 +158,8 @@
         background: none;
         line-height: 0;
       }
+      #top { min-width: 190px; backdrop-filter: blur(10px); }
+      #clock { color: #f0a94d; }
     </style>
   </head>
   <body>
@@ -167,6 +169,7 @@
         id="mode"
         style="font-size: 12px; opacity: 0.8"
       ></span>
+      <br /><span id="clock">--:--</span> · <span id="dayPhase">Ban ngày</span>
     </div>
     <div id="toast" class="card"></div>
     <div id="ytbox" class="card" style="display: none">
@@ -179,7 +182,7 @@
     <div id="acts">
       <button id="bSit">🧘 Ngồi</button><button id="bBow">🙏 Lạy</button
       ><button id="bInc" class="alt">🪔 Thắp hương</button
-      ><button id="bMo" class="alt">🪘 Gõ mõ</button>
+      ><button id="bMo" class="alt">🪘 Gõ mõ</button><button id="bLantern" class="alt">🏮 Thả hoa đăng · 3</button>
       <button id="bMus" class="alt">🎵 Nhạc: tắt</button
       ><input
         id="vol"
@@ -208,8 +211,8 @@
         lerp = (a, b, k) => a + (b - a) * k;
 
       // ================= cảnh 3D =================
-      const R = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      R.setPixelRatio(Math.min(devicePixelRatio, 2));
+      const R = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+      R.setPixelRatio(Math.min(devicePixelRatio, 1.75));
       R.setSize(innerWidth, innerHeight);
       document.body.insertBefore(R.domElement, document.body.firstChild);
       const S = new THREE.Scene();
@@ -281,6 +284,35 @@
         null,
         [-Math.PI / 2, 0, 0],
       );
+      // Dải sông và bờ đi dạo ở phía đông khuôn viên.
+      const riverMat = new THREE.MeshPhongMaterial({ color: 0x3d9da8, emissive: 0x123c50, shininess: 90, specular: 0xa6ffff, transparent: true, opacity: 0.94 });
+      const riverGeo = new THREE.PlaneGeometry(72, 30, 40, 20);
+      const riverBase = riverGeo.attributes.position.array.slice();
+      const river = new THREE.Mesh(riverGeo, riverMat);
+      river.rotation.x = -Math.PI / 2; river.position.set(0, -0.08, 39); S.add(river);
+      const bank = new THREE.Mesh(new THREE.BoxGeometry(76, 0.55, 5), tm(0x8ebd78));
+      bank.position.set(0, 0.05, 22); S.add(bank);
+      const riverWalk = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.22, 14), tm(0xb7aa89));
+      riverWalk.position.set(0, 0.22, 27); S.add(riverWalk);
+      for (let i = 0; i < 8; i++) {
+        const x = i < 4 ? -36 + i * 4 : 24 + (i - 4) * 4;
+        const tree = new THREE.Group(); tree.position.set(x, 0, 13 + (i % 2) * 8); S.add(tree);
+        put(tree, new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.42, 3.2, 7), tm(0x765036)), 0, 1.6, 0);
+        put(tree, new THREE.Mesh(new THREE.ConeGeometry(2.5, 5.5, 8), tm(i % 2 ? 0x548c65 : 0x6d9d72)), 0, 5, 0);
+        put(tree, new THREE.Mesh(new THREE.ConeGeometry(1.8, 4.2, 8), tm(0x78aa79)), 0, 7, 0);
+      }
+      const riverGlow = new THREE.PointLight(0x73d9e8, 0, 48); riverGlow.position.set(0, 5, 37); S.add(riverGlow);
+      const riverLanterns = [];
+      for (let i = 0; i < 12; i++) {
+        const x = -32 + i * (64 / 11), z = 19 + (i % 2) * 2;
+        const post = new THREE.Group(); post.position.set(x, 0, z); S.add(post);
+        put(post, new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.1, 2.7, 8), tm(0x63472e)), 0, 1.35, 0);
+        const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), new THREE.MeshBasicMaterial({ color: 0xffbd70 }));
+        put(post, lamp, 0, 2.82, 0);
+        const light = i % 2 === 0 ? new THREE.PointLight(0xffa85c, 0, 8) : null;
+        if (light) { light.position.set(x, 2.9, z); S.add(light); }
+        riverLanterns.push({ lamp, light, phase: i * 0.7 });
+      }
       const tileTex = (() => {
         const c = document.createElement("canvas");
         c.width = c.height = 256;
@@ -3549,11 +3581,7 @@
 
         // ---------- MÔI TRƯỜNG: ngày/đêm + thời tiết ----------
         const ENV = { night: 0, nv: 0, wx: 0, w: [0, 0] };
-        try {
-          const sv = localStorage.getItem("mebi-night"),
-            h = new Date().getHours();
-          ENV.night = sv == null ? (h >= 18 || h < 5 ? 1 : 0) : +sv;
-        } catch (e) {}
+        ENV.night = (() => { const h = new Date().getHours() + new Date().getMinutes() / 60; return h >= 18 || h < 6 ? 1 : 0; })();
         ENV.nv = ENV.night;
         const hemi = S.children.find((o) => o.isHemisphereLight);
         let moonM = null;
@@ -3811,16 +3839,7 @@
           lbWx = () => (bWx.textContent = WXL[ENV.wx]);
         lbDN();
         lbWx();
-        const toggleDN = () => {
-          ENV.night = ENV.night ? 0 : 1;
-          try {
-            localStorage.setItem("mebi-night", ENV.night);
-          } catch (e) {}
-          lbDN();
-          toast(
-            ENV.night ? "🌙 Đêm xuống, đèn lồng thắp sáng" : "☀️ Trời sáng",
-          );
-        };
+        const toggleDN = () => toast("Cảnh tự chuyển ngày đêm theo giờ địa phương của bạn");
         const cycleWx = () => {
           ENV.wx = (ENV.wx + 1) % 3;
           lbWx();
@@ -4028,18 +4047,18 @@
         $("bows").textContent = "--";
         toast("Không tải được công đức, hãy tải lại trang để thử lại");
       });
-      const rewardCooldownMs = { bow: 5000, incense: 60000, mallet: 5000 };
+      const rewardCooldownMs = { bow: 5000, incense: 60000, mallet: 5000, lantern: 0 };
       const rewardBlockedUntil = {};
       const rewardPending = new Set();
       function rewardMerit(action, explainCooldown = false) {
-        if (rewardPending.has(action) || Date.now() < (rewardBlockedUntil[action] || 0)) return;
+        if (rewardPending.has(action) || Date.now() < (rewardBlockedUntil[action] || 0)) return Promise.resolve(null);
         rewardPending.add(action);
-        window.MebiMerit.reward(action).then((result) => {
+        return window.MebiMerit.reward(action).then((result) => {
           const wait = result.rewarded ? rewardCooldownMs[action] : result.retryAfterMs;
           rewardBlockedUntil[action] = Date.now() + wait;
           if (result.rewarded) toast("🙏 +" + result.amount + " công đức");
           else if (explainCooldown) toast("Thử nhận công đức lại sau " + Math.ceil(wait / 1000) + " giây");
-        }).catch(() => toast("Không lưu được công đức, hãy thử lại"))
+        }).catch(() => { toast("Không lưu được công đức, hãy thử lại"); return null; })
           .finally(() => rewardPending.delete(action));
       }
       window.addEventListener("mebi-merit-change", (event) => {
@@ -4049,7 +4068,7 @@
       let jx = 0,
         jy = 0,
         yaw = 0,
-        dist = 12.5,
+        dist = 15,
         camYaw = 0;
       addEventListener("keydown", (e) => {
         if (e.target.tagName === "INPUT") return;
@@ -4060,6 +4079,7 @@
         } else if (e.code === "KeyB") bow();
         else if (e.code === "KeyH") incense();
         else if (e.code === "KeyM") mo();
+        else if (e.code === "KeyL") dropLantern();
         if (e.code.startsWith("Arrow")) e.preventDefault();
       });
       addEventListener("keyup", (e) => (keys[e.code] = 0));
@@ -4109,6 +4129,48 @@
         if (ws && ws.readyState === 1) ws.send(JSON.stringify(m));
       }
       const near = () => Math.hypot(me.x - BXZ[0], me.z - BXZ[1]) < 3.4;
+      const riverNear = () => Math.abs(me.z - 21.5) < 4.2 && Math.abs(me.x) < 35;
+      let lanterns = [], lanternRemaining = 3, lanternDay = "";
+      function syncLanternQuota() {
+        const now = new Date(), sessionDay = new Date(now);
+        if (now.getHours() < 6) sessionDay.setDate(sessionDay.getDate() - 1);
+        const day = `${sessionDay.getFullYear()}-${sessionDay.getMonth()}-${sessionDay.getDate()}`;
+        if (lanternDay !== day) {
+          lanternDay = day;
+          try {
+            const saved = JSON.parse(localStorage.getItem("mebi-lantern-evening") || "null");
+            lanternRemaining = saved && saved.day === day ? Math.max(0, 3 - saved.used) : 3;
+            if (!saved || saved.day !== day) localStorage.setItem("mebi-lantern-evening", JSON.stringify({ day, used: 0 }));
+          } catch { lanternRemaining = 3; }
+        }
+        const evening = now.getHours() >= 18 || now.getHours() < 6;
+        $("bLantern").textContent = `🏮 Thả hoa đăng · ${lanternRemaining}`;
+        $("bLantern").disabled = !evening || !riverNear() || lanternRemaining <= 0;
+      }
+      function dropLantern() {
+        const now = new Date();
+        if (!(now.getHours() >= 18 || now.getHours() < 6)) return toast("Hoa đăng chỉ thả vào buổi tối nhé");
+        if (!riverNear()) return toast("Hãy lại gần bờ sông để thả hoa đăng");
+        syncLanternQuota();
+        if (lanternRemaining <= 0) return toast("Tối nay bạn đã thả đủ 3 hoa đăng");
+        lanternRemaining--;
+        try { localStorage.setItem("mebi-lantern-evening", JSON.stringify({day: lanternDay, used: 3-lanternRemaining})); } catch {}
+        const g = new THREE.Group(), color = [0xff9c62, 0xffd66e, 0xff83b8][(Math.random()*3)|0];
+        const shell = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.28, 0.45, 12), new THREE.MeshBasicMaterial({color, transparent:true, opacity:0.95}));
+        const flame = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({color:0xfff2a0})); flame.position.y=0.3; g.add(shell,flame);
+        const glow = new THREE.PointLight(color, 1.5, 6); glow.position.y=0.55; g.add(glow);
+        g.position.set(me.x,0.18,24+Math.random()*3); S.add(g);
+        lanterns.push({g,age:0,v:1.1+Math.random()*0.45,phase:Math.random()*6});
+        toast("🏮 Hoa đăng trôi theo dòng nước…");
+        rewardMerit("lantern").then((result) => {
+          if (result?.rewarded) return;
+          lanternRemaining = Math.min(3, lanternRemaining + 1);
+          try { localStorage.setItem("mebi-lantern-evening", JSON.stringify({day: lanternDay, used: 3-lanternRemaining})); } catch {}
+          toast("Chưa nhận được công đức; lượt thả đã được hoàn lại");
+        });
+        syncLanternQuota();
+      }
+      $("bLantern").onclick = dropLantern;
       function toggleSit() {
         audio();
         if (me.st === 2) return;
@@ -4524,6 +4586,27 @@
       // ================= vòng lặp =================
       function update(dt) {
         T += dt;
+        const wall = new Date(), hour = wall.getHours() + wall.getMinutes() / 60 + wall.getSeconds() / 3600;
+        const smooth = (v) => { v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); };
+        ENV.night = hour >= 17.5 && hour < 18.5 ? smooth(hour - 17.5) : hour >= 18.5 || hour < 5.5 ? 1 : hour >= 5.5 && hour < 6.5 ? 1 - smooth(hour - 5.5) : 0;
+        riverLanterns.forEach((l) => { const glow = ENV.nv; if (l.light) l.light.intensity = glow * (0.9 + 0.2 * Math.sin(T * 2 + l.phase)); l.lamp.material.color.setHex(0xffbd70); });
+        riverGlow.intensity = ENV.nv * (1.1 + Math.sin(T * 0.7) * 0.12);
+        riverMat.color.setHex(ENV.nv > 0.5 ? 0x164c68 : 0x55b8bd);
+        riverMat.emissive.setHex(ENV.nv > 0.5 ? 0x102e57 : 0x16434a);
+        for (let i = lanterns.length - 1; i >= 0; i--) {
+          const l = lanterns[i]; l.age += dt; l.g.position.z += l.v * dt; l.g.position.x += Math.sin(T * 0.6 + l.phase) * dt * 0.22;
+          l.g.rotation.z = Math.sin(T * 1.2 + l.phase) * 0.06;
+          const fade = l.age < 10 ? 1 : Math.max(0, 1 - (l.age - 10) / 5);
+          l.g.children.forEach((o) => { if (o.material && "opacity" in o.material) o.material.opacity = fade; if (o.isPointLight) o.intensity = 1.5 * fade; });
+          if (l.age >= 15) { S.remove(l.g); l.g.traverse((o) => { o.geometry?.dispose(); if (o.material) o.material.dispose(); }); lanterns.splice(i,1); }
+        }
+        const waterPos = riverGeo.attributes.position;
+        for (let i = 0; i < waterPos.count; i++) {
+          const x = riverBase[i * 3], z = riverBase[i * 3 + 1];
+          waterPos.array[i * 3 + 2] = Math.sin(x * 0.22 + T * 1.25) * 0.035 + Math.cos(z * 0.38 - T) * 0.025;
+        }
+        waterPos.needsUpdate = true; riverGeo.computeVertexNormals();
+        syncLanternQuota();
         incCd = Math.max(0, incCd - dt);
         const ix =
             (keys.KeyD || keys.ArrowRight ? 1 : 0) -
@@ -4551,8 +4634,8 @@
           me.f = me.tf;
           me.moving = true;
           const inHall = me.z < -10.6;
-          me.x = Math.max(inHall ? -11 : -16, Math.min(inHall ? 11 : 16, me.x));
-          me.z = Math.max(-14.6, Math.min(18, me.z));
+          me.x = Math.max(inHall ? -11 : -34, Math.min(inHall ? 11 : 34, me.x));
+          me.z = Math.max(-14.6, Math.min(48, me.z));
           const bx = me.x - BXZ[0],
             bz = me.z - BXZ[1],
             bd = Math.hypot(bx, bz);
@@ -4671,6 +4754,9 @@
           l.g.rotation.z = Math.sin(T * 1.1 + l.ph) * 0.05;
         });
         $("cnt").textContent = others.size + 1;
+        $("clock").textContent = wall.toLocaleTimeString("vi-VN", {hour:"2-digit",minute:"2-digit"});
+        $("dayPhase").textContent = ENV.nv > 0.5 ? "Đêm bên sông" : "Ban ngày";
+        const dayButton = $("bDN"); if (dayButton) dayButton.textContent = ENV.nv > 0.5 ? "🌙 Ban đêm · tự động" : "☀️ Ban ngày · tự động";
         $("bInc").disabled = !near() || incCd > 0;
         $("bSit").textContent = me.st === 1 ? "🚶 Đứng dậy" : "🧘 Ngồi";
         $("bBow").disabled = me.st === 2;
