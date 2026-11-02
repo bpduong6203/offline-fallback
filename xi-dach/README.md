@@ -81,5 +81,7 @@ Quyết toán xóa khoản giữ và chỉ chạy trong giai đoạn SETTLEMENT.
 - Bộ test engine/service kiểm tra solo, tám ghế, từ chối ghế thứ chín, A, bài đặc biệt, bot, cược sai, escrow, timeout, trùng action, giấu bài, reconnect và restore Durable Object.
 - Browser đã kiểm tra hai phiên độc lập qua đầy đủ vòng chơi, refresh giữa ván, ván tiếp theo, tám người thật kết nối, bảo toàn công đức và UI desktop/mobile. Sáu trong tám kết nối của bài browser test được tự động điều khiển qua WebSocket; hai kết nối thao tác qua UI Chrome.
 - Chưa deploy, chưa kiểm tra qua Internet hoặc trên điện thoại thật. Migration `v13` và binding `XIDACH` đã thêm vào `wrangler.toml`; cần chạy quy trình triển khai Worker của dự án khi muốn đưa lên mạng.
-- Ghế được giữ cho reconnect trong suốt đời phòng; phiên bản này chưa có đuổi người/thu hồi ghế hoặc xóa phòng. Bộ xếp phòng giữ chỉ số phòng trong Durable Object và cấp ghế tuần tự để không vượt 8 người. Không có cơ chế bổ sung công đức khi người chơi hết số dư.
 - Danh tính là token lưu theo trình duyệt và phòng, không phải ví công đức toàn tài khoản. Xóa dữ liệu trình duyệt sẽ mất token cũ. Production lưu quỹ/phòng trong Durable Object; local RAM không mô phỏng độ bền sau khi tắt Node.
+## Dọn ghế mất kết nối
+
+Giữ ghế 60 giây để kết nối lại. Hết hạn thì dọn ghế và ưu tiên chuyển chủ phòng cho người còn online. Người có cược được quyết toán vào ví trước khi dọn. Alarm vẫn dọn phòng chờ không có thao tác; khi khôi phục phòng cũ, người chưa có kết nối được giữ thêm tối đa 60 giây (hoặc đến khi quyết toán xong).

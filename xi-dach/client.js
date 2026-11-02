@@ -105,6 +105,7 @@ function connect(code,create=false){
   socket.onopen=()=>{if(socket!==ws)return;socket.send(JSON.stringify({type:'hello',name:$('name').value.trim(),avatar,create,token:tokenFor(code)||undefined}));};
   socket.onmessage=event=>{if(socket!==ws)return;let m;try{m=JSON.parse(event.data);}catch{return;}
     if(m.type==='welcome'){selfId=m.id;storage.set('xidach.merit.token.'+code,m.token);storage.set('xidach.name',$('name').value.trim());connected=true;retry=0;$('connection').textContent='● Đã kết nối';$('entry').hidden=true;$('game').hidden=false;history.replaceState(null,'','/xi-dach');}
+    if(m.type==='error'&&m.code==='SEAT_EXPIRED'){storage.set('xidach.merit.token.'+code,'');storage.set('xidach.merit.room','');selfId=null;state=null;$('entry').hidden=false;$('game').hidden=true;socket.close();}
     if(m.type==='error'){toast(m.message);refreshMerit();if(!selfId){$('entryError').textContent=m.message;$('joinButton').disabled=false;socket.close();}return;}
     if(m.type==='snapshot'&&selfId){state=m.state;offset=state.serverTime-Date.now();const me=state.players.find(p=>p.id===selfId),key=state.roundId+':'+me?.balance+':'+me?.bet;if(key!==lastWalletState){lastWalletState=key;refreshMerit();}render();if(state.phase!==lastPhase){beep();lastPhase=state.phase;}}
   };

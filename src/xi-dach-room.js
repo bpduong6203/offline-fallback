@@ -12,8 +12,9 @@ export class XiDachRoom {
       const wallet=state?.players?.some(p=>!p.meritId)?null:meritWallet(env);
       this.service=new XiDachService(state?.roomId||'',{state,wallet,save:async state=>{
         await ctx.storage.put('room',state);
-        if(state.pendingMerit)await ctx.storage.setAlarm(Date.now()+2000);else if(state.deadline)await ctx.storage.setAlarm(state.deadline);else await ctx.storage.deleteAlarm();
+        if(state.pendingMerit)await ctx.storage.setAlarm(Date.now()+2000);else if(this.service.nextAlarm())await ctx.storage.setAlarm(this.service.nextAlarm());else await ctx.storage.deleteAlarm();
       }});
+      await this.service.save(this.service.engine.state);
     });
   }
   async fetch(request){
@@ -45,7 +46,7 @@ export class XiDachRoom {
     server.addEventListener('close',leave);server.addEventListener('error',leave);
     return new Response(null,{status:101,webSocket:pair[0]});
   }
-  async alarm(){await this.ready;try{await this.service.tick();}finally{const s=this.service.engine.state;if(s.pendingMerit)await this.ctx.storage.setAlarm(Date.now()+2000);else if(s.deadline)await this.ctx.storage.setAlarm(Math.max(Date.now()+20,s.deadline));}}
+  async alarm(){await this.ready;try{await this.service.tick();}finally{const s=this.service.engine.state;if(s.pendingMerit)await this.ctx.storage.setAlarm(Date.now()+2000);else if(this.service.nextAlarm())await this.ctx.storage.setAlarm(Math.max(Date.now()+20,this.service.nextAlarm()));else await this.ctx.storage.deleteAlarm();}}
 }
 
 export function roomCode(index){
@@ -54,9 +55,11 @@ export function roomCode(index){
   return code.padStart(6,'A');
 }
 export async function autoJoin(service,profile){
+  await service.recover();await service.cleanup();
   if(service.wallet&&profile.meritId){const existing=service.engine.state.players.find(p=>p.meritId===profile.meritId);if(existing)return Response.json({room:service.engine.state.roomId,token:existing.token});}
   if(service.engine.state.players.length>=8)return new Response('Full',{status:409});
   try{await service.recover();const before=structuredClone(service.engine.state);if(service.engine.tick())await service.commit(before);const id=service.engine.join({...profile,token:undefined,create:false,auto:true});
+    service.engine.player(id).disconnectedAt=Date.now();
     await service.syncPlayer(service.engine.player(id));
     await service.save(service.engine.state);service.broadcast();
     return Response.json({room:service.engine.state.roomId,token:service.engine.player(id).token});
