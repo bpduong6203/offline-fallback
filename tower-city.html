@@ -119,7 +119,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
       </div>
       <ul class="how">
         <li><b>Thả</b><span>Chạm màn hình hoặc nhấn Space khi tầng nằm đúng trên tháp.</span></li>
-        <li><b>Hoàn hảo</b><span>Thả khít để tháp bớt lắc và có thêm cư dân.</span></li>
+        <li><b>Hoàn hảo</b><span>Thả khít để tháp bớt lắc và thêm cư dân; đặt lệch càng nhiều tháp càng rung lắc.</span></li>
         <li><b>Mũ bảo hộ</b><span>Trượt 3 lần là tháp đổ.</span></li>
       </ul>
       <div class="btns">
@@ -195,7 +195,10 @@ function beep(f,d,type,v,slide){
   }catch(e){}
 }
 const sfx={
-  land(){beep(190,.09,'triangle',.09,-70)},
+  land(misaligned){
+    beep(misaligned?150:190,.09,'triangle',.09,misaligned?-90:-70);
+    if(misaligned)setTimeout(()=>beep(75,.14,'sawtooth',.05,-30),25);
+  },
   perfect(){beep(660,.09,'square',.04);setTimeout(()=>beep(990,.14,'square',.04),70)},
   miss(){beep(240,.28,'sawtooth',.05,-170)},
   done(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.16,'square',.05),i*110))},
@@ -213,14 +216,25 @@ function resize(){
 
 /* ---------- tower game ---------- */
 function newGame(type,target,demo){
-  const g={type,target,demo:!!demo,floors:[{x:VW/2}],cam:0,camT:0,t:0,phase:Math.random()*6.28,wob:0,amp:2,combo:0,lives:3,pop:0,disp:0,
+  const g={type,target,demo:!!demo,floors:[{x:VW/2}],cam:0,camT:0,t:0,phase:Math.random()*6.28,wob:0,amp:3,shake:0,shakeT:0,swayPhase:0,flutterAmp:0,combo:0,lives:3,pop:0,disp:0,
     state:'swing',timer:0,block:null,falling:[],popups:[],parts:[],skyT:0,perfects:0,trolley:VW/2};
-  if(demo){for(let i=1;i<6;i++)g.floors.push({x:VW/2+Math.sin(i*1.9)*7});g.wob=.4;g.skyT=.12}
+  if(demo){for(let i=1;i<6;i++)g.floors.push({x:VW/2+Math.sin(i*1.9)*8});g.wob=.5;g.skyT=.12}
   g.camT=H*.6+g.floors.length*BH;g.cam=g.camT;
   S=g;spawn();return g;
 }
 function spawn(){S.block={x:VW/2,y:H*.17-S.cam,vy:0};S.state='swing'}
-function sway(i){const k=Math.min(1,i/16);return S.amp*k*k*Math.sin(S.t*1.7)}
+function sway(i){
+  if(!S||i<=0)return 0;
+  const s=S;
+  const k=Math.min(2.5,Math.pow(i/9,1.35));
+  const ph=s.swayPhase||(s.t*2);
+  const w1=Math.sin(ph);
+  const w2=Math.sin(ph*2.18+0.9)*0.28;
+  const primary=s.amp*k*(w1+w2)*0.82;
+  const shudder=(s.shake&&s.shake>0.1)?s.shake*Math.min(1.6,i/8)*Math.sin((s.shakeT||0)*40):0;
+  const flutter=(s.flutterAmp&&s.flutterAmp>0.1)?Math.sin(s.t*16+i*0.5)*s.flutterAmp*Math.min(1.4,i/9):0;
+  return primary+shudder+flutter;
+}
 function addPop(x,y,text,color){S.popups.push({x,y,text,color,t:0})}
 
 function updateGame(dt){
@@ -228,10 +242,38 @@ function updateGame(dt){
   s.cam+=(s.camT-s.cam)*Math.min(1,dt*4.5);
   s.skyT+=(Math.min(1,s.floors.length/45)-s.skyT)*Math.min(1,dt*1.2);
   s.disp+=(s.pop-s.disp)*Math.min(1,dt*8);
-  s.amp+=((2+s.wob*5.5)-s.amp)*Math.min(1,dt*3);
+
+  if(s.shake>0.05){
+    s.shakeT+=dt;
+    s.shake=Math.max(0,s.shake-dt*28);
+  }else{
+    s.shake=0;
+  }
+
+  let misSum=0;
+  for(let j=1;j<s.floors.length;j++){
+    misSum+=Math.abs(s.floors[j].x-s.floors[j-1].x);
+  }
+  const misAvg=s.floors.length>1?misSum/(s.floors.length-1):0;
+
+  const minWob=Math.min(5,(misAvg/BW)*7.5);
+  if(s.wob>minWob){
+    s.wob=Math.max(minWob,s.wob-dt*0.2);
+  }
+
+  const targetAmp=3.0+s.wob*7.5+(misAvg/BW)*45;
+  s.amp+=(targetAmp-s.amp)*Math.min(1,dt*3.5);
+
+  const targetFlutter=(s.wob>0.7||misAvg>6)?Math.min(6,s.wob*0.9+(misAvg/BW)*12):0;
+  s.flutterAmp+=(targetFlutter-s.flutterAmp)*Math.min(1,dt*4);
+
+  const swaySpeed=1.95+Math.min(s.floors.length,35)*0.025+Math.min(s.wob,8)*0.06;
+  s.swayPhase=(s.swayPhase||0)+dt*swaySpeed;
+
   const n=s.floors.length;
   if(s.state==='swing'){
-    s.phase+=dt*(1.7+Math.min(n,40)*.035);
+    const craneSpeed=2.1+Math.min(n,45)*0.045+Math.min(s.wob,6)*0.035;
+    s.phase+=dt*craneSpeed;
     s.trolley=VW/2+Math.sin(s.phase)*RANGE;
     s.block.x=s.trolley;s.block.y=H*.17-s.cam;
   }else if(s.state==='drop'){
@@ -256,29 +298,68 @@ function land(){
   const s=S,b=s.block,n=s.floors.length,top=s.floors[n-1];
   const topX=top.x+sway(n-1);
   let dx=b.x-topX;const off=Math.abs(dx)/BW;
-  if(BW-Math.abs(dx)<BW*.22){
-    s.falling.push({x:b.x,y:b.y,vx:(dx>0?1:-1)*70,vy:0,rot:0,vr:(dx>0?1:-1)*2.6,type:s.type});
-    s.lives--;s.combo=0;s.wob=Math.min(4,s.wob+.8);
+
+  const minOverlap=Math.min(0.42,0.34+Math.min(s.wob,8)*0.01);
+  if(BW-Math.abs(dx)<BW*minOverlap){
+    s.falling.push({x:b.x,y:b.y,vx:(dx>0?1:-1)*75,vy:0,rot:0,vr:(dx>0?1:-1)*2.6,type:s.type});
+    s.lives--;s.combo=0;
+    s.wob=Math.min(10,s.wob+1.8);
+    s.shake=Math.min(24,s.shake+18);
+    s.shakeT=0;
     addPop(b.x,b.y-10,'TRƯỢT','#ff6a4d');sfx.miss();
     s.block=null;
     if(s.lives<=0){s.state='dead';s.timer=1}else{s.state='miss';s.timer=.75}
     return;
   }
-  const perfect=off<.045;
+
+  const perfect=off<0.038;
   if(perfect)dx=0;
   const bx=topX+dx;
   s.floors.push({x:bx-sway(n)});
   const T=TYPES[s.type];
-  if(perfect){s.combo++;s.perfects++;s.wob*=.55}else{s.combo=0;s.wob=Math.min(4,s.wob+off*2.4+.12)}
-  const q=perfect?1.5:Math.max(.25,1-off*1.25);
+
+  if(perfect){
+    s.combo++;s.perfects++;
+    s.wob=Math.max(0,s.wob*0.4-0.25);
+    s.shake=0;
+  }else{
+    s.combo=0;
+    const penalty=off-0.038;
+    s.wob=Math.min(10,s.wob+penalty*5.5+0.35);
+    s.shake=Math.min(22,s.shake+penalty*28+5);
+    s.shakeT=0;
+  }
+
+  const q=perfect?1.5:Math.max(.2,1-off*1.35);
   const gain=Math.round(T.base*q)+(perfect?(s.combo-1)*2:0);
   s.pop+=gain;
   const py=b.y-6;
+
   if(perfect){
     addPop(bx,py,s.combo>=2?'HOÀN HẢO ×'+s.combo:'HOÀN HẢO','#5ee0b0');
     for(let i=0;i<14;i++)s.parts.push({x:bx+(Math.random()-.5)*BW,y:b.y+BH,vx:(Math.random()-.5)*220,vy:-Math.random()*200-40,t:0,c:i%2?'#ffe08a':'#5ee0b0'});
     sfx.perfect();
-  }else{addPop(bx,py,'+'+gain,'#ffc24b');sfx.land()}
+  }else{
+    if(off>0.08){
+      const count=Math.min(10,Math.round(off*16));
+      for(let i=0;i<count;i++){
+        s.parts.push({
+          x:bx+(dx>0?-BW/2+4:BW/2-4)+(Math.random()-.5)*16,
+          y:b.y+BH,
+          vx:(Math.random()-.5)*70+(dx>0?-40:40),
+          vy:Math.random()*90+20,
+          t:0,
+          c:i%2?'#9db0d8':'#6f8fc0'
+        });
+      }
+    }
+    if(off>0.32){
+      addPop(bx,py-18,'LỆCH TẦNG!','#ff8e6b');
+    }
+    addPop(bx,py,'+'+gain,'#ffc24b');
+    sfx.land(off>0.15);
+  }
+
   s.camT=H*.6+s.floors.length*BH;
   s.block=null;
   if(s.type!=='Q'&&s.floors.length-1>=s.target){
