@@ -16,6 +16,11 @@ export class MebiMeritProfile {
         action TEXT PRIMARY KEY,
         awarded_at INTEGER NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS merit_debt (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        debt INTEGER NOT NULL DEFAULT 0 CHECK (debt >= 0 AND debt <= 10000)
+      );
+      INSERT OR IGNORE INTO merit_debt (id, debt) VALUES (1, 0);
     `);
   }
 
@@ -32,12 +37,13 @@ export class MebiMeritProfile {
         const now = Date.now();
         const previous = this.ctx.storage.sql.exec('SELECT awarded_at FROM merit_reward_cooldowns WHERE action = ?', body.action).toArray()[0];
         const retryAfterMs = previous ? reward.cooldownMs - (now - previous.awarded_at) : 0;
-        const balance = this.ctx.storage.sql.exec('SELECT balance FROM merit_balance WHERE id = 1').toArray()[0]?.balance || 0;
-        if (retryAfterMs > 0) return Response.json({ balance, rewarded: false, amount: 0, retryAfterMs }, { headers: { 'Cache-Control': 'no-store' } });
+        if (retryAfterMs > 0) return Response.json({ ...this.balanceData(), rewarded: false, amount: 0, retryAfterMs }, { headers: { 'Cache-Control': 'no-store' } });
         this.ctx.storage.sql.exec('INSERT INTO merit_reward_cooldowns (action, awarded_at) VALUES (?, ?) ON CONFLICT(action) DO UPDATE SET awarded_at = excluded.awarded_at', body.action, now);
-        this.ctx.storage.sql.exec('UPDATE merit_balance SET balance = balance + ?, legacy_imported = 1 WHERE id = 1', reward.amount);
-        const nextBalance = this.ctx.storage.sql.exec('SELECT balance FROM merit_balance WHERE id = 1').toArray()[0]?.balance || 0;
-        return Response.json({ balance: nextBalance, rewarded: true, amount: reward.amount, retryAfterMs: 0 }, { headers: { 'Cache-Control': 'no-store' } });
+        const debt = this.ctx.storage.sql.exec('SELECT debt FROM merit_debt WHERE id = 1').toArray()[0].debt;
+        const repaid = Math.min(reward.amount, debt);
+        this.ctx.storage.sql.exec('UPDATE merit_debt SET debt = debt - ? WHERE id = 1', repaid);
+        this.ctx.storage.sql.exec('UPDATE merit_balance SET balance = balance + ?, legacy_imported = 1 WHERE id = 1', reward.amount - repaid);
+        return Response.json({ ...this.balanceData(), rewarded: true, amount: reward.amount, retryAfterMs: 0 }, { headers: { 'Cache-Control': 'no-store' } });
       });
     }
     if (url.pathname !== '/balance') return new Response('Not Found', { status: 404 });
@@ -46,6 +52,7 @@ export class MebiMeritProfile {
 
     let body;
     try { body = await request.json(); } catch { return Response.json({ error: 'Invalid JSON' }, { status: 400 }); }
+    if(body?.action==='borrow')return this.borrow(body.requestId);
     const delta = Number(body?.delta);
     if (!Number.isSafeInteger(delta) || Math.abs(delta) > 100000) {
       return Response.json({ error: 'Invalid point change' }, { status: 400 });
@@ -73,13 +80,32 @@ export class MebiMeritProfile {
       if (delta < 0) return Response.json({ error: 'Invalid legacy balance' }, { status: 400 });
       this.ctx.storage.sql.exec('UPDATE merit_balance SET balance = balance + ?, legacy_imported = 1 WHERE id = 1 AND legacy_imported = 0', delta);
     } else {
-      this.ctx.storage.sql.exec('UPDATE merit_balance SET balance = MAX(0, balance + ?), legacy_imported = 1 WHERE id = 1', delta);
+      this.ctx.storage.sql.exec('UPDATE merit_balance SET balance = MAX(0, balance + ?), legacy_imported = 1 WHERE id = 1',delta);
     }
     return this.readBalance();
   }
 
-  readBalance() {
+  borrow(requestId){
+    if(typeof requestId!=='string'||!/^[a-zA-Z0-9-]{16,80}$/.test(requestId))return Response.json({error:'Mã giao dịch vay không hợp lệ'},{status:400});
+    return this.ctx.storage.transactionSync(()=>{
+      const key='loan:'+requestId;
+      if(this.ctx.storage.sql.exec('SELECT delta FROM merit_transactions WHERE transaction_id = ?',key).toArray().length)return this.readBalance();
+      const debt=this.ctx.storage.sql.exec('SELECT debt FROM merit_debt WHERE id = 1').toArray()[0].debt;
+      if(debt+100>10000)return Response.json({error:'Dư nợ tối đa 10.000 công đức. Hãy sang Chùa làm công đức để trả nợ.'},{status:409});
+      this.ctx.storage.sql.exec('UPDATE merit_balance SET balance = balance + 100, legacy_imported = 1 WHERE id = 1');
+      this.ctx.storage.sql.exec('UPDATE merit_debt SET debt = debt + 100 WHERE id = 1');
+      this.ctx.storage.sql.exec('INSERT INTO merit_transactions (transaction_id, delta) VALUES (?, ?)',key,100);
+      return this.readBalance();
+    });
+  }
+
+  balanceData() {
     const row = this.ctx.storage.sql.exec('SELECT balance, legacy_imported FROM merit_balance WHERE id = 1').toArray()[0];
-    return Response.json({ balance: row?.balance || 0, canImportLegacy: !row?.legacy_imported }, { headers: { 'Cache-Control': 'no-store' } });
+    const debt=this.ctx.storage.sql.exec('SELECT debt FROM merit_debt WHERE id = 1').toArray()[0]?.debt||0;
+    return { balance: row?.balance || 0, debt, netBalance:(row?.balance||0)-debt, canImportLegacy: !row?.legacy_imported };
+  }
+
+  readBalance() {
+    return Response.json(this.balanceData(), {headers:{'Cache-Control':'no-store'}});
   }
 }

@@ -2421,39 +2421,13 @@
       // ================= NÂNG CẤP V3: mái cong, tam quan, ngày/đêm, thời tiết, ao sen, âm thanh, bàn thờ, gõ mõ =================
       window.BELLK = { t: 99, sw: 0 };
       if (!window.MebiMerit) {
-        let n = 0;
-        try {
-          n = +(localStorage.getItem("mebi-merit") || 0);
-        } catch (e) {}
+        const ready = Promise.reject(new Error("Không tải được API Công đức"));
+        ready.catch(() => {});
         window.MebiMerit = {
-          get: () => n,
-          change: (d) => {
-            n = Math.max(0, n + d);
-            try {
-              localStorage.setItem("mebi-merit", n);
-            } catch (e) {}
-            window.dispatchEvent(
-              new CustomEvent("mebi-merit-change", { detail: n }),
-            );
-            return Promise.resolve(n);
-          },
-          reward: (action) => {
-            const rules = { bow: [1, 5000], incense: [2, 60000], mallet: [1, 5000] };
-            const rule = rules[action];
-            if (!rule) return Promise.reject(new Error("Loại công đức không hợp lệ"));
-            const key = "chua-mebi-reward-" + action;
-            let last = 0;
-            try { last = Number(localStorage.getItem(key)) || 0; } catch (e) {}
-            const retryAfterMs = Math.max(0, rule[1] - (Date.now() - last));
-            if (retryAfterMs) return Promise.resolve({ balance: n, rewarded: false, amount: 0, retryAfterMs });
-            n += rule[0];
-            try {
-              localStorage.setItem("chua-mebi-merit-v1", String(n));
-              localStorage.setItem(key, String(Date.now()));
-            } catch (e) {}
-            window.dispatchEvent(new CustomEvent("mebi-merit-change", { detail: n }));
-            return Promise.resolve({ balance: n, rewarded: true, amount: rule[0], retryAfterMs: 0 });
-          },
+          ready,
+          get: () => 0,
+          change: () => Promise.reject(new Error("Không lưu được công đức")),
+          reward: () => Promise.reject(new Error("Merit API unavailable")),
         };
       }
       {
@@ -4033,7 +4007,7 @@
         me = newPerson({ id: "me", col: COLS[0], look: 0, name: "Khách" });
       const others = new Map();
       let T = 0,
-        bows = window.MebiMerit.get(),
+        bows = 0,
         sfxOn = true,
         musOn = false,
         ws = null,
@@ -4044,6 +4018,16 @@
         incCd = 0,
         lastBell = 0;
       $("bows").textContent = bows;
+      const renderTempleMerit = () => {
+        bows = window.MebiMerit.getNet ? window.MebiMerit.getNet() : window.MebiMerit.get();
+        $("bows").textContent = bows;
+        const debt = window.MebiMerit.getDebt ? window.MebiMerit.getDebt() : 0;
+        $("bows").title = debt ? `Dư nợ: ${debt.toLocaleString("vi-VN")} công đức. Lạy và gõ mõ để trả nợ.` : "Công đức Mebi";
+      };
+      Promise.resolve(window.MebiMerit.ready).then(renderTempleMerit).catch(() => {
+        $("bows").textContent = "--";
+        toast("Không tải được công đức, hãy tải lại trang để thử lại");
+      });
       const rewardCooldownMs = { bow: 5000, incense: 60000, mallet: 5000 };
       const rewardBlockedUntil = {};
       const rewardPending = new Set();
@@ -4059,8 +4043,7 @@
           .finally(() => rewardPending.delete(action));
       }
       window.addEventListener("mebi-merit-change", (event) => {
-        bows = event.detail;
-        $("bows").textContent = bows;
+        renderTempleMerit();
       });
       const keys = {};
       let jx = 0,

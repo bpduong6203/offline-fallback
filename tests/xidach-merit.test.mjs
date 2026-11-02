@@ -7,6 +7,42 @@ import {autoJoin} from '../src/xi-dach-room.js';
 import {handleMeritRequest} from '../src/mebi-merit-api.js';
 
 const cards=(a,b)=>[{rank:a,suit:'♠'},{rank:b,suit:'♥'}];
+test('borrow 100 per request, cap outstanding debt at 10000, retry does not double borrow',async t=>{
+  const env=localMerit();t.after(()=>env.close());
+  const first=await handleMeritRequest(new Request('https://game.mebidev.site/api/merit'),env);
+  const cookie=first.headers.get('Set-Cookie').split(';')[0];
+  const post=(body,path='/api/merit')=>handleMeritRequest(new Request('https://game.mebidev.site'+path,{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify(body)}),env);
+  const firstId=crypto.randomUUID();
+  assert.equal((await (await post({action:'borrow',requestId:firstId})).json()).balance,100);
+  assert.equal((await (await post({action:'borrow',requestId:firstId})).json()).debt,100);
+  const attempts=await Promise.all(Array.from({length:100},()=>post({action:'borrow',requestId:crypto.randomUUID()})));
+  assert.equal(attempts.filter(r=>r.ok).length,99);assert.equal(attempts.filter(r=>r.status===409).length,1);
+  const replay=await post({action:'borrow',requestId:firstId});assert.equal(replay.status,200);
+  assert.deepEqual(await replay.json(),{balance:10000,debt:10000,netBalance:0,canImportLegacy:false});
+  const id=cookie.split('=')[1],wallet=meritWallet(env);
+  await wallet.change(id,-10000,'spent-loan');
+  const temple=await handleMeritRequest(new Request('https://chua.mebidev.site/api/merit',{headers:{Cookie:cookie}}),env);
+  assert.equal((await temple.json()).netBalance,-10000);
+  const earned=await (await post({action:'bow'},'/api/merit/reward')).json();
+  assert.equal(earned.balance,0);assert.equal(earned.debt,9999);assert.equal(earned.netBalance,-9999);
+  const cooldown=await (await post({action:'bow'},'/api/merit/reward')).json();
+  assert.equal(cooldown.rewarded,false);assert.equal(cooldown.debt,9999);assert.equal(cooldown.netBalance,-9999);
+  assert.equal((await post({delta:1000})).status,403,'keep upstream protection against arbitrary rewards');
+  env.MERIT.get(id).ctx.storage.sql.exec('UPDATE merit_debt SET debt = ? WHERE id = 1',1);
+  const settled=await (await post({action:'incense'},'/api/merit/reward')).json();assert.equal(settled.debt,0);assert.equal(settled.balance,1);
+  assert.equal((await post({action:'borrow',requestId:crypto.randomUUID()})).status,200);
+});
+test('game refunds preserve borrowed spending power; temple rewards repay debt before adding spendable merit',async t=>{
+  const env=localMerit();t.after(()=>env.close());const id=crypto.randomUUID();
+  const profile=env.MERIT.get(id),wallet=meritWallet(env);
+  const response=await profile.fetch(new Request('https://internal/balance',{method:'POST',body:JSON.stringify({action:'borrow',requestId:crypto.randomUUID()})}));
+  assert.equal(response.status,200);
+  await wallet.change(id,-100,'bet');await wallet.change(id,100,'cancel');
+  let result=await (await profile.fetch(new Request('https://internal/balance'))).json();
+  assert.equal(result.balance,100);assert.equal(result.debt,100);
+  await profile.fetch(new Request('https://internal/reward',{method:'POST',body:JSON.stringify({action:'bow'})}));
+  result=await (await profile.fetch(new Request('https://internal/balance'))).json();assert.equal(result.balance,100);assert.equal(result.debt,99);assert.equal(result.netBalance,1);
+});
 async function setup(t){
   const env=localMerit();t.after(()=>env.close());const wallet=meritWallet(env),id=crypto.randomUUID();
   await wallet.change(id,5000,'seed');let saved;
@@ -24,7 +60,7 @@ test('shared merit API preserves signed anonymous cookie across subdomains and i
   assert.equal((await first.json()).balance,0);
   const setCookie=first.headers.get('Set-Cookie');assert.match(setCookie,/Domain=mebidev.site/);
   const cookie=setCookie.split(';')[0];
-  const changed=await handleMeritRequest(new Request('https://game.mebidev.site/api/merit',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({delta:5000})}),env);
+  const changed=await handleMeritRequest(new Request('https://game.mebidev.site/api/merit',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({delta:5000,legacyImport:true})}),env);
   assert.equal((await changed.json()).balance,5000);
   const other=await handleMeritRequest(new Request('https://chua.mebidev.site/api/merit',{headers:{Cookie:cookie}}),env);
   assert.equal((await other.json()).balance,5000);assert.equal(other.headers.get('Set-Cookie'),null);

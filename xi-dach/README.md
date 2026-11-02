@@ -4,6 +4,12 @@ Game xì dách Việt Nam multiplayer thực, tích hợp vào Cloudflare Worker
 
 ## Ví Công đức Mebi
 
+Nút **Vay 100 công đức** cấp đúng 100 điểm có thể cược và ghi thêm 100 dư nợ, tối đa 10.000 dư nợ trên cùng ví cookie. Khoản vay và mã giao dịch được lưu nguyên tử ở profile MERIT hiện có; gửi lại cùng mã không vay thêm lần nữa. Không thêm binding hoặc migration. Trình duyệt chỉ lưu mã yêu cầu đang chờ để thử lại, không lưu số dư hay khoản nợ riêng.
+
+Ví trả về `balance` (điểm có thể dùng, không âm), `debt` và `netBalance = balance - debt` (có thể âm). `MebiMerit.get()` giữ ý nghĩa số dư có thể dùng; `getDebt()` đọc nợ và `getNet()` đọc số ròng. Chùa hiển thị số ròng. Vay rồi tiêu hết 100: Chùa hiện −100; lạy kiếm +1: nợ còn 99 và Chùa hiện −99. Điểm thưởng qua API công khai ưu tiên trả nợ, phần vượt dư nợ mới vào số dư có thể dùng. Hoàn cược và trả thưởng game qua giao dịch nội bộ vẫn vào số dư có thể dùng để không trừ mất tiền hoàn cược. Hạn mức được mở lại khi đã trả đủ phần nợ cần thiết.
+
+Thưởng Chùa dùng `MebiMerit.reward(action)` và mức thưởng/cooldown do server xác nhận: lạy +1 mỗi 5 giây, thắp hương +2 mỗi 60 giây, gõ mõ +1 mỗi 5 giây. Thưởng ưu tiên trả nợ. Chùa chờ ví tải xong và cập nhật số ròng theo sự kiện. Nếu API không tải được, báo lỗi thay vì tạo ví localStorage thay thế.
+
 Xì Dách dùng số dư Công đức chung để cược, không cấp 100.000 điểm mới và không chuyển trứng cũ sang Công đức. Game dùng Worker chính, `/merit.js`, `/api/merit` và binding `MERIT` hiện có; không thêm Durable Object, binding hoặc migration. Các phòng Công đức dùng tên nội bộ `merit:` để tách khỏi các ván trứng cũ.
 
 Trình duyệt chờ `MebiMerit.ready`, đọc `get()`, nghe `mebi-merit-change` và làm mới bằng `change(0)` sau thay đổi cược/quyết toán hoặc khi trở lại tab. Số dư không được lưu trong localStorage; chỉ tùy chọn giao diện và token ghế được lưu. ID ví lấy từ cookie ẩn danh, không lấy từ tên hoặc dữ liệu người chơi gửi lên.
@@ -12,7 +18,7 @@ Server kiểm tra và trừ phần cược tăng thêm, hoàn phần cược gi�
 
 Cookie `Domain=mebidev.site` dùng chung giữa các subdomain. Điều này cần các hostname được trỏ tới cùng Worker và dùng cùng cấu hình `MERIT`/khóa cookie. Kiểm thử local giả lập hai hostname xác nhận dùng chung số dư; chưa xác minh DNS hoặc deployment thật. Node local chạy cùng API/profile SQL trong SQLite RAM, không ghi số dư production.
 
-API công khai vẫn chấp nhận thay đổi điểm từ trình duyệt như hệ thống hiện có. Giao dịch Xì Dách được server xác nhận nhưng toàn bộ ví chưa chống gian lận từ API công khai này.
+API công khai từ chối cộng điểm tùy ý qua `change(delta > 0)`; Chùa nhận thưởng qua `/api/merit/reward` với cooldown phía server. Giao dịch cược/quyết toán Xì Dách được server xác nhận và khoản vay giữ khóa chống lặp.
 
 ## Chạy local
 

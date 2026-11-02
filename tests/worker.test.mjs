@@ -30,7 +30,7 @@ test('same Worker serves Xi Dach, merit.js and shared merit API',async t=>{
  assert.equal(script.status,200);assert.match(script.headers.get('Content-Type'),/javascript/);assert.match(await script.text(),/fetch\('\/api\/merit'/);
  const first=await worker.fetch(new Request('https://game.mebidev.site/api/merit'),env);
  const cookie=first.headers.get('Set-Cookie').split(';')[0];assert.equal((await first.json()).balance,0);
- const changed=await worker.fetch(new Request('https://game.mebidev.site/api/merit',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({delta:2000})}),env);
+ const changed=await worker.fetch(new Request('https://game.mebidev.site/api/merit',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({delta:2000,legacyImport:true})}),env);
  assert.equal((await changed.json()).balance,2000);
  const other=await worker.fetch(new Request('https://other.mebidev.site/api/merit',{headers:{Cookie:cookie}}),env);
  assert.equal((await other.json()).balance,2000);

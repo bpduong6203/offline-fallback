@@ -7,10 +7,29 @@ let avatar=Number(storage.get('xidach.avatar')||0),ws,state,selfId,room='',amoun
 let reduce=storage.get('xidach.reduce')==='on'||matchMedia('(prefers-reduced-motion: reduce)').matches;
 const seenCards=new Map();let shownRound=-1,shownResult='';
 let meritLoaded=false,meritRefreshing=false,meritRefreshAgain=false,lastWalletState='';
+let borrowing=false;
+function renderLoan(){
+  const debt=meritLoaded?window.MebiMerit.getDebt():0,pending=storage.get('xidach.merit.loanRequest');
+  $('loanDebt').textContent=meritLoaded?`Dư nợ: ${formatMerit(debt)} / 10.000`:'Dư nợ: Đang tải…';
+  $('borrowMerit').disabled=!meritLoaded||borrowing||(!pending&&debt+100>10000);
+  $('borrowMerit').textContent=borrowing?'Đang xử lý…':pending?'Thử lại khoản vay 100':'Vay 100 công đức';
+}
+$('borrowMerit').onclick=async()=>{
+  if(borrowing||!meritLoaded)return;
+  borrowing=true;const requestId=storage.get('xidach.merit.loanRequest')||actionId();
+  storage.set('xidach.merit.loanRequest',requestId);renderLoan();
+  try{
+    await window.MebiMerit.borrow(requestId);
+    storage.set('xidach.merit.loanRequest','');
+    $('loanMessage').textContent='Đã vay 100 công đức. Công đức kiếm được bên Chùa sẽ ưu tiên trả nợ.';
+  }catch(error){$('loanMessage').textContent=error.message;toast(error.message);}
+  finally{borrowing=false;renderLoan();}
+};
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,5000);}
 function renderMerit(balance){
   if(!Number.isSafeInteger(balance)||balance<0)return;
   $('meritBalance').textContent=`Công đức: ${balance.toLocaleString('vi-VN')}`;
+  renderLoan();
   if(state)render();
 }
 window.addEventListener('mebi-merit-change',event=>renderMerit(event.detail));
@@ -115,6 +134,7 @@ $('results').innerHTML=results(s.results,s.dealer.hand);$('history').innerHTML=s
   if($('betAmount'))$('betAmount').oninput=e=>{amount=Number(e.target.value);$('confirmBet').textContent=`Đặt cược ${Number.isSafeInteger(amount)&&amount>0?formatMerit(amount):'— công đức'}`;};
   if($('confirmBet'))$('confirmBet').onclick=()=>{if(!$('betAmount').reportValidity())return;if(!meritLoaded||amount>availableMerit+me.bet){toast('Không đủ công đức');return;}act('bet',{amount});};
   if($('transfer'))$('transfer').onclick=()=>act('host',{targetId:$('hostTarget').value});countdown();animateCards();
+  renderLoan();
 }
 function countdown(){if(!state)return;const sec=Math.max(0,Math.ceil((state.deadline-Date.now()-offset)/1000));$('countdown').textContent=state.deadline?`${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`:'';$('dockClock').textContent=$('countdown').textContent;}
 setInterval(countdown,250);

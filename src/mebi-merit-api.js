@@ -1,5 +1,7 @@
 export const MERIT_CLIENT_SCRIPT = `(() => {
   let balance = 0;
+  let debt = 0;
+  const update = (data) => { balance = data.balance; debt = data.debt || 0; };
   const notify = () => window.dispatchEvent(new CustomEvent('mebi-merit-change', { detail: balance }));
   const sendChange = async (delta, legacyImport = false) => {
     const response = await fetch('/api/merit', {
@@ -9,7 +11,7 @@ export const MERIT_CLIENT_SCRIPT = `(() => {
     });
     if (!response.ok) throw new Error('Không lưu được công đức');
     const data = await response.json();
-    balance = data.balance;
+    update(data);
     notify();
     return balance;
   };
@@ -21,14 +23,14 @@ export const MERIT_CLIENT_SCRIPT = `(() => {
     });
     if (!response.ok) throw new Error('Không lưu được công đức');
     const data = await response.json();
-    balance = data.balance;
+    update(data);
     notify();
     return data;
   };
   const ready = fetch('/api/merit', { credentials: 'same-origin' }).then(async (response) => {
     if (!response.ok) throw new Error('Không tải được công đức');
     const data = await response.json();
-    balance = data.balance;
+    update(data);
     if (data.canImportLegacy) {
       let legacy = 0;
       try { legacy = Math.max(0, Number.parseInt(localStorage.getItem('chua-mebi-merit-v1'), 10) || 0); }
@@ -60,7 +62,17 @@ export const MERIT_CLIENT_SCRIPT = `(() => {
     queue = operation.catch(() => {});
     return operation;
   };
-  window.MebiMerit = Object.freeze({ get: () => balance, ready, change, reward });
+  const borrow = (requestId) => {
+    const operation = queue.then(async () => {
+      await ready;
+      const response = await fetch('/api/merit', {method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'borrow',requestId})});
+      const data = await response.json();
+      if(!response.ok)throw new Error(data.error || 'Không vay được công đức. Vui lòng thử lại.');
+      update(data);notify();return balance;
+    });
+    queue=operation.catch(()=>{});return operation;
+  };
+  window.MebiMerit = Object.freeze({ get: () => balance, getDebt: () => debt, getNet: () => balance-debt, ready, change, reward, borrow });
 })();`;
 
 const MERIT_COOKIE = 'mebi_merit_id';
@@ -134,7 +146,7 @@ export async function handleMeritRequest(request, env) {
   const stub = env.MERIT.get(env.MERIT.idFromName(identity.id));
   const internalRequest = new Request('https://merit.internal/' + (isReward ? 'reward' : 'balance'), {
     method: request.method,
-    ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(isReward ? { action: body?.action } : { delta: body?.delta, legacyImport: body?.legacyImport === true }) })
+    ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(isReward ? {action:body?.action} : body?.action==='borrow' ? {action:'borrow',requestId:body.requestId} : {delta:body?.delta,legacyImport:body?.legacyImport===true}) })
   });
   const result = await stub.fetch(internalRequest);
   const headers = new Headers(result.headers);

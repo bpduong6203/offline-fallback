@@ -34,7 +34,7 @@ try{
     return {sessionId,evaluate,click,send:(method,params)=>send(method,params,sessionId)};
   }
   const a=await page(),b=await page(true);
-  for(const p of [a,b]){await p.evaluate('window.MebiMerit.ready');assert.equal(await p.evaluate('window.MebiMerit.get()'),0);await p.evaluate('window.MebiMerit.change(100000)');assert.equal(await p.evaluate("document.getElementById('meritBalance').textContent.includes('100.000')"),true);}
+  for(const p of [a,b]){await p.evaluate('window.MebiMerit.ready');assert.equal(await p.evaluate('window.MebiMerit.get()'),0);await p.evaluate("fetch('/api/merit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({delta:100000,legacyImport:true})}).then(()=>window.MebiMerit.change(0))");assert.equal(await p.evaluate("document.getElementById('meritBalance').textContent.includes('100.000')"),true);}
   await a.evaluate(`document.getElementById('name').value='Chủ bàn';document.getElementById('joinButton').click()`);
   const room=await until(()=>a.evaluate('window.__snap?.roomId'),'create');
   await b.evaluate(`document.getElementById('name').value='Bạn mobile';document.getElementById('joinButton').click()`);
@@ -62,7 +62,7 @@ try{
   // Fill the same room to eight using six real WebSocket clients.
   for(let i=0;i<6;i++){
     const initial=await fetch(base+'/api/merit');const cookie=initial.headers.get('set-cookie').split(';')[0];
-    await fetch(base+'/api/merit',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({delta:100000})});
+    await fetch(base+'/api/merit',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({delta:100000,legacyImport:true})});
     const match=await (await fetch(base+'/__game/xi-dach/match',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({name:'Player '+i})})).json();assert.equal(match.room,room);
     const ws=new NodeWebSocket(base.replace('http','ws')+'/__game/xi-dach/ws?room='+room,{headers:{Cookie:cookie}});const peer={ws,id:null,state:null};extra.push(peer);
     ws.on('message',raw=>{const m=JSON.parse(raw);if(m.type==='welcome')peer.id=m.id;if(m.type==='snapshot'){peer.state=m.state;const p=m.state.players.find(p=>p.id===peer.id);if(m.state.phase==='PLAYER_TURNS'&&m.state.turnId===peer.id){ws.send(JSON.stringify({type:p.hand.total>=16?'stand':'hit',roomId:room,roundId:m.state.roundId,actionId:crypto.randomUUID()}));}}});
@@ -84,6 +84,20 @@ try{
   await a.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1080,deviceScaleFactor:1,mobile:false});
   const desktop=await a.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});await writeFile(new URL('../dist/xi-dach/desktop-check.png',import.meta.url),Buffer.from(desktop.data,'base64'));
   for(const p of [a,b]){assert.deepEqual(await p.evaluate('window.__errors'),[]);assert.equal(await p.evaluate(`document.body.innerText.includes('chip')`),false);}
+  const beforeLoan=await a.evaluate('window.MebiMerit.get()');
+  assert.equal(await a.click('#borrowMerit'),true);
+  await until(()=>a.evaluate('window.MebiMerit.getDebt()===100'),'loan applied');
+  assert.equal(await a.evaluate('window.MebiMerit.get()'),beforeLoan+100);
+  await a.send('Page.reload');await until(()=>a.evaluate('window.__welcome?.id&&window.MebiMerit?.getDebt()===100'),'loan survives reload');
+  for(let i=1;i<100;i++){
+    assert.equal(await a.click('#borrowMerit'),true);
+    await until(()=>a.evaluate(`window.MebiMerit.getDebt()===${(i+1)*100}&&!document.getElementById('borrowMerit').textContent.includes('Đang')`),'loan '+(i+1));
+  }
+  assert.equal(await a.evaluate("document.getElementById('borrowMerit').disabled"),true);
+  const beforeReward=await a.evaluate('window.MebiMerit.get()');await a.evaluate("window.MebiMerit.reward('bow')");
+  assert.equal(await a.evaluate('window.MebiMerit.getDebt()'),9999);
+  assert.equal(await a.evaluate('window.MebiMerit.get()'),beforeReward);
+  console.log('PASS borrow 100, persisted debt, 10000 cap and temple rewards repay debt');
   await a.send('Network.enable');await a.send('Network.setBlockedURLs',{urls:['*/api/merit']});
   await a.evaluate("window.dispatchEvent(new Event('focus'))");await until(()=>a.evaluate("document.getElementById('toast').textContent.includes('mới nhất')"),'visible merit API error');
   await a.send('Network.setBlockedURLs',{urls:[]});await a.evaluate("window.dispatchEvent(new Event('focus'))");
