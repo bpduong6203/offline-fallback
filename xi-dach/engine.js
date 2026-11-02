@@ -6,16 +6,17 @@ export class XiDachEngine {
     this.rules=rules;
     this.state=state || {roomId,created:false,hostId:null,phase:'LOBBY',roundId:0,players:[],fund:rules.initialFund,deck:[],dealer:[],participants:[],turnId:null,deadline:null,history:[],seen:[],results:[]};
   }
-  join({name,avatar=0,token,create=false},now=Date.now()) {
+  join({name,avatar=0,token,create=false,auto=false},now=Date.now()) {
     const s=this.state;
     if(token){const p=s.players.find(p=>p.token===token);if(!p)fail('Phiên chơi không hợp lệ.');return p.id;}
     if(create && s.created)fail('Mã phòng đã tồn tại. Hãy tạo phòng khác.');
-    if(!create && !s.created)fail('Không tìm thấy phòng.');
+    if(!auto && !create && !s.created)fail('Không tìm thấy phòng.');
     if(s.players.length>=this.rules.maxPlayers)fail('Phòng đã đủ 8 người chơi.');
     if(typeof name!=='string'||!name.trim()||name.trim().length>24)fail('Tên cần có từ 1 đến 24 ký tự.');
     const p={id:crypto.randomUUID(),token:crypto.randomUUID()+crypto.randomUUID(),name:name.trim(),avatar:Number.isInteger(avatar)&&avatar>=0&&avatar<8?avatar:0,balance:this.rules.initialBalance,bet:0,cards:[],done:false};
     s.players.push(p);s.created=true;s.hostId ||=p.id;
-    this.assertFunds();return p.id;
+    if(auto && s.phase==='LOBBY')this.betting(now);
+    this.updateReady(now);this.assertFunds();return p.id;
   }
   player(id){return this.state.players.find(p=>p.id===id)||fail('Không tìm thấy người chơi.');}
   total(){const s=this.state;return s.fund+s.players.reduce((sum,p)=>sum+p.balance+2*p.bet,0);}
@@ -53,12 +54,20 @@ export class XiDachEngine {
         s.hostId=this.player(m.targetId).id;break;
       default:fail('Thao tác không hợp lệ.');
     }
+    this.updateReady(now);
     s.seen.push(key);if(s.seen.length>2048)s.seen.shift();this.assertFunds();return true;
   }
-  betting(now){const s=this.state;s.roundId++;s.phase='BETTING';s.deadline=now+this.rules.bettingMs;s.turnId=null;s.dealer=[];s.results=[];s.participants=[];for(const p of s.players){p.cards=[];p.done=false;}s.seen=[];}
+  updateReady(now){
+    const s=this.state;if(s.phase!=='BETTING')return;
+    const ready=s.players.length>0&&s.players.every(p=>p.bet>0);
+    if(ready&&!s.allReady){s.bettingDeadline ||= s.deadline;s.deadline=Math.min(s.deadline,now+this.rules.readyMs);}
+    if(!ready&&s.allReady)s.deadline=s.bettingDeadline;
+    s.allReady=ready;
+  }
+  betting(now){const s=this.state;s.roundId++;s.phase='BETTING';s.allReady=false;s.bettingDeadline=now+this.rules.bettingMs;s.deadline=s.bettingDeadline;s.turnId=null;s.dealer=[];s.results=[];s.participants=[];for(const p of s.players){p.cards=[];p.done=false;}s.seen=[];}
   start(now){
     const s=this.state;s.participants=s.players.filter(p=>p.bet>0).map(p=>p.id);
-    if(!s.participants.length){s.phase='LOBBY';s.deadline=null;return;}
+    if(!s.participants.length){this.betting(now);return;}
     s.deck=shuffledDeck();s.dealer=[];
     for(let i=0;i<2;i++){for(const id of s.participants)this.player(id).cards.push(this.draw());s.dealer.push(this.draw());}
     for(const id of s.participants){const p=this.player(id);p.done=locked(p.cards,this.rules);}
@@ -73,7 +82,7 @@ export class XiDachEngine {
   advance(now){
     const s=this.state,next=s.participants.map(id=>this.player(id)).find(p=>!p.done);
     if(next){s.phase='PLAYER_TURNS';s.turnId=next.id;s.deadline=now+this.rules.turnMs;}
-    else{s.phase='DEALER_TURN';s.turnId=null;s.deadline=now+this.rules.botDelayMs;}
+    else{s.phase='READY_END';s.turnId=null;s.deadline=now+this.rules.readyMs;}
   }
   showdown(now){const s=this.state;s.phase='SHOWDOWN';s.turnId=null;s.deadline=now+this.rules.showdownMs;}
   settle(){
@@ -88,6 +97,7 @@ export class XiDachEngine {
       case 'BETTING':this.start(now);break;
       case 'DEALING':if(classify(s.dealer).kind>=3)this.showdown(now);else this.advance(now);break;
       case 'PLAYER_TURNS':{const p=this.player(s.turnId);while(!p.done&&score(p.cards).total<this.rules.playerStand)this.play(p,'hit',now);if(!p.done)this.play(p,'stand',now);break;}
+      case 'READY_END':s.phase='DEALER_TURN';s.deadline=now+this.rules.botDelayMs;break;
       case 'DEALER_TURN':if(decideBot(s.dealer,this.rules)==='hit'){s.dealer.push(this.draw());s.deadline=now+this.rules.botDelayMs;}else this.showdown(now);break;
       case 'SHOWDOWN':s.phase='SETTLEMENT';s.deadline=now+200;break;
       case 'SETTLEMENT':this.settle();s.phase='ROUND_END';s.deadline=now+this.rules.resultMs;break;

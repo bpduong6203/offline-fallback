@@ -34,15 +34,14 @@ try{
     return {sessionId,evaluate,click,send:(method,params)=>send(method,params,sessionId)};
   }
   const a=await page(),b=await page(true);
-  await a.evaluate(`document.getElementById('name').value='Chủ bàn';document.getElementById('createButton').click()`);
+  await a.evaluate(`document.getElementById('name').value='Chủ bàn';document.getElementById('joinButton').click()`);
   const room=await until(()=>a.evaluate('window.__snap?.roomId'),'create');
-  await b.evaluate(`document.getElementById('name').value='Bạn mobile';document.getElementById('roomCode').value='${room}';document.getElementById('joinButton').click()`);
+  await b.evaluate(`document.getElementById('name').value='Bạn mobile';document.getElementById('joinButton').click()`);
   await until(()=>a.evaluate('window.__snap?.players.length===2'),'two joined');
-  assert.equal(await a.click('[data-action="open"]'),true);
   await until(()=>b.evaluate(`window.__snap?.phase==='BETTING'`),'betting');
   await a.click('#confirmBet');await b.click('[data-bet="2000"]');await b.click('#confirmBet');
   await until(()=>a.evaluate('window.__snap?.players.every(p=>p.bet>0)'),'two bets');
-  await a.click('[data-action="start"]');
+  for(const p of [a,b])assert.equal(await p.evaluate(`(()=>{const r=document.getElementById('confirmBet').getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;})()`),true,'bet visible without scrolling');
   await until(()=>a.evaluate(`window.__snap?.phase==='DEALING'`),'dealing');
   const before=await b.evaluate('({id:window.__welcome.id,balance:window.__snap.players.find(p=>p.id===window.__welcome.id).balance})');
   await b.send('Page.reload');await until(()=>b.evaluate('window.__welcome?.id&&window.__snap?.players.length===2'),'reconnect');
@@ -56,7 +55,7 @@ try{
     },'complete round with '+count,30000);
   }
   await playBrowsers(2);assert.equal(await a.evaluate('window.__snap.results.length'),2);
-  console.log('PASS two isolated browser sessions: create/join, bets, turns, payouts and reload/reconnect');
+  console.log('PASS automatic matching, visible bets, turns, payouts and reload/reconnect');
   // Fill the same room to eight using six real WebSocket clients.
   for(let i=0;i<6;i++){
     const ws=new NodeWebSocket(base.replace('http','ws')+'/__game/xi-dach/ws?room='+room);const peer={ws,id:null,state:null};extra.push(peer);
@@ -65,13 +64,14 @@ try{
   }
   await until(()=>a.evaluate('window.__snap.players.length===8'),'eight seats');
   const ninth=new NodeWebSocket(base.replace('http','ws')+'/__game/xi-dach/ws?room='+room);await new Promise(resolve=>ninth.once('open',resolve));let refusal='';ninth.on('message',raw=>{const m=JSON.parse(raw);if(m.type==='error')refusal=m.message;});ninth.send(JSON.stringify({type:'hello',name:'Người thứ 9'}));await until(()=>refusal,'ninth refused');assert.match(refusal,/8 người/);ninth.close();
-  if(await a.evaluate(`window.__snap.phase==='ROUND_END'`))await a.click('[data-action="next"]');
+  const ninthMatch=await a.evaluate(`fetch('/__game/xi-dach/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Room two'})}).then(r=>r.json())`);
+  assert.notEqual(ninthMatch.room,room,'ninth player automatically enters another room');
   await until(()=>a.evaluate(`window.__snap.phase==='BETTING'`),'next betting');await a.click('#confirmBet');await b.click('#confirmBet');
   for(const p of extra){await until(()=>p.state?.phase==='BETTING','extra betting');p.ws.send(JSON.stringify({type:'bet',amount:3000,roomId:room,roundId:p.state.roundId,actionId:crypto.randomUUID()}));}
-  await until(()=>a.evaluate('window.__snap.players.every(p=>p.bet>0)'),'eight bets');await a.click('[data-action="start"]');await playBrowsers(8);
+  await until(()=>a.evaluate('window.__snap.players.every(p=>p.bet>0)'),'eight bets');await playBrowsers(8);
   const snap=await a.evaluate('window.__snap');assert.equal(snap.fund+snap.players.reduce((sum,p)=>sum+p.balance+2*p.bet,0),10800000);assert.equal(snap.results.length,8);
   assert.equal(await b.evaluate('document.documentElement.scrollWidth<=innerWidth'),true,'mobile must not overflow horizontally');
-  assert.ok(await b.evaluate(`document.querySelector('#self .card').getBoundingClientRect().height>=74`));
+  assert.ok(await b.evaluate(`document.querySelector('#self .card').getBoundingClientRect().height>=49`));
   assert.equal(await b.evaluate(`getComputedStyle(document.getElementById('results')).overflowY`),'auto');
   await pause(650);
   const shot=await b.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});await writeFile(new URL('../dist/xi-dach/mobile-check.png',import.meta.url),Buffer.from(shot.data,'base64'));

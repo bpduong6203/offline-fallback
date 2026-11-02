@@ -4,7 +4,47 @@ import {RULES,score,classify,compare,decideBot,validateBet,deck52,shuffledDeck,f
 import {XiDachEngine} from '../xi-dach/engine.js';
 import {XiDachService} from '../xi-dach/service.js';
 import {XiDachRoom} from '../src/xi-dach-room.js';
+import {autoJoin,roomCode} from '../src/xi-dach-room.js';
 const cards=(...ranks)=>ranks.map((rank,i)=>({rank,suit:['♠','♥','♦','♣'][i%4]}));
+test('automatic seats start betting, cap at eight and resume with token',async()=>{
+  const service=new XiDachService(roomCode(0));
+  const joined=await Promise.all(Array.from({length:9},(_,i)=>service.serial(()=>autoJoin(service,{name:'Auto '+i}))));
+  assert.equal(joined.filter(r=>r.status===200).length,8);
+  assert.equal(joined[8].status,409);
+  assert.equal(service.engine.state.phase,'BETTING');
+  const first=await joined[0].json();assert.equal(service.engine.join({token:first.token}),service.engine.state.players[0].id);
+  assert.notEqual(roomCode(0),roomCode(1));
+});
+test('matchmaker persists room rollover and never allocates more than eight seats',async()=>{
+  function context(){const data=new Map();let queue=Promise.resolve();return {storage:{get:async k=>data.get(k),put:async(k,v)=>data.set(k,structuredClone(v)),setAlarm:async()=>{},deleteAlarm:async()=>{}},blockConcurrencyWhile(fn){const job=queue.then(fn);queue=job.catch(()=>{});return job;}};}
+  const rooms=new Map(),env={XIDACH:{idFromName:name=>name,get(name){if(!rooms.has(name))rooms.set(name,new XiDachRoom(context(),env));return rooms.get(name);}}};
+  const ctx=context();let matcher=new XiDachRoom(ctx,env);
+  const requests=Array.from({length:9},(_,i)=>new Request('https://internal/__game/xi-dach/match',{method:'POST',body:JSON.stringify({name:'Player '+i})}));
+  const allocations=await Promise.all(requests.map(async request=>(await matcher.fetch(request)).json()));
+  assert.ok(allocations.slice(0,8).every(p=>p.room===roomCode(0)));assert.equal(allocations[8].room,roomCode(1));
+  matcher=new XiDachRoom(ctx,env);
+  const tenth=await (await matcher.fetch(new Request('https://internal/__game/xi-dach/match',{method:'POST',body:JSON.stringify({name:'Ten'})}))).json();
+  assert.equal(tenth.room,roomCode(1));assert.equal(rooms.get(roomCode(0)).service.engine.state.players.length,8);
+});
+test('empty betting window reopens automatically without host controls',()=>{
+  const e=new XiDachEngine('ABC234');e.join({name:'One',auto:true},100);
+  e.tick(90100);assert.equal(e.state.phase,'BETTING');assert.equal(e.state.deadline,180100);
+});
+test('90 second timers shorten to 10 seconds once everyone bets, cancel restores deadline',()=>{
+  const e=new XiDachEngine('ABC234');
+  const ids=[e.join({name:'One',auto:true},100),e.join({name:'Two',auto:true},100)];
+  assert.equal(e.state.deadline,90100);
+  action(e,ids[0],'bet',{amount:1000},200);assert.equal(e.state.deadline,90100);
+  action(e,ids[1],'bet',{amount:1000},300);assert.equal(e.state.deadline,10300);
+  action(e,ids[1],'bet',{amount:2000},400);assert.equal(e.state.deadline,10300);
+  action(e,ids[1],'cancel',{},500);assert.equal(e.state.deadline,90100);
+  action(e,ids[1],'bet',{amount:1000},600);assert.equal(e.state.deadline,10600);
+  e.tick(10600);e.player(ids[0]).cards=cards(10,6);e.player(ids[0]).done=false;e.player(ids[1]).cards=cards(10,6);e.player(ids[1]).done=false;e.state.dealer=cards(10,7);
+  e.tick(e.state.deadline);assert.equal(e.state.deadline,101500);
+  action(e,ids[0],'stand',{},12000);action(e,ids[1],'stand',{},13000);
+  assert.equal(e.state.phase,'READY_END');assert.equal(e.state.deadline,23000);
+  assert.equal(e.tick(22999),false);e.tick(23000);assert.equal(e.state.phase,'DEALER_TURN');
+});
 function room(count=1){const e=new XiDachEngine('ABC234');const ids=Array.from({length:count},(_,i)=>e.join({name:'Bạn '+i,create:i===0}));return {e,ids};}
 function action(e,id,type,extra={},now=1){return e.action(id,{roomId:e.state.roomId,roundId:e.state.roundId,actionId:crypto.randomUUID(),type,...extra},now);}
 function begin(e,ids){action(e,ids[0],'open');for(const id of ids)action(e,id,'bet',{amount:1000});action(e,ids[0],'start');}
@@ -74,7 +114,7 @@ test('Xì Dách: wrong room, round, turn, phase, host and replay are validated',
   assert.throws(()=>action(e,ids[1],'start'),/chủ phòng/);action(e,ids[0],'start');assert.throws(()=>action(e,ids[0],'bet',{amount:1000}),/thời gian/);
   e.player(ids[0]).cards=cards(10,5);e.player(ids[0]).done=false;e.state.dealer=cards(10,7);e.tick(e.state.deadline);
   assert.throws(()=>action(e,ids[1],'hit'),/lượt/);assert.throws(()=>action(e,ids[0],'stand'),/16/);
-  e.player(ids[0]).cards=cards(10,6);action(e,ids[0],'stand');assert.equal(e.state.phase,'DEALER_TURN');
+  e.player(ids[0]).cards=cards(10,6);action(e,ids[0],'stand');assert.equal(e.state.phase,'READY_END');
 });
 test('Xì Dách: late join waits, snapshots hide all other hands/special status and tokens',()=>{
   const {e,ids}=room(2);begin(e,ids);const late=e.join({name:'Đến trễ'});

@@ -11,7 +11,9 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
-Mở **http://localhost:5173/xi-dach**. Tạo phòng, sao chép link mời và mở ở trình duyệt khác hoặc cửa sổ riêng tư. Chủ phòng bấm **Mở đặt cược**, người chơi chọn cược, rồi chủ phòng bấm **Bắt đầu ván** hoặc chờ hết 20 giây cược. Chơi một mình với bot cũng được.
+Mở **http://localhost:5173/xi-dach**, nhập tên và bấm **Vào chơi ngay**. Server tự xếp tối đa 8 người mỗi phòng, không kể bot nhà cái; người thứ 9 sang phòng mới. Tải lại trang giữ nguyên ghế bằng token đã lưu. Không còn giao diện tạo phòng hoặc nhập mã phòng.
+
+Bàn tự mở cược trong 90 giây; khi tất cả đã cược, thời gian còn lại rút xuống tối đa 10 giây. Hủy cược hoặc có người mới vào sẽ khôi phục hạn cược ban đầu. Mỗi lượt thao tác có 90 giây. Khi tất cả người chơi hoàn thành lượt, đếm ngược 10 giây rồi nhà cái xử lý và quyết toán. Nếu không ai cược, bàn tự mở đợt cược tiếp theo. Bài của bạn, đồng hồ và nút cược/rút/dằn luôn được ghim ở cạnh dưới màn hình trên desktop/mobile.
 
 Trên LAN mở `http://<IP-máy-chạy-server>:5173/xi-dach`; cần máy chủ cho phép kết nối cổng 5173. Link mời dùng địa chỉ đang mở, nên hãy tạo link từ địa chỉ LAN khi mời máy khác. Các tab cùng hồ sơ trình duyệt dùng chung danh tính phòng qua localStorage; dùng cửa sổ riêng tư/hồ sơ khác cho người chơi thứ hai. Local server giữ dữ liệu trong RAM, chỉ giữ qua refresh/reconnect, không giữ khi khởi động lại tiến trình.
 
@@ -59,5 +61,5 @@ Quyết toán xóa khoản giữ và chỉ chạy trong giai đoạn SETTLEMENT.
 - Bộ test engine/service kiểm tra solo, tám ghế, từ chối ghế thứ chín, A, bài đặc biệt, bot, cược sai, escrow, timeout, trùng action, giấu bài, reconnect và restore Durable Object.
 - Browser đã kiểm tra hai phiên độc lập qua đầy đủ vòng chơi, refresh giữa ván, ván tiếp theo, tám người thật kết nối, bảo toàn trứng và UI desktop/mobile. Sáu trong tám kết nối của bài browser test được tự động điều khiển qua WebSocket; hai kết nối thao tác qua UI Chrome.
 - Chưa deploy, chưa kiểm tra qua Internet hoặc trên điện thoại thật. Migration `v13` và binding `XIDACH` đã thêm vào `wrangler.toml`; cần chạy quy trình triển khai Worker của dự án khi muốn đưa lên mạng.
-- Ghế được giữ cho reconnect trong suốt đời phòng; phiên bản này chưa có đuổi người/thu hồi ghế hoặc xóa phòng. Chủ phòng có thể chuyển quyền quản lý lúc chờ, cược hoặc kết thúc ván. Không có cơ chế bổ sung trứng khi người chơi hết số dư.
+- Ghế được giữ cho reconnect trong suốt đời phòng; phiên bản này chưa có đuổi người/thu hồi ghế hoặc xóa phòng. Bộ xếp phòng giữ chỉ số phòng trong Durable Object và cấp ghế tuần tự để không vượt 8 người. Không có cơ chế bổ sung trứng khi người chơi hết số dư.
 - Danh tính là token lưu theo trình duyệt và phòng, không phải ví trứng toàn tài khoản. Xóa dữ liệu trình duyệt sẽ mất token cũ. Production lưu quỹ/phòng trong Durable Object; local RAM không mô phỏng độ bền sau khi tắt Node.

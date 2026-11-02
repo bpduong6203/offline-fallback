@@ -53,6 +53,11 @@ export default {
       if (!['GET','HEAD'].includes(request.method)) return new Response('Method Not Allowed', {status:405,headers:{Allow:'GET, HEAD'}});
       return new Response(request.method==='HEAD'?null:xiDach,{headers:{'Content-Type':'text/html; charset=UTF-8','Cache-Control':'no-store'}});
     }
+    if(url.pathname==='/__game/xi-dach/match'){
+      if(request.method!=='POST')return new Response('Method Not Allowed',{status:405});
+      if(request.headers.get('Origin')&&request.headers.get('Origin')!==url.origin)return new Response('Forbidden',{status:403});
+      return env.XIDACH.get(env.XIDACH.idFromName('matchmaker')).fetch(request);
+    }
     if (url.pathname === '/__game/xi-dach/ws') {
       if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') return new Response('Cần WebSocket',{status:426});
       const origin=request.headers.get('Origin');
