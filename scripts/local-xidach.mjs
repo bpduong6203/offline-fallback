@@ -25,6 +25,7 @@ if(!['/xi-dach','/xi-dach/','/__game/xi-dach'].includes(path))return false;if(![
       const room=url.searchParams.get('room');if(!/^[A-HJ-NP-Z2-9]{6}$/.test(room||'')){reject();return true;}
       let service=rooms.get(room);if(!service){service=new XiDachService(room,{wallet});rooms.set(room,service);}if(service.peers.size>=24){reject();return true;}
       getMeritIdentity(new Request(url,{headers:req.headers}),merit).then(identity=>wss.handleUpgrade(req,socket,head,ws=>{const peer=service.connect(message=>{if(ws.readyState===1)ws.send(JSON.stringify(message));},()=>ws.close(1008),identity.id);const handshake=setTimeout(()=>{if(!peer.id)ws.close(1008);},10000);ws.on('message',(data,binary)=>{if(binary)return;let message;try{message=JSON.parse(data.toString());}catch{return;}service.receive(peer,message).catch(console.error);});ws.on('close',()=>{clearTimeout(handshake);service.disconnect(peer);});ws.on('error',()=>service.disconnect(peer));})).catch(()=>reject());return true;},
-    close(){clearInterval(timer);for(const ws of wss.clients)ws.terminate();wss.close();merit.close();}
+    async dispose(){await Promise.all([...rooms.values()].map(service=>service.queue));merit.close();},
+    close(){clearInterval(timer);for(const ws of wss.clients)ws.terminate();wss.close();}
   };
 }

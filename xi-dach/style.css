@@ -33,3 +33,5 @@
 #toast{z-index:100}
 
 .loan-panel{border-top:1px solid var(--line);padding-top:8px}.loan-panel button{width:100%;margin-top:6px;min-height:40px}.loan-panel a{text-decoration:underline;color:var(--gold)}.loan-panel .fine{margin:4px 0}#loanMessage:empty{display:none}@media(max-width:700px){.loan-panel{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;align-items:center}.loan-panel .fine{grid-column:1/-1}.loan-panel button{margin:0;padding:7px;font-size:11px}}
+
+.loan-panel label{grid-column:1/-1;margin:6px 0 0}.loan-panel #repayAmount{min-width:0}

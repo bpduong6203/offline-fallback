@@ -53,6 +53,7 @@ export class MebiMeritProfile {
     let body;
     try { body = await request.json(); } catch { return Response.json({ error: 'Invalid JSON' }, { status: 400 }); }
     if(body?.action==='borrow')return this.borrow(body.requestId);
+    if(body?.action==='repay')return this.repay(body.requestId,body.principal);
     const delta = Number(body?.delta);
     if (!Number.isSafeInteger(delta) || Math.abs(delta) > 100000) {
       return Response.json({ error: 'Invalid point change' }, { status: 400 });
@@ -95,6 +96,23 @@ export class MebiMeritProfile {
       this.ctx.storage.sql.exec('UPDATE merit_balance SET balance = balance + 100, legacy_imported = 1 WHERE id = 1');
       this.ctx.storage.sql.exec('UPDATE merit_debt SET debt = debt + 100 WHERE id = 1');
       this.ctx.storage.sql.exec('INSERT INTO merit_transactions (transaction_id, delta) VALUES (?, ?)',key,100);
+      return this.readBalance();
+    });
+  }
+
+  repay(requestId,principal){
+    if(typeof requestId!=='string'||!/^[a-zA-Z0-9-]{16,80}$/.test(requestId)||!Number.isSafeInteger(principal)||principal<1||principal>10000)return Response.json({error:'Thông tin trả nợ không hợp lệ.'},{status:400});
+    // Integer arithmetic: ceil(principal * 1.4), including debts reduced by temple rewards.
+    const cost=Math.ceil(principal*14/10),key='repay:'+requestId;
+    return this.ctx.storage.transactionSync(()=>{
+      const receipt=this.ctx.storage.sql.exec('SELECT delta FROM merit_transactions WHERE transaction_id = ?',key).toArray()[0];
+      if(receipt)return receipt.delta===-cost?this.readBalance():Response.json({error:'Mã trả nợ đã được dùng cho khoản khác.'},{status:409});
+      const data=this.balanceData();
+      if(data.debt<principal)return Response.json({error:'Số công đức gốc muốn trả vượt quá dư nợ hiện tại.'},{status:409});
+      if(data.balance<cost)return Response.json({error:'Không đủ công đức để trả cả gốc và lãi.'},{status:409});
+      this.ctx.storage.sql.exec('UPDATE merit_balance SET balance = balance - ?, legacy_imported = 1 WHERE id = 1',cost);
+      this.ctx.storage.sql.exec('UPDATE merit_debt SET debt = debt - ? WHERE id = 1',principal);
+      this.ctx.storage.sql.exec('INSERT INTO merit_transactions (transaction_id, delta) VALUES (?, ?)',key,-cost);
       return this.readBalance();
     });
   }

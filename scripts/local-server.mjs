@@ -109,5 +109,5 @@ export function localServer(getHtml,monopolyOptions={}){
   const snake=localSnake();
   const xidach=localXiDach();
   const monopoly=localMonopoly(server,monopolyOptions);
-  return {server,snake,close:async()=>{xidach.close();snake.close();await monopoly.close();for(const queue of bangQueues.values())clearInterval(queue.timer);for(const room of rooms.values())clearInterval(room.timer);for(const ws of wss.clients)ws.terminate();wss.close();await new Promise(resolve=>server.close(resolve));}};
+  return {server,snake,close:async()=>{xidach.close();snake.close();await monopoly.close();for(const queue of bangQueues.values())clearInterval(queue.timer);for(const room of rooms.values())clearInterval(room.timer);for(const ws of wss.clients)ws.terminate();wss.close();await new Promise(resolve=>server.close(resolve));await xidach.dispose();}};
 }

@@ -7,6 +7,44 @@ import {autoJoin} from '../src/xi-dach-room.js';
 import {handleMeritRequest} from '../src/mebi-merit-api.js';
 
 const cards=(a,b)=>[{rank:a,suit:'♠'},{rank:b,suit:'♥'}];
+test('partial repayment reduces only the chosen principal and charges 1.4 with rounding',async t=>{
+  const env=localMerit();t.after(()=>env.close());const id=crypto.randomUUID(),profile=env.MERIT.get(id);
+  const post=body=>profile.fetch(new Request('https://internal/balance',{method:'POST',body:JSON.stringify(body)}));
+  await post({action:'borrow',requestId:crypto.randomUUID()});
+  const requestId=crypto.randomUUID(),body={action:'repay',requestId,principal:13};
+  let data=await (await post(body)).json();assert.equal(data.debt,87);assert.equal(data.balance,81);
+  data=await (await post(body)).json();assert.equal(data.debt,87);assert.equal(data.balance,81);
+  assert.equal((await post({...body,principal:14})).status,409);
+  assert.equal((await post({action:'repay',requestId:crypto.randomUUID(),principal:88})).status,409);
+  data=await (await post({action:'repay',requestId:crypto.randomUUID(),principal:50})).json();assert.equal(data.debt,37);assert.equal(data.balance,11);
+  assert.equal((await post({action:'repay',requestId:crypto.randomUUID(),principal:10})).status,409);
+});
+test('repay charges principal times 1.4, ignores forged cost and never repeats a completed repayment',async t=>{
+  const env=localMerit();t.after(()=>env.close());
+  const first=await handleMeritRequest(new Request('https://game.mebidev.site/api/merit'),env),cookie=first.headers.get('Set-Cookie').split(';')[0],id=cookie.split('=')[1];
+  const post=body=>handleMeritRequest(new Request('https://game.mebidev.site/api/merit',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify(body)}),env);
+  await post({action:'borrow',requestId:crypto.randomUUID()});
+  const requestId=crypto.randomUUID();
+  assert.equal((await post({action:'repay',requestId,principal:100,cost:1})).status,409);
+  assert.equal((await (await post({delta:0})).json()).debt,100);
+  await meritWallet(env).change(id,40,'repay-funds');
+  const paid=await (await post({action:'repay',requestId,principal:100,cost:1})).json();
+  assert.equal(paid.balance,0);assert.equal(paid.debt,0);
+  assert.equal((await (await post({action:'repay',requestId,principal:100})).json()).balance,0);
+  await post({action:'borrow',requestId:crypto.randomUUID()});
+  const replay=await (await post({action:'repay',requestId,principal:100})).json();assert.equal(replay.balance,100);assert.equal(replay.debt,100,'old repayment cannot clear a new loan');
+});
+test('repayment rounds interest up, rejects stale debt and serializes competing repayments',async t=>{
+  const env=localMerit();t.after(()=>env.close());const id=crypto.randomUUID(),profile=env.MERIT.get(id),wallet=meritWallet(env);
+  const post=(body,path='balance')=>profile.fetch(new Request('https://internal/'+path,{method:'POST',body:JSON.stringify(body)}));
+  await post({action:'borrow',requestId:crypto.randomUUID()});await post({action:'bow'},'reward');
+  assert.equal((await post({action:'repay',requestId:crypto.randomUUID(),principal:100})).status,409);
+  for(const principal of [0,-1,1.5,'99',10001])assert.equal((await post({action:'repay',requestId:crypto.randomUUID(),principal})).status,400);
+  await wallet.change(id,39,'interest-funds');
+  const attempts=await Promise.all(Array.from({length:2},()=>post({action:'repay',requestId:crypto.randomUUID(),principal:99})));
+  assert.equal(attempts.filter(r=>r.status===200).length,1);assert.equal(attempts.filter(r=>r.status===409).length,1);
+  const data=await (await profile.fetch(new Request('https://internal/balance'))).json();assert.equal(data.balance,0);assert.equal(data.debt,0);
+});
 test('borrow 100 per request, cap outstanding debt at 10000, retry does not double borrow',async t=>{
   const env=localMerit();t.after(()=>env.close());
   const first=await handleMeritRequest(new Request('https://game.mebidev.site/api/merit'),env);

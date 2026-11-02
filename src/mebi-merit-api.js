@@ -72,7 +72,17 @@ export const MERIT_CLIENT_SCRIPT = `(() => {
     });
     queue=operation.catch(()=>{});return operation;
   };
-  window.MebiMerit = Object.freeze({ get: () => balance, getDebt: () => debt, getNet: () => balance-debt, ready, change, reward, borrow });
+  const repay = (requestId, principal) => {
+    const operation=queue.then(async()=>{
+      await ready;
+      const response=await fetch('/api/merit',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'repay',requestId,principal})});
+      const data=await response.json();
+      if(!response.ok){const error=new Error(data.error||'Không trả nợ được. Vui lòng thử lại.');error.definitive=response.status>=400&&response.status<500;throw error;}
+      update(data);notify();return balance;
+    });
+    queue=operation.catch(()=>{});return operation;
+  };
+  window.MebiMerit = Object.freeze({ get: () => balance, getDebt: () => debt, getNet: () => balance-debt, ready, change, reward, borrow, repay });
 })();`;
 
 const MERIT_COOKIE = 'mebi_merit_id';
@@ -146,7 +156,7 @@ export async function handleMeritRequest(request, env) {
   const stub = env.MERIT.get(env.MERIT.idFromName(identity.id));
   const internalRequest = new Request('https://merit.internal/' + (isReward ? 'reward' : 'balance'), {
     method: request.method,
-    ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(isReward ? {action:body?.action} : body?.action==='borrow' ? {action:'borrow',requestId:body.requestId} : {delta:body?.delta,legacyImport:body?.legacyImport===true}) })
+    ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(isReward ? {action:body?.action} : body?.action==='borrow' ? {action:'borrow',requestId:body.requestId} : body?.action==='repay' ? {action:'repay',requestId:body.requestId,principal:body.principal} : {delta:body?.delta,legacyImport:body?.legacyImport===true}) })
   });
   const result = await stub.fetch(internalRequest);
   const headers = new Headers(result.headers);

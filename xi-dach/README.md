@@ -4,6 +4,8 @@ Game xì dách Việt Nam multiplayer thực, tích hợp vào Cloudflare Worker
 
 ## Ví Công đức Mebi
 
+Nhập **Số công đức gốc muốn trả**, rồi bấm **Trả nợ** để trả từng phần hoặc toàn bộ. Tổng trừ = số gốc nhập × **1,4** (gốc + lãi 40%), làm tròn lên; nhập 50 thì trừ 70 và dư nợ giảm 50. Số gốc là số nguyên từ 1 đến dư nợ hiện tại. UI hiện riêng gốc, lãi và tổng trước khi bấm, khóa nút khi chưa đủ điểm. API tự tính phí và ghi giao dịch nguyên tử; thử lại cùng mã không trừ lần nữa. Cơ chế làm việc thiện trả nợ bên Chùa giữ nguyên.
+
 Nút **Vay 100 công đức** cấp đúng 100 điểm có thể cược và ghi thêm 100 dư nợ, tối đa 10.000 dư nợ trên cùng ví cookie. Khoản vay và mã giao dịch được lưu nguyên tử ở profile MERIT hiện có; gửi lại cùng mã không vay thêm lần nữa. Không thêm binding hoặc migration. Trình duyệt chỉ lưu mã yêu cầu đang chờ để thử lại, không lưu số dư hay khoản nợ riêng.
 
 Ví trả về `balance` (điểm có thể dùng, không âm), `debt` và `netBalance = balance - debt` (có thể âm). `MebiMerit.get()` giữ ý nghĩa số dư có thể dùng; `getDebt()` đọc nợ và `getNet()` đọc số ròng. Chùa hiển thị số ròng. Vay rồi tiêu hết 100: Chùa hiện −100; lạy kiếm +1: nợ còn 99 và Chùa hiện −99. Điểm thưởng qua API công khai ưu tiên trả nợ, phần vượt dư nợ mới vào số dư có thể dùng. Hoàn cược và trả thưởng game qua giao dịch nội bộ vẫn vào số dư có thể dùng để không trừ mất tiền hoàn cược. Hạn mức được mở lại khi đã trả đủ phần nợ cần thiết.

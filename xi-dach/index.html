@@ -65,6 +65,11 @@
                         <section class="loan-panel">
                             <div id="loanDebt" class="muted">Dư nợ: Đang tải…</div>
                             <button id="borrowMerit" type="button" class="secondary" disabled>Vay 100 công đức</button>
+                            <label for="repayAmount">Số công đức gốc muốn trả</label>
+                            <input id="repayAmount" type="number" inputmode="numeric" min="1" max="10000" step="1" placeholder="Nhập số muốn trả" required disabled>
+                            <button id="repayMerit" type="button" class="secondary" disabled>Trả nợ</button>
+                            <p id="repayQuote" class="fine" aria-live="polite"></p>
+                            <p class="fine">Trả nợ tại đây: nợ gốc × 1,4 (gồm lãi 40%), làm tròn lên.</p>
                             <p class="fine">Dư nợ tối đa 10.000. <a href="/chua-mebi">Sang Chùa</a> lạy hoặc gõ mõ để kiếm Công đức trả nợ.</p>
                             <p id="loanMessage" class="fine" role="status"></p>
                         </section>

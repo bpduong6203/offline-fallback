@@ -26,4 +26,9 @@ test('shared client and actual temple counter show negative net merit and update
   assert.equal(counter.textContent,-100);assert.match(counter.title,/100/);
   window.earnMerit('bow');await merit.change(0);
   assert.equal(counter.textContent,-99);assert.equal(merit.get(),0);assert.equal(merit.getDebt(),99);
+  await meritWallet(env).change(cookie.split('=')[1],139,'repayment-funds');await merit.change(0);
+  const original=context.fetch;let loseResponse=true;
+  context.fetch=async(path,options)=>{const response=await original(path,options);if(options?.body&&JSON.parse(options.body).action==='repay'&&loseResponse){loseResponse=false;throw new Error('Lost repayment response');}return response;};
+  const requestId=crypto.randomUUID();await assert.rejects(()=>merit.repay(requestId,99),/Lost repayment/);
+  await merit.repay(requestId,99);assert.equal(merit.get(),0);assert.equal(merit.getDebt(),0);assert.equal(counter.textContent,0);
 });

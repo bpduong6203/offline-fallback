@@ -7,15 +7,26 @@ let avatar=Number(storage.get('xidach.avatar')||0),ws,state,selfId,room='',amoun
 let reduce=storage.get('xidach.reduce')==='on'||matchMedia('(prefers-reduced-motion: reduce)').matches;
 const seenCards=new Map();let shownRound=-1,shownResult='';
 let meritLoaded=false,meritRefreshing=false,meritRefreshAgain=false,lastWalletState='';
-let borrowing=false;
+let borrowing=false,repaying=false;
 function renderLoan(){
   const debt=meritLoaded?window.MebiMerit.getDebt():0,pending=storage.get('xidach.merit.loanRequest');
   $('loanDebt').textContent=meritLoaded?`Dư nợ: ${formatMerit(debt)} / 10.000`:'Dư nợ: Đang tải…';
-  $('borrowMerit').disabled=!meritLoaded||borrowing||(!pending&&debt+100>10000);
+  $('borrowMerit').disabled=!meritLoaded||borrowing||repaying||(!pending&&debt+100>10000);
   $('borrowMerit').textContent=borrowing?'Đang xử lý…':pending?'Thử lại khoản vay 100':'Vay 100 công đức';
+  let pendingRepay;
+  try{pendingRepay=JSON.parse(storage.get('xidach.merit.repayRequest')||'null');}catch{}
+  const input=$('repayAmount');
+  if(pendingRepay)input.value=pendingRepay.principal;
+  input.max=debt;input.disabled=!meritLoaded||borrowing||repaying||!!pendingRepay||debt===0;
+  const principal=Number(input.value),valid=Number.isSafeInteger(principal)&&principal>0&&principal<=debt,cost=valid||pendingRepay?Math.ceil(principal*14/10):0;
+  $('repayMerit').disabled=!meritLoaded||borrowing||repaying||(!pendingRepay&&(!valid||window.MebiMerit.get()<cost));
+  $('repayMerit').textContent=repaying?'Đang trả nợ…':pendingRepay?'Thử lại trả nợ':valid?`Trả nợ · ${formatMerit(cost)}`:'Trả nợ';
+  $('repayMerit').title=valid?`Nợ gốc ${formatMerit(principal)} + lãi ${formatMerit(cost-principal)}`:'Nhập số gốc muốn trả, không vượt dư nợ';
+  $('repayQuote').textContent=valid||pendingRepay?`Gốc ${formatMerit(principal)} + lãi ${formatMerit(cost-principal)} = ${formatMerit(cost)}.`:'';
 }
+$('repayAmount').oninput=renderLoan;
 $('borrowMerit').onclick=async()=>{
-  if(borrowing||!meritLoaded)return;
+  if(borrowing||repaying||!meritLoaded)return;
   borrowing=true;const requestId=storage.get('xidach.merit.loanRequest')||actionId();
   storage.set('xidach.merit.loanRequest',requestId);renderLoan();
   try{
@@ -24,6 +35,29 @@ $('borrowMerit').onclick=async()=>{
     $('loanMessage').textContent='Đã vay 100 công đức. Công đức kiếm được bên Chùa sẽ ưu tiên trả nợ.';
   }catch(error){$('loanMessage').textContent=error.message;toast(error.message);}
   finally{borrowing=false;renderLoan();}
+};
+$('repayMerit').onclick=async()=>{
+  if(repaying||borrowing||!meritLoaded)return;
+  let pending;
+  try{pending=JSON.parse(storage.get('xidach.merit.repayRequest')||'null');}catch{}
+  if(!pending){
+    if(!$('repayAmount').reportValidity())return;
+    const principal=Number($('repayAmount').value),cost=Math.ceil(principal*14/10);
+    if(!Number.isSafeInteger(principal)||principal<1||principal>window.MebiMerit.getDebt()){toast('Số gốc muốn trả phải từ 1 đến dư nợ hiện tại.');return;}
+    if(window.MebiMerit.get()<cost){toast('Không đủ công đức để trả cả gốc và lãi.');return;}
+    pending={requestId:actionId(),principal};
+    storage.set('xidach.merit.repayRequest',JSON.stringify(pending));
+  }
+  repaying=true;renderLoan();
+  try{
+    await window.MebiMerit.repay(pending.requestId,pending.principal);
+    storage.set('xidach.merit.repayRequest','');
+    $('repayAmount').value='';
+    $('loanMessage').textContent=`Đã trả nợ gốc ${formatMerit(pending.principal)}, tổng gốc và lãi ${formatMerit(Math.ceil(pending.principal*14/10))}. Còn nợ ${formatMerit(window.MebiMerit.getDebt())}.`;
+  }catch(error){
+    if(error.definitive)storage.set('xidach.merit.repayRequest','');
+    $('loanMessage').textContent=error.message;toast(error.message);refreshMerit();
+  }finally{repaying=false;renderLoan();}
 };
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,5000);}
 function renderMerit(balance){
