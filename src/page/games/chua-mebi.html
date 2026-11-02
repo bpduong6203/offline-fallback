@@ -201,6 +201,7 @@
       <div id="sm" style="font-size: 12px; margin-top: 8px; opacity: 0.8"></div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="/merit.js"></script>
     <script>
       const $ = (i) => document.getElementById(i),
         TAU = Math.PI * 2,
@@ -2447,7 +2448,7 @@
         me = newPerson({ id: "me", col: COLS[0], look: 0, name: "Khách" });
       const others = new Map();
       let T = 0,
-        bows = 0,
+        bows = window.MebiMerit.get(),
         sfxOn = true,
         musOn = false,
         ws = null,
@@ -2457,6 +2458,14 @@
         sendT = 0,
         incCd = 0,
         lastBell = 0;
+      $("bows").textContent = bows;
+      function changeMerit(delta) {
+        window.MebiMerit.change(delta).catch(() => toast("Không lưu được công đức, hãy thử lại"));
+      }
+      window.addEventListener("mebi-merit-change", (event) => {
+        bows = event.detail;
+        $("bows").textContent = bows;
+      });
       const keys = {};
       let jx = 0,
         jy = 0,
@@ -2931,8 +2940,7 @@
           if (me.bt >= 2.8) {
             me.st = me.prev || 0;
             me.bt = 0;
-            bows++;
-            $("bows").textContent = bows;
+            changeMerit(1);
             toast("🙏 +1 công đức");
           }
         }

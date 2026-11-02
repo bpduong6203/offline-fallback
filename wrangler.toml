@@ -142,3 +142,12 @@ class_name = "ChuaMebiRoom"
 [[migrations]]
 tag = "v14"
 new_sqlite_classes = ["ChuaMebiRoom"]
+
+# Anonymous shared merit balances across mebidev.site subdomains.
+[[durable_objects.bindings]]
+name = "MERIT"
+class_name = "MebiMeritProfile"
+
+[[migrations]]
+tag = "v15"
+new_sqlite_classes = ["MebiMeritProfile"]
