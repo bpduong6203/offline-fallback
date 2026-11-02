@@ -6,12 +6,13 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {WebSocket as NodeWebSocket} from 'ws';
 import {localServer} from './local-server.mjs';
+import {renderOffline} from '../src/page/render.js';
 
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn,label,timeout=15000){const start=Date.now();while(Date.now()-start<timeout){const value=await fn();if(value)return value;await pause(80);}throw new Error('Timeout: '+label);}
 const browser=process.env.CHROME_PATH||['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe','C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe'].find(existsSync);
 if(!browser)throw new Error('Cần Chrome hoặc Edge để chạy kiểm thử trình duyệt.');
-const profile=await mkdtemp(path.join(tmpdir(),'xidach-browser-')),app=localServer(()=>'<p>Local test</p>');
+const profile=await mkdtemp(path.join(tmpdir(),'xidach-browser-')),app=localServer(async()=>renderOffline(new Request('https://local.test/',{headers:{Accept:'text/html'}})).text());
 await new Promise(resolve=>app.server.listen(0,'127.0.0.1',resolve));
 const base=`http://127.0.0.1:${app.server.address().port}`;
 const chrome=spawn(browser,['--headless','--no-sandbox','--disable-gpu','--no-first-run','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{windowsHide:true,stdio:['ignore','ignore','pipe']});
@@ -84,6 +85,14 @@ try{
   await a.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1080,deviceScaleFactor:1,mobile:false});
   const desktop=await a.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});await writeFile(new URL('../dist/xi-dach/desktop-check.png',import.meta.url),Buffer.from(desktop.data,'base64'));
   for(const p of [a,b]){assert.deepEqual(await p.evaluate('window.__errors'),[]);assert.equal(await p.evaluate(`document.body.innerText.includes('chip')`),false);}
+  const home=await page(false,'/');await home.send('Page.bringToFront');
+  const launchPoint=await home.evaluate("(()=>{const r=document.getElementById('mebi-shared-chat').shadowRoot.getElementById('launch').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()");
+  await home.send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...launchPoint});
+  await home.send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...launchPoint});
+  assert.equal(await home.evaluate("document.getElementById('mebi-shared-chat').shadowRoot.getElementById('panel').hidden"),false,'real mouse click opens chat on fallback homepage');
+  await until(()=>home.evaluate("!document.getElementById('mebi-shared-chat').shadowRoot.getElementById('send').disabled"),'homepage chat connected');
+  await home.evaluate("document.getElementById('mebi-shared-chat').shadowRoot.getElementById('close').click()");
+  console.log('PASS fallback homepage: real mouse click opens shared chat');
   const c=await page(false,'/uno');
   for(const p of [a,c]){
     await p.send('Page.bringToFront');

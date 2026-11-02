@@ -2,6 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SharedChatRoom} from '../src/shared-chat-room.js';
 import {handleChat,injectChatHtml} from '../src/shared-chat.js';
+import {build} from 'esbuild';
+import {SHARED_CHAT_CLIENT} from '../src/shared-chat-client.js';
+test('Worker bundling with keepNames preserves the standalone browser script',async()=>{
+ const bundle=await build({entryPoints:['src/shared-chat-client.js'],bundle:true,write:false,format:'esm',keepNames:true,minify:true});
+ const compiled=await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64'));
+ assert.equal(compiled.SHARED_CHAT_CLIENT,SHARED_CHAT_CLIENT);
+ assert.equal(compiled.SHARED_CHAT_CLIENT.includes('__name('),false);
+});
 function setup(){const data=new Map();const ctx={blockConcurrencyWhile:fn=>fn(),storage:{get:async key=>structuredClone(data.get(key)),put:async(key,value)=>{data.set(key,structuredClone(value));}}};const room=new SharedChatRoom(ctx);return {room,ctx,env:{CHAT:{idFromName:name=>{assert.equal(name,'global');return name;},get:()=>room}}};}
 function post(room,sender,text='Hello',id=crypto.randomUUID()){return room.fetch(new Request('https://internal/messages',{method:'POST',headers:{'X-Mebi-Chat-Identity':sender},body:JSON.stringify({name:'Guest',text,requestId:id})}));}
 test('shared chat persists bounded history and deduplicates retries before applying rate limit',async()=>{
