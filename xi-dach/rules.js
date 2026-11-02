@@ -1,5 +1,5 @@
 // Shared, pure Vietnamese Xì Dách rules. Currency values are actual integer eggs.
-export const RULES = Object.freeze({maxPlayers:8, initialBalance:100000, initialFund:10000000, minBet:1000, maxBet:10000, betUnit:1000, playerStand:16, botStand:17, maxCards:5, bettingMs:90000, turnMs:90000, readyMs:10000, resultMs:8000, botDelayMs:800, dealMs:900, showdownMs:700});
+export const RULES = Object.freeze({maxPlayers:8, initialBalance:100000, initialFund:10000000, minBet:10, maxBet:10000, betUnit:10, playerStand:16, botStand:17, maxCards:5, bettingMs:90000, turnMs:90000, readyMs:10000, resultMs:8000, botDelayMs:800, dealMs:900, showdownMs:700});
 export const HAND_NAMES = ['Quắc', 'Bài thường', 'Ngũ linh', 'Xì dách', 'Xì bàn'];
 export function score(cards) {
   let totals = [0];
@@ -31,7 +31,7 @@ export function decideBot(cards, rules=RULES) {
   return locked(cards,rules) || score(cards).total>=rules.botStand ? 'stand' : 'hit';
 }
 export function validateBet(amount, balance, fund, rules=RULES) {
-  if (!Number.isSafeInteger(amount) || amount<rules.minBet || amount>rules.maxBet || amount%rules.betUnit!==0) throw new Error('Mức cược phải từ 1.000 đến 10.000 công đức, chia hết cho 1.000.');
+  if (!Number.isSafeInteger(amount) || amount<rules.minBet || amount>rules.maxBet || amount%rules.betUnit!==0) throw new Error('Mức cược phải từ 10 đến 10.000 công đức, chia hết cho 10.');
   if (amount>balance) throw new Error('Không đủ công đức');
   if (amount>fund) throw new Error('Nhà cái không đủ quỹ cho mức cược này. Vui lòng chọn mức thấp hơn.');
 }

@@ -56,7 +56,7 @@ Thứ hạng: xì bàn > xì dách > ngũ linh > bài thường > quắc. Cùng 
 
 `decideBot(cards, rules)` chỉ nhận bài bot và cấu hình công khai; không nhận deck, bài người chơi, cược hoặc số dư. Khoảng nghỉ rút mặc định 800 ms.
 
-Số dư người chơi lấy từ ví Mebi dùng chung, quỹ bot 10.000.000 công đức/phòng. Cược 1.000–10.000 công đức, bội số 1.000. Đặt cược trừ ngay số dư khả dụng của cả hai bên và giữ `2 × bet`. Đổi cược hoàn khoản giữ cũ rồi giữ khoản mới sau khi kiểm tra khả năng chi trả. Hủy cược hoàn cả hai bên. Thắng chuyển cả khoản giữ cho người chơi, thua chuyển cho bot, hòa mỗi bên nhận lại cược. Mọi thắng trả 1:1.
+Số dư người chơi lấy từ ví Mebi dùng chung, quỹ bot 10.000.000 công đức/phòng. Cược 10–10.000 công đức, bội số 10. Đặt cược trừ ngay số dư khả dụng của cả hai bên và giữ `2 × bet`. Đổi cược hoàn khoản giữ cũ rồi giữ khoản mới sau khi kiểm tra khả năng chi trả. Hủy cược hoàn cả hai bên. Thắng chuyển cả khoản giữ cho người chơi, thua chuyển cho bot, hòa mỗi bên nhận lại cược. Mọi thắng trả 1:1.
 
 Bất biến engine kiểm tra sau thay đổi:
 

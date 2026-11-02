@@ -40,7 +40,7 @@ try{
   await b.evaluate(`document.getElementById('name').value='Bạn mobile';document.getElementById('joinButton').click()`);
   await until(()=>a.evaluate('window.__snap?.players.length===2'),'two joined');
   await until(()=>b.evaluate(`window.__snap?.phase==='BETTING'`),'betting');
-  await a.click('#confirmBet');await b.click('[data-bet="2000"]');await b.click('#confirmBet');
+  await a.click('#confirmBet');await b.click('[data-bet="20"]');await b.click('#confirmBet');
   await until(()=>a.evaluate('window.__snap?.players.every(p=>p.bet>0)'),'two bets');
   for(const p of [a,b])assert.equal(await p.evaluate(`(()=>{const r=document.getElementById('confirmBet').getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;})()`),true,'bet visible without scrolling');
   await until(()=>a.evaluate(`window.__snap?.phase==='DEALING'`),'dealing');

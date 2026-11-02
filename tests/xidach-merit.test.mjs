@@ -52,6 +52,13 @@ test('bets, replacements, cancellation and external spending use the shared wall
   assert.equal(service.engine.player(peer.id).bet,0);assert.equal(await wallet.get(id),0);
   assert.match(messages.findLast(m=>m.type==='error').message,/Không đủ/);
 });
+test('a wallet with 16 merit can bet 10 and cancel for a full refund',async t=>{
+  const {service,peer,message,wallet,id}=await setup(t);
+  await wallet.change(id,-4984,'prepare-low-balance');
+  await service.receive(peer,message('bet',{amount:10}));
+  assert.equal(await wallet.get(id),6);assert.equal(service.engine.player(peer.id).bet,10);
+  await service.receive(peer,message('cancel'));assert.equal(await wallet.get(id),16);
+});
 test('a lost debit response recovers from persisted intent without spending twice',async t=>{
   const {service,peer,message,wallet,id,save,saved}=await setup(t);
   let fail=true;service.wallet={...wallet,async change(...args){const value=await wallet.change(...args);if(fail){fail=false;throw new Error('Lost response');}return value;}};

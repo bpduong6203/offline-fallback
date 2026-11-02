@@ -93,8 +93,8 @@ test('Xì Dách: bot fixed public strategy uses only own cards and handles A',()
   const hand=Object.freeze(cards(1,6).map(Object.freeze));assert.equal(decideBot(hand),'stand');
 });
 test('Xì Dách: bet validation rejects fractions, negatives, strings and wrong units',()=>{
-  for(const n of [500,1500,-1000,1000.1,NaN,Infinity,0,11000,'1000'])assert.throws(()=>validateBet(n,100000,10000000));
-  for(const n of [1000,3000,10000])assert.doesNotThrow(()=>validateBet(n,100000,10000000));
+  for(const n of [1,9,11,15,25,-10,10.1,NaN,Infinity,0,10010,'10'])assert.throws(()=>validateBet(n,100000,10000000));
+  for(const n of [10,20,50,100,500,1500,1000,3000,10000])assert.doesNotThrow(()=>validateBet(n,100000,10000000));
   assert.throws(()=>validateBet(1000,999,100000),/Không đủ công đức/);
   assert.throws(()=>validateBet(1000,10000,999),/^Error: Nhà cái không đủ quỹ cho mức cược này. Vui lòng chọn mức thấp hơn\.$/);
   assert.equal(formatMerit(100000),'100.000 công đức');
@@ -172,7 +172,7 @@ test('Xì Dách: concurrent duplicate bets reserve once, failed actions roll bac
   const s=new XiDachService('ABC234');const peer=s.connect(()=>{});await s.receive(peer,{type:'hello',create:true,name:'Bạn'});
   const msg=type=>({roomId:'ABC234',roundId:s.engine.state.roundId,actionId:crypto.randomUUID(),type});await s.receive(peer,msg('open'));
   const bet={...msg('bet'),amount:1000};await Promise.all([s.receive(peer,bet),s.receive(peer,bet),s.tick(Date.now())]);assert.equal(s.engine.player(peer.id).balance,99000);assert.equal(s.engine.state.fund,9999000);
-  const before=structuredClone(s.engine.state);await s.receive(peer,{...msg('bet'),amount:1500});assert.deepEqual(s.engine.state,before);
+  const before=structuredClone(s.engine.state);await s.receive(peer,{...msg('bet'),amount:15});assert.deepEqual(s.engine.state,before);
 });
 test('Xì Dách: Durable Object reload restores escrow and alarm advances a disconnected room',async()=>{
   const {e,ids}=room();begin(e,ids);const data=structuredClone(e.state);data.deadline=Date.now()-10;let saved,alarm;

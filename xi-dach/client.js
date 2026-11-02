@@ -1,9 +1,9 @@
-import {formatMerit} from './rules.js';
+import {formatMerit,RULES} from './rules.js';
 const $=id=>document.getElementById(id), avatars=['🐯','🐼','🦊','🐸','🐱','🐻','🐰','🐧'];
 const esc=text=>String(text??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const actionId=()=>[...crypto.getRandomValues(new Uint8Array(16))].map(n=>n.toString(16).padStart(2,'0')).join('');
 const storage={get(key){try{return localStorage.getItem(key);}catch{return null;}},set(key,value){try{localStorage.setItem(key,value);}catch{}}};
-let avatar=Number(storage.get('xidach.avatar')||0),ws,state,selfId,room='',amount=1000,reconnectTimer,toastTimer,retry=0,connected=false,offset=0,sound=storage.get('xidach.sound')==='on',audio,lastPhase='';
+let avatar=Number(storage.get('xidach.avatar')||0),ws,state,selfId,room='',amount=RULES.minBet,reconnectTimer,toastTimer,retry=0,connected=false,offset=0,sound=storage.get('xidach.sound')==='on',audio,lastPhase='';
 let reduce=storage.get('xidach.reduce')==='on'||matchMedia('(prefers-reduced-motion: reduce)').matches;
 const seenCards=new Map();let shownRound=-1,shownResult='';
 let meritLoaded=false,meritRefreshing=false,meritRefreshAgain=false,lastWalletState='';
@@ -105,7 +105,7 @@ function render(){
   $('self').classList.toggle('active',myTurn);$('self').innerHTML=`<div class="name">${avatars[me.avatar]} ${esc(me.name)} · Bạn${host?' ♛':''}</div>${cards(me)}${hand(me.hand)}${me.hand?.totals.length>1?`<div class="fine">Các tổng A: ${me.hand.totals.join(' / ')}</div>`:''}${!me.participating&&!['LOBBY','BETTING'].includes(s.phase)?'<div class="fine">Bạn sẽ tham gia từ ván tiếp theo.</div>':''}`;
   $('hostControls').innerHTML='';
   let content=`<div class="wallet"><div><span>Số dư</span><b>✨ ${formatMerit(availableMerit)}</b></div><div><span>Đang cược</span><b>${formatMerit(me.bet)}</b></div></div>`;
-  if(s.phase==='BETTING')content+=`<div class="quick">${[1000,2000,5000,10000].map(n=>`<button data-bet="${n}" class="${amount===n?'selected':''}" ${!connected||n>availableMerit+me.bet?'disabled':''}>${formatMerit(n)}</button>`).join('')}</div><label for="betAmount">Mức cược · bước 1.000 công đức</label><div class="bet-layout"><input id="betAmount" type="number" inputmode="numeric" min="1000" max="10000" step="1000" value="${amount}"><button id="confirmBet" class="primary" ${!connected||!meritLoaded?'disabled':''}>Đặt cược ${formatMerit(amount)}</button><button data-action="cancel" class="subtle" ${!connected||!me.bet?'disabled':''}>Hủy cược</button></div>`;
+  if(s.phase==='BETTING')content+=`<div class="quick">${[10,20,50,100].map(n=>`<button data-bet="${n}" class="${amount===n?'selected':''}" ${!connected||n>availableMerit+me.bet?'disabled':''}>${formatMerit(n)}</button>`).join('')}</div><label for="betAmount">Mức cược · bước 10 công đức</label><div class="bet-layout"><input id="betAmount" type="number" inputmode="numeric" min="${RULES.minBet}" max="${RULES.maxBet}" step="${RULES.betUnit}" value="${amount}"><button id="confirmBet" class="primary" ${!connected||!meritLoaded?'disabled':''}>Đặt cược ${formatMerit(amount)}</button><button data-action="cancel" class="subtle" ${!connected||!me.bet?'disabled':''}>Hủy cược</button></div>`;
   else if(myTurn)content+=`<div class="play-actions"><button data-action="hit" class="primary" ${!connected||!meritLoaded?'disabled':''}>Rút bài</button><button data-action="stand" class="secondary" ${!connected||me.hand.total<16?'disabled':''}>Dằn</button></div>${me.hand.total<16?'<p class="fine">Cần ít nhất 16 điểm bài mới được dằn.</p>':''}`;
   else content+=`<div class="muted">${s.phase==='LOBBY'?'Chờ chủ phòng mở đặt cược.':s.phase==='ROUND_END'?'Kiểm tra kết quả và chuẩn bị ván tiếp theo.':s.phase==='PLAYER_TURNS'?'Chờ đến lượt của bạn.':'Mọi thao tác được xử lý trên server.'}</div>`;
   $('controls').innerHTML=content;$('dockPhase').textContent=$('phaseLabel').textContent;
