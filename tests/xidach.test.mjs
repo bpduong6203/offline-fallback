@@ -84,7 +84,7 @@ test('Xì Dách: special ranking and tie rules including double bust',()=>{
   assert.equal(compare(cards(1,1),cards(1,13)),1);assert.equal(compare(cards(1,13),cards(2,3,4,5,6)),1);
   assert.equal(compare(cards(2,2,3,3,4),cards(2,3,4,5,6)),1);
   for(const hand of [cards(1,1),cards(1,10),cards(2,2,3,3,4),cards(10,8)])assert.equal(compare(hand,hand),0);
-  assert.equal(compare(cards(10,10,2),cards(10,10,3)),-1);assert.equal(compare(cards(10,8),cards(10,10,3)),1);
+  assert.equal(compare(cards(10,10,2),cards(10,10,3)),0);assert.equal(compare(cards(10,10,3),cards(10,10,2)),0);assert.equal(compare(cards(10,10,2),cards(10,10,2)),0);assert.equal(compare(cards(10,10,2),cards(10,8)),-1);assert.equal(compare(cards(10,8),cards(10,10,3)),1);
 });
 test('Xì Dách: bot fixed public strategy uses only own cards and handles A',()=>{
   assert.equal(decideBot.length,1);
@@ -152,7 +152,7 @@ test('Xì Dách: timeout uses same rules, cannot interleave expired hit and time
   const count=e.player(ids[0]).cards.length;assert.throws(()=>action(e,ids[0],'hit'),/lượt/);assert.equal(e.player(ids[0]).cards.length,count);
 });
 test('Xì Dách: every payout is 1:1, including specials, ties and double bust',()=>{
-  for(const [p,d,result] of [[cards(1,1),cards(1,13),1],[cards(2,2,2,2,2),cards(10,10),1],[cards(10,8),cards(10,8),0],[cards(10,10,3),cards(10,10,2),-1]]){
+  for(const [p,d,result] of [[cards(1,1),cards(1,13),1],[cards(2,2,2,2,2),cards(10,10),1],[cards(10,8),cards(10,8),0],[cards(10,10,2),cards(10,10,3),0],[cards(10,10,3),cards(10,10,2),0],[cards(10,10,2),cards(10,8),-1]]){
     const {e,ids}=room();begin(e,ids);e.player(ids[0]).cards=p;e.state.dealer=d;e.state.phase='SETTLEMENT';e.settle();
     assert.equal(e.player(ids[0]).balance,100000+1000*result);assert.equal(e.state.fund,10000000-1000*result);assert.equal(e.player(ids[0]).bet,0);assert.equal(e.state.results[0].result,result);
   }

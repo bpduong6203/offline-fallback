@@ -17,7 +17,7 @@ export function classify(cards) {
 }
 export function compare(player, dealer) {
   const p=classify(player), d=classify(dealer);
-  if (p.bust) return -1; // A player who busts always loses, including double bust.
+  if (p.bust) return d.bust ? 0 : -1; // Both bust: tie and refund the bet.
   if (p.kind!==d.kind) return Math.sign(p.kind-d.kind);
   if (p.kind>=3) return 0;
   return Math.sign(p.kind===2 ? d.total-p.total : p.total-d.total);
