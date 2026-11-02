@@ -16,11 +16,6 @@ export class MebiMeritProfile {
         action TEXT PRIMARY KEY,
         awarded_at INTEGER NOT NULL
       );
-      CREATE TABLE IF NOT EXISTS merit_lantern_usage (
-        id INTEGER PRIMARY KEY CHECK (id = 1),
-        window_started_at INTEGER NOT NULL,
-        uses INTEGER NOT NULL DEFAULT 0
-      );
       CREATE TABLE IF NOT EXISTS merit_debt (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         debt INTEGER NOT NULL DEFAULT 0 CHECK (debt >= 0 AND debt <= 10000)
@@ -35,26 +30,11 @@ export class MebiMeritProfile {
       if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
       let body;
       try { body = await request.json(); } catch { return Response.json({ error: 'Invalid JSON' }, { status: 400 }); }
-      const rewards = { bow: { amount: 1, cooldownMs: 5000 }, incense: { amount: 2, cooldownMs: 60000 }, mallet: { amount: 1, cooldownMs: 5000 }, lantern: { amount: 50, cooldownMs: 0 } };
+      const rewards = { bow: { amount: 1, cooldownMs: 5000 }, incense: { amount: 2, cooldownMs: 60000 }, mallet: { amount: 1, cooldownMs: 5000 } };
       const reward = rewards[body?.action];
       if (!reward) return Response.json({ error: 'Unknown reward action' }, { status: 400 });
       return this.ctx.storage.transactionSync(() => {
         const now = Date.now();
-        if (body.action === 'lantern') {
-          const windowMs = 24 * 60 * 60 * 1000;
-          // Lượt hoa đăng tính theo buổi tối Việt Nam, làm mới lúc 06:00 ICT.
-          const eveningKey = Math.floor((now + 60 * 60 * 1000) / windowMs);
-          const usage = this.ctx.storage.sql.exec('SELECT window_started_at, uses FROM merit_lantern_usage WHERE id = 1').toArray()[0];
-          const active = usage && usage.window_started_at === eveningKey;
-          const uses = active ? usage.uses : 0;
-          if (uses >= 3) return Response.json({ ...this.balanceData(), rewarded: false, amount: 0, retryAfterMs: 0, remaining: 0 }, { headers: { 'Cache-Control': 'no-store' } });
-          this.ctx.storage.sql.exec('INSERT INTO merit_lantern_usage (id, window_started_at, uses) VALUES (1, ?, 1) ON CONFLICT(id) DO UPDATE SET window_started_at = ?, uses = ?', eveningKey, eveningKey, uses + 1);
-          const debt = this.ctx.storage.sql.exec('SELECT debt FROM merit_debt WHERE id = 1').toArray()[0].debt;
-          const repaid = Math.min(reward.amount, debt);
-          this.ctx.storage.sql.exec('UPDATE merit_debt SET debt = debt - ? WHERE id = 1', repaid);
-          this.ctx.storage.sql.exec('UPDATE merit_balance SET balance = balance + ?, legacy_imported = 1 WHERE id = 1', reward.amount - repaid);
-          return Response.json({ ...this.balanceData(), rewarded: true, amount: reward.amount, retryAfterMs: 0, remaining: 2 - uses }, { headers: { 'Cache-Control': 'no-store' } });
-        }
         const previous = this.ctx.storage.sql.exec('SELECT awarded_at FROM merit_reward_cooldowns WHERE action = ?', body.action).toArray()[0];
         const retryAfterMs = previous ? reward.cooldownMs - (now - previous.awarded_at) : 0;
         if (retryAfterMs > 0) return Response.json({ ...this.balanceData(), rewarded: false, amount: 0, retryAfterMs }, { headers: { 'Cache-Control': 'no-store' } });
