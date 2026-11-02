@@ -6,7 +6,7 @@ import {XiDachService} from '../xi-dach/service.js';
 import {autoJoin} from '../src/xi-dach-room.js';
 import {handleMeritRequest} from '../src/mebi-merit-api.js';
 
-const cards=(a,b)=>[{rank:a,suit:'♠'},{rank:b,suit:'♥'}];
+const cards=(...ranks)=>ranks.map((rank,i)=>({rank,suit:i%2?'♥':'♠'}));
 test('partial repayment reduces only the chosen principal and charges 1.4 with rounding',async t=>{
   const env=localMerit();t.after(()=>env.close());const id=crypto.randomUUID(),profile=env.MERIT.get(id);
   const post=body=>profile.fetch(new Request('https://internal/balance',{method:'POST',body:JSON.stringify(body)}));
@@ -143,7 +143,7 @@ test('a lost debit response recovers from persisted intent without spending twic
   assert.equal(restored.engine.player(peer.id).bet,1000);
 });
 test('win/tie/loss settlement credits correct amount and recovers a lost payout exactly once',async t=>{
-  for(const [player,dealer,expected] of [[cards(10,9),cards(10,7),6000],[cards(10,7),cards(10,7),5000],[cards(10,6),cards(10,7),4000]]){
+  for(const [player,dealer,expected] of [[cards(10,9),cards(10,7),6000],[cards(10,7),cards(10,7),5000],[cards(10,10,2),cards(10,10,3),5000],[cards(10,6),cards(10,7),4000]]){
     const {service,peer,message,wallet,id,save,saved}=await setup(t);
     await service.receive(peer,message('bet',{amount:1000}));
     const p=service.engine.player(peer.id);p.cards=player;

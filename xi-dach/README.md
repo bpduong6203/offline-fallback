@@ -60,7 +60,7 @@ Các route: `/xi-dach`, `/xi-dach/`, `/__game/xi-dach`; socket `/__game/xi-dach/
 
 ## Luật và quỹ
 
-Thứ hạng: xì bàn > xì dách > ngũ linh > bài thường > quắc. Cùng ngũ linh: tổng thấp hơn thắng. Bài thường: tổng cao hơn thắng. Cùng xì bàn/xì dách, ngũ linh cùng tổng, bài thường cùng tổng: hòa. Người chơi quắc luôn thua, kể cả bot quắc. Người chơi được dằn từ 16; bot rút dưới 17, dằn từ 17. Đạt 21 hoặc đủ 5 lá tự khóa. Bot có bài đặc biệt thì so ngay; người chơi có bài đặc biệt tự khóa nhưng giữ kín tới showdown.
+Thứ hạng: xì bàn > xì dách > ngũ linh > bài thường > quắc. Cùng ngũ linh: tổng thấp hơn thắng. Bài thường: tổng cao hơn thắng. Cùng xì bàn/xì dách, ngũ linh cùng tổng, bài thường cùng tổng: hòa. Cả người chơi và bot cùng quắc thì hòa, hoàn cược; chỉ người chơi quắc thì thua. Người chơi được dằn từ 16; bot rút dưới 17, dằn từ 17. Đạt 21 hoặc đủ 5 lá tự khóa. Bot có bài đặc biệt thì so ngay; người chơi có bài đặc biệt tự khóa nhưng giữ kín tới showdown.
 
 `decideBot(cards, rules)` chỉ nhận bài bot và cấu hình công khai; không nhận deck, bài người chơi, cược hoặc số dư. Khoảng nghỉ rút mặc định 800 ms.
 

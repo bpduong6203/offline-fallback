@@ -57,6 +57,7 @@ export const clientMain = `    // ===================== CHUNG ==================
     var loginAuthenticated = false;
     function setLibraryAccess(allowed) {
       loginAuthenticated = allowed;
+      window.dispatchEvent(new CustomEvent('mebi-auth-change', { detail: { authenticated: !!allowed } }));
       homeLibrary.hidden = !allowed;
       homeTitle.textContent = allowed ? 'Chọn trò chơi' : 'Máy chủ local chưa bật 🐞';
       homeIntro.textContent = allowed ? 'Chọn một game để bắt đầu chơi trong lúc chờ máy chủ kết nối lại.' : 'Đang chờ máy chủ kết nối lại. Trang sẽ tự tải khi máy chủ hoạt động.';

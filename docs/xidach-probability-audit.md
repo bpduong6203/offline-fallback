@@ -1,5 +1,7 @@
 # Kiểm tra hòa liên tục và tỷ lệ thắng Xì Dách
 
+> Báo cáo dưới đây đo luật cũ: người chơi quắc luôn thua dù nhà cái cũng quắc. Luật hiện tại đã đổi sang **cả hai cùng quắc thì hòa, hoàn cược** theo yêu cầu mới. Các tỷ lệ trong báo cáo không còn đại diện cho luật hiện tại; cần chạy lại script để đo luật mới.
+
 Kết quả dưới đây từ mã nguồn trong workspace, không phải thống kê các ván production. Không thay đổi luật, cách chia hoặc cách quyết toán của game.
 
 ## Cách đo

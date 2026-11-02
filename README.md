@@ -2,7 +2,9 @@
 
 ## Chat chung toàn repo
 
-Worker tự thêm nút **Chat chung** vào các trang game của repo và trang fallback. Các trang/subdomain do cùng Worker phục vụ dùng chung một kênh; HTML của origin đang hoạt động được giữ nguyên. Cửa sổ chat thu gọn ở cạnh phải, dùng Shadow DOM để tách giao diện và chặn sự kiện bàn phím trong ô nhập lan sang điều khiển game.
+Worker tự thêm nút **Chat chung** vào các trang game của repo và trang fallback. Các trang/subdomain do cùng Worker phục vụ dùng chung một kênh; HTML của origin đang hoạt động được giữ nguyên. Cửa sổ chat thu gọn ở góc trái bên dưới, dùng Shadow DOM để tách giao diện và chặn sự kiện bàn phím trong ô nhập lan sang điều khiển game.
+
+Chat ẩn mặc định cho đến khi `/api/auth/session` xác nhận đã đăng nhập. Đăng nhập ở trang chủ cập nhật chat ngay qua sự kiện; đăng xuất hoặc phiên hết hạn sẽ ẩn nút, đóng khung và dừng polling. Quay lại tab sẽ kiểm tra phiên lại.
 
 `/shared-chat.js` tải widget; `/api/chat` đọc/gửi tin qua Durable Object `SharedChatRoom`, binding `CHAT`, migration `v16` trong `wrangler.toml`. Cần triển khai Worker với cấu hình này để bật chat trên production. Không dùng ví MERIT để lưu tin nhắn; cookie ẩn danh hiện có chỉ xác định người gửi để chống gửi quá nhanh. Khi bật mật khẩu trang chủ, chat cũng yêu cầu phiên đăng nhập đó.
 

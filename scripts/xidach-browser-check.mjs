@@ -23,10 +23,12 @@ try{
   let seq=0;const pending=new Map(),errors=[];
   socket.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);clearTimeout(p.timer);m.error?p.reject(new Error(m.error.message)):p.resolve(m.result);}});
   const send=(method,params={},sessionId)=>new Promise((resolve,reject)=>{const id=++seq;const timer=setTimeout(()=>{pending.delete(id);reject(new Error('CDP timeout '+method));},15000);pending.set(id,{resolve,reject,timer});socket.send(JSON.stringify({id,method,params,sessionId}));});
-  async function page(mobile=false,route='/xi-dach'){
+  async function page(mobile=false,route='/xi-dach',authenticated=true){
     const {browserContextId}=await send('Target.createBrowserContext');const {targetId}=await send('Target.createTarget',{url:'about:blank',browserContextId});const {sessionId}=await send('Target.attachToTarget',{targetId,flatten:true});
     await send('Page.enable',{},sessionId);await send('Runtime.enable',{},sessionId);
     if(mobile)await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true},sessionId);
+    // Auth responses are simulated locally; backend authorization is covered by Worker tests.
+    await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__chatAuthenticated=${authenticated};const originalFetch=window.fetch;window.fetch=(url,options)=>{if(url==='/api/auth/session')return Promise.resolve(Response.json({authenticated:window.__chatAuthenticated}));if(url==='/api/auth/login'){window.__chatAuthenticated=true;return Promise.resolve(Response.json({authenticated:true}));}if(url==='/api/auth/logout'){window.__chatAuthenticated=false;return Promise.resolve(Response.json({authenticated:false}));}return originalFetch(url,options);};`},sessionId);
     // Test instrumentation observes network messages without changing game code.
     await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.__snap=null;window.__welcome=null;window.__errors=[];const Native=window.WebSocket;window.WebSocket=class extends Native{constructor(...args){super(...args);this.addEventListener('message',e=>{const m=JSON.parse(e.data);if(m.type==='snapshot')window.__snap=m.state;if(m.type==='welcome')window.__welcome=m;if(m.type==='error')window.__errors.push(m.message);});}};`},sessionId);
     const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},sessionId);if(r.exceptionDetails)throw new Error(r.exceptionDetails.text);return r.result.value;};
@@ -85,14 +87,20 @@ try{
   await a.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1080,deviceScaleFactor:1,mobile:false});
   const desktop=await a.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});await writeFile(new URL('../dist/xi-dach/desktop-check.png',import.meta.url),Buffer.from(desktop.data,'base64'));
   for(const p of [a,b]){assert.deepEqual(await p.evaluate('window.__errors'),[]);assert.equal(await p.evaluate(`document.body.innerText.includes('chip')`),false);}
-  const home=await page(false,'/');await home.send('Page.bringToFront');
+  const home=await page(false,'/',false);await home.send('Page.bringToFront');
+  assert.equal(await home.evaluate("document.getElementById('mebi-shared-chat').hidden"),true,'chat hidden before login');
+  await home.evaluate("document.getElementById('loginUsername').value='local';document.getElementById('loginPassword').value='local';document.getElementById('loginForm').requestSubmit()");
+  await until(()=>home.evaluate("!document.getElementById('mebi-shared-chat').hidden"),'chat appears immediately after login');
+  assert.equal(await home.evaluate("(()=>{const r=document.getElementById('mebi-shared-chat').shadowRoot.getElementById('launch').getBoundingClientRect();return r.left>=0&&r.left<=24&&innerHeight-r.bottom>=0&&innerHeight-r.bottom<=24;})()"),true,'chat launcher at bottom left');
   const launchPoint=await home.evaluate("(()=>{const r=document.getElementById('mebi-shared-chat').shadowRoot.getElementById('launch').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()");
   await home.send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...launchPoint});
   await home.send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...launchPoint});
   assert.equal(await home.evaluate("document.getElementById('mebi-shared-chat').shadowRoot.getElementById('panel').hidden"),false,'real mouse click opens chat on fallback homepage');
   await until(()=>home.evaluate("!document.getElementById('mebi-shared-chat').shadowRoot.getElementById('send').disabled"),'homepage chat connected');
   await home.evaluate("document.getElementById('mebi-shared-chat').shadowRoot.getElementById('close').click()");
-  console.log('PASS fallback homepage: real mouse click opens shared chat');
+  await home.evaluate("window.__chatAuthenticated=false;window.dispatchEvent(new CustomEvent('mebi-auth-change',{detail:{authenticated:false}}))");
+  assert.equal(await home.evaluate("document.getElementById('mebi-shared-chat').hidden"),true,'chat disappears after logout');
+  console.log('PASS fallback homepage: chat hidden before login, appears after login at bottom left, opens by mouse and hides on logout');
   const c=await page(false,'/uno');
   for(const p of [a,c]){
     await p.send('Page.bringToFront');
