@@ -1484,48 +1484,6 @@
         const box = (par, w, h, d, m, x, y, z) =>
           put(par, new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m), x, y, z);
 
-        // --- mái chính: gân ngói + bờ nóc vàng + diềm vàng ---
-        const A1 = [0, 10.5, -17.5],
-          A2 = [0, 15.3, -17.5];
-        for (let x = -15; x <= 15; x += 2.5) {
-          beam(hall, A1, [x, 7.8, -7.25], 0.07, mTl);
-          beam(hall, A1, [x, 7.8, -27.75], 0.07, mTl);
-        }
-        for (let k = -4; k <= 4; k++) {
-          const z = -17.5 + k * 2.5;
-          beam(hall, A1, [16, 7.8, z], 0.07, mTl);
-          beam(hall, A1, [-16, 7.8, z], 0.07, mTl);
-        }
-        for (let x = -10; x <= 10; x += 2.5) {
-          beam(hall, A2, [x, 11.7, -10.25], 0.06, mTl);
-          beam(hall, A2, [x, 11.7, -24.75], 0.06, mTl);
-        }
-        for (let k = -2; k <= 2; k++) {
-          const z = -17.5 + k * 2.5;
-          beam(hall, A2, [11, 11.7, z], 0.06, mTl);
-          beam(hall, A2, [-11, 11.7, z], 0.06, mTl);
-        }
-        [
-          [-16, -7.25],
-          [16, -7.25],
-          [-16, -27.75],
-          [16, -27.75],
-        ].forEach(([x, z]) => beam(hall, A1, [x, 7.8, z], 0.18, mG));
-        [
-          [-11, -10.25],
-          [11, -10.25],
-          [-11, -24.75],
-          [11, -24.75],
-        ].forEach(([x, z]) => beam(hall, A2, [x, 11.7, z], 0.15, mG));
-        box(hall, 32.6, 0.42, 0.4, mG, 0, 7.85, -7.1);
-        box(hall, 32.6, 0.42, 0.4, mG, 0, 7.85, -27.9);
-        box(hall, 0.4, 0.42, 21, mG, 16.2, 7.85, -17.5);
-        box(hall, 0.4, 0.42, 21, mG, -16.2, 7.85, -17.5);
-        box(hall, 22.5, 0.4, 0.35, mG, 0, 11.75, -10.1);
-        box(hall, 22.5, 0.4, 0.35, mG, 0, 11.75, -24.9);
-        box(hall, 0.35, 0.4, 14.9, mG, 11.2, 11.75, -17.5);
-        box(hall, 0.35, 0.4, 14.9, mG, -11.2, 11.75, -17.5);
-
         // --- chuông gió ở các góc mái ---
         const bells = [];
         const bellAt = (x, y, z) => {
@@ -1552,7 +1510,7 @@
           [-11.6, 11.4, -10.1],
           [11.6, 11.4, -24.9],
           [-11.6, 11.4, -24.9],
-        ].forEach((a) => bellAt(...a));
+        ].forEach((a) => bellAt(a[0], a[1] + (a[1] > 10 ? 1.1 : 1.85), a[2]));
         GA.push((t) =>
           bells.forEach((b) => {
             b.g.rotation.z = Math.sin(t * 1.7 + b.p) * 0.18;
@@ -1963,7 +1921,8 @@
           );
           put(pv, new THREE.Mesh(SP(0.18), mG), 0, -1.8, 0);
           GA.push((t) => {
-            pv.rotation.z = Math.sin(t * 0.6) * 0.07;
+            pv.rotation.z =
+              Math.sin(t * 0.6) * 0.07 + (window.BELLK ? window.BELLK.sw : 0);
           });
         }
         belfry(31, -12, 1.15, -0.35);
@@ -2411,6 +2370,14 @@
             lerp(s * 0.2, -s * 0.72, ap),
           );
         });
+        if (p.kt > 0) {
+          p.kt = Math.max(0, p.kt - dt);
+          const kk = Math.sin((1 - p.kt / 0.16) * Math.PI);
+          c.armR.rotation.x = -1.3 - kk * 0.6;
+          c.armR.rotation.z = -0.72;
+          c.armL.rotation.x = -1.3;
+          c.armL.rotation.z = 0.72;
+        }
         c.body.rotation.z = Math.sin(t * 1.1 + (p.nb || 0)) * 0.012 * sit;
       } // thiền: đung đưa rất nhẹ
       function newPerson(o) {
@@ -2440,8 +2407,1609 @@
         p.ch.root.rotation.y += d * Math.min(1, dt * 12);
         animChar(p, dt, t);
       }
-      const gY = (x, z) => (z > -9.4 ? 0 : z > -10.6 ? 0.4 : H0);
+      function bridgeY(x, z) {
+        const dx = x - 14.5,
+          dz = z - 10;
+        if (Math.abs(dx) > 1.3 || Math.abs(dz) > 5.8) return 0;
+        const t = dz / 5.8;
+        return 1.5 * (1 - t * t);
+      }
+      const gY = (x, z) =>
+        bridgeY(x, z) + (z > -9.4 ? 0 : z > -10.6 ? 0.4 : H0);
       const faceBud = (p) => Math.atan2(0 - p.x, -21.4 - p.z);
+
+      // ================= NÂNG CẤP V3: mái cong, tam quan, ngày/đêm, thời tiết, ao sen, âm thanh, bàn thờ, gõ mõ =================
+      window.BELLK = { t: 99, sw: 0 };
+      if (!window.MebiMerit) {
+        let n = 0;
+        try {
+          n = +(localStorage.getItem("mebi-merit") || 0);
+        } catch (e) {}
+        window.MebiMerit = {
+          get: () => n,
+          change: (d) => {
+            n = Math.max(0, n + d);
+            try {
+              localStorage.setItem("mebi-merit", n);
+            } catch (e) {}
+            window.dispatchEvent(
+              new CustomEvent("mebi-merit-change", { detail: n }),
+            );
+            return Promise.resolve(n);
+          },
+        };
+      }
+      {
+        const GOLD = 0xe8b84a,
+          mGold = tm(GOLD, 0x3a2600),
+          hexMix = (a, b, k) => {
+            const ar = (a >> 16) & 255,
+              ag = (a >> 8) & 255,
+              ab = a & 255,
+              br = (b >> 16) & 255,
+              bg = (b >> 8) & 255,
+              bb = b & 255;
+            return (
+              (Math.round(ar + (br - ar) * k) << 16) |
+              (Math.round(ag + (bg - ag) * k) << 8) |
+              Math.round(ab + (bb - ab) * k)
+            );
+          },
+          css = (h) => "#" + h.toString(16).padStart(6, "0"),
+          canv = (w, h) => {
+            const c = document.createElement("canvas");
+            c.width = w;
+            c.height = h;
+            return c;
+          },
+          rnd = (a, b) => a + Math.random() * (b - a),
+          glowTex = (() => {
+            const c = canv(128, 128),
+              x = c.getContext("2d"),
+              g = x.createRadialGradient(64, 64, 2, 64, 64, 62);
+            g.addColorStop(0, "rgba(255,236,190,1)");
+            g.addColorStop(0.35, "rgba(255,190,110,.45)");
+            g.addColorStop(1, "rgba(255,150,80,0)");
+            x.fillStyle = g;
+            x.fillRect(0, 0, 128, 128);
+            return new THREE.CanvasTexture(c);
+          })();
+
+        // ---------- MÁI CONG KIỂU CHÙA VIỆT ----------
+        const ROOFTEX = {};
+        const roofTex = (hex) => {
+          if (ROOFTEX[hex]) return ROOFTEX[hex];
+          const c = canv(64, 64),
+            x = c.getContext("2d"),
+            col = new THREE.Color(hex),
+            hs = (k) => "#" + col.clone().multiplyScalar(k).getHexString(),
+            hl =
+              "#" +
+              col.clone().lerp(new THREE.Color(0xffffff), 0.2).getHexString();
+          x.fillStyle = hs(1);
+          x.fillRect(0, 0, 64, 64);
+          x.fillStyle = hl;
+          x.fillRect(5, 0, 54, 22);
+          x.strokeStyle = hs(0.58);
+          x.lineWidth = 3;
+          x.beginPath();
+          x.moveTo(1.5, 0);
+          x.lineTo(1.5, 64);
+          x.stroke();
+          x.beginPath();
+          x.moveTo(0, 61);
+          x.quadraticCurveTo(32, 49, 64, 61);
+          x.stroke();
+          const t = new THREE.CanvasTexture(c);
+          t.wrapS = t.wrapT = THREE.RepeatWrapping;
+          t.anisotropy = 4;
+          return (ROOFTEX[hex] = t);
+        };
+        const roofData = (hw, hd, H, L, nu, nv) => {
+          const P = [],
+            UV = [],
+            I = [],
+            F = [
+              (s) => [s * hw, hd],
+              (s) => [-s * hw, -hd],
+              (s) => [hw, -s * hd],
+              (s) => [-hw, s * hd],
+            ],
+            ln = [2 * hw, 2 * hw, 2 * hd, 2 * hd],
+            sl = [hd, hd, hw, hw];
+          const surf = (f, s, r) => {
+            const e = F[f](s);
+            return [
+              r * e[0],
+              H * Math.pow(1 - r, 1.7) +
+                L * Math.pow(Math.abs(s), 2.4) * Math.pow(r, 2.5),
+              r * e[1],
+            ];
+          };
+          for (let f = 0; f < 4; f++) {
+            const b0 = P.length / 3,
+              tu = Math.max(1, Math.round(ln[f] / 1.5)),
+              tv = Math.max(1, Math.round(Math.hypot(H, sl[f]) / 1.2));
+            for (let j = 0; j <= nv; j++)
+              for (let i = 0; i <= nu; i++) {
+                const s = -1 + (2 * i) / nu,
+                  r = j / nv;
+                P.push(...surf(f, s, r));
+                UV.push((i / nu) * tu, r * tv);
+              }
+            for (let j = 0; j < nv; j++)
+              for (let i = 0; i < nu; i++) {
+                const a = b0 + j * (nu + 1) + i,
+                  b = a + 1,
+                  c = a + nu + 1,
+                  d = c + 1;
+                I.push(a, c, b, b, c, d);
+              }
+          }
+          return { P, UV, I, surf };
+        };
+        const roofGeo = (hw, hd, H, L) => {
+          const d = roofData(hw, hd, H, L, 14, 10),
+            g = new THREE.BufferGeometry();
+          g.setAttribute("position", new THREE.Float32BufferAttribute(d.P, 3));
+          g.setAttribute("uv", new THREE.Float32BufferAttribute(d.UV, 2));
+          g.setIndex(d.I);
+          g.computeVertexNormals();
+          const n = d.P.length / 3,
+            acc = new Map(),
+            key = (i) =>
+              Math.round(d.P[i * 3] * 50) +
+              "," +
+              Math.round(d.P[i * 3 + 1] * 50) +
+              "," +
+              Math.round(d.P[i * 3 + 2] * 50),
+            na = g.attributes.normal;
+          for (let i = 0; i < n; i++) {
+            const k = key(i),
+              a = acc.get(k) || [0, 0, 0];
+            a[0] += na.getX(i);
+            a[1] += na.getY(i);
+            a[2] += na.getZ(i);
+            acc.set(k, a);
+          }
+          const sn = new Float32Array(n * 3);
+          for (let i = 0; i < n; i++) {
+            const a = acc.get(key(i)),
+              l = Math.hypot(a[0], a[1], a[2]) || 1;
+            sn[i * 3] = a[0] / l;
+            sn[i * 3 + 1] = a[1] / l;
+            sn[i * 3 + 2] = a[2] / l;
+          }
+          const og = new THREE.BufferGeometry();
+          og.setAttribute("position", g.attributes.position);
+          og.setAttribute("normal", new THREE.BufferAttribute(sn, 3));
+          og.setIndex(d.I);
+          return { g, og, d };
+        };
+        const curvedRoof = (hw, hd, H, L, hex) => {
+          const { g, og, d } = roofGeo(hw, hd, H, L),
+            grp = new THREE.Group();
+          const mat = new THREE.MeshToonMaterial({
+            color: 0xffffff,
+            map: roofTex(hex),
+            gradientMap: GRAD,
+            emissive: new THREE.Color(hex).multiplyScalar(0.14),
+          });
+          const roof = new THREE.Mesh(g, mat);
+          roof.add(new THREE.Mesh(og, OUTM));
+          grp.add(roof);
+          const sf = new THREE.Mesh(
+            new THREE.PlaneGeometry(hw * 2, hd * 2),
+            tm(0x5a3326),
+          );
+          sf.rotation.x = Math.PI / 2;
+          sf.position.y = 0.02;
+          grp.add(sf);
+          const rr = Math.min(0.2, Math.max(0.06, hw * 0.011));
+          const tube = (arr, r) => {
+            const cv = new THREE.CatmullRomCurve3(
+              arr.map((p) => new THREE.Vector3(p[0], p[1], p[2])),
+            );
+            grp.add(
+              new THREE.Mesh(
+                new THREE.TubeGeometry(cv, arr.length * 3, r, 6, false),
+                mGold,
+              ),
+            );
+          };
+          for (let f = 0; f < 4; f++) {
+            const hip = [],
+              edge = [];
+            for (let j = 0; j <= 10; j++) hip.push(d.surf(f, 1, j / 10));
+            for (let i = 0; i <= 16; i++)
+              edge.push(d.surf(f, -1 + (2 * i) / 16, 1));
+            tube(hip, rr);
+            tube(edge, rr * 1.15);
+            const tp = d.surf(f, 1, 1),
+              ball = new THREE.Mesh(
+                new THREE.SphereGeometry(rr * 2.1, 10, 8),
+                mGold,
+              );
+            ball.position.set(tp[0], tp[1] + rr * 0.6, tp[2]);
+            grp.add(ball);
+          }
+          return grp;
+        };
+        // thay toàn bộ mái hình chóp cũ bằng mái cong, bỏ các mũi nhọn cũ
+        {
+          const roofs = [],
+            tips = [];
+          S.traverse((o) => {
+            const p = o.geometry && o.geometry.parameters;
+            if (
+              !o.isMesh ||
+              !p ||
+              o.geometry.type !== "ConeGeometry" ||
+              (o.parent && o.parent.isMesh)
+            )
+              return;
+            if (p.radialSegments === 4 && Math.abs(p.radius - 0.7071) < 0.001)
+              roofs.push(o);
+            else if (
+              (p.radius === 0.28 && p.height === 1.3) ||
+              (Math.abs(p.radius - 0.13) < 0.001 &&
+                Math.abs(p.height - 0.55) < 0.001)
+            )
+              tips.push(o);
+          });
+          tips.forEach((o) => o.parent.remove(o));
+          roofs.forEach((o) => {
+            const hw = o.scale.x / 2,
+              hd = o.scale.z / 2,
+              H = o.scale.y,
+              L = Math.max(0.3, Math.min(1.5, hw * 0.095)),
+              lift = hw > 14 ? 0.35 : 0,
+              r = curvedRoof(hw, hd, H, L, o.material.color.getHex());
+            r.position.set(
+              o.position.x,
+              o.position.y - H / 2 + lift,
+              o.position.z,
+            );
+            o.parent.add(r);
+            o.parent.remove(o);
+          });
+        }
+
+        // ---------- TAM QUAN (cổng chùa) ----------
+        {
+          const gate = new THREE.Group();
+          gate.position.set(0, 0, 31);
+          S.add(gate);
+          const STONE = 0xd9cdb4,
+            RED = 0xc4553d,
+            TEAL = 0x4d8f8a;
+          put(
+            gate,
+            mk(new THREE.BoxGeometry(17, 0.5, 6.4), STONE, 1.02),
+            0,
+            0.25,
+            0,
+          );
+          [
+            [-3.4, -2],
+            [3.4, -2],
+            [-3.4, 2],
+            [3.4, 2],
+          ].forEach(([x, z]) => {
+            put(
+              gate,
+              mk(new THREE.CylinderGeometry(0.85, 0.95, 0.6, 14), STONE, 1.03),
+              x,
+              0.8,
+              z,
+            );
+            put(
+              gate,
+              mk(new THREE.CylinderGeometry(0.5, 0.56, 6.2, 14), RED, 1.03),
+              x,
+              4.2,
+              z,
+            );
+            put(
+              gate,
+              new THREE.Mesh(new THREE.TorusGeometry(0.56, 0.08, 6, 16), mGold),
+              x,
+              1.8,
+              z,
+              null,
+              [Math.PI / 2, 0, 0],
+            );
+            put(
+              gate,
+              new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.08, 6, 16), mGold),
+              x,
+              6.1,
+              z,
+              null,
+              [Math.PI / 2, 0, 0],
+            );
+          });
+          [
+            [-6.6, -1.4],
+            [-6.6, 1.4],
+            [6.6, -1.4],
+            [6.6, 1.4],
+          ].forEach(([x, z]) => {
+            put(
+              gate,
+              mk(new THREE.CylinderGeometry(0.58, 0.66, 0.4, 12), STONE, 1.03),
+              x,
+              0.7,
+              z,
+            );
+            put(
+              gate,
+              mk(new THREE.CylinderGeometry(0.32, 0.36, 3.8, 12), RED, 1.03),
+              x,
+              2.8,
+              z,
+            );
+            put(
+              gate,
+              new THREE.Mesh(new THREE.TorusGeometry(0.37, 0.06, 6, 14), mGold),
+              x,
+              4.5,
+              z,
+              null,
+              [Math.PI / 2, 0, 0],
+            );
+          });
+          const bx = (w, h, dd, c, x, y, z, o) =>
+            put(
+              gate,
+              mk(
+                new THREE.BoxGeometry(w, h, dd),
+                c,
+                o === undefined ? 1.03 : o,
+              ),
+              x,
+              y,
+              z,
+            );
+          bx(7.6, 0.55, 0.55, RED, 0, 6.75, -2);
+          bx(7.6, 0.55, 0.55, RED, 0, 6.75, 2);
+          bx(0.55, 0.55, 4.6, RED, -3.4, 6.75, 0);
+          bx(0.55, 0.55, 4.6, RED, 3.4, 6.75, 0);
+          bx(7.0, 0.22, 0.4, GOLD, 0, 6.35, -2, 0);
+          bx(7.0, 0.22, 0.4, GOLD, 0, 6.35, 2, 0);
+          [-6.6, 6.6].forEach((x) => {
+            bx(3.9, 0.4, 0.4, RED, x, 4.6, -1.4);
+            bx(3.9, 0.4, 0.4, RED, x, 4.6, 1.4);
+            bx(0.4, 0.4, 2.8, RED, x - 1.5, 4.6, 0);
+            bx(0.4, 0.4, 2.8, RED, x + 1.5, 4.6, 0);
+            put(gate, curvedRoof(3.5, 2.4, 1.2, 0.55, TEAL), x, 4.8, 0);
+          });
+          put(gate, curvedRoof(5.9, 4.1, 1.9, 0.9, TEAL), 0, 7.4, 0);
+          bx(4.4, 1.5, 3.0, 0xb8503f, 0, 8.6, 0, 1.02);
+          put(gate, curvedRoof(3.6, 2.7, 1.6, 0.65, TEAL), 0, 9.3, 0);
+          put(gate, mk(SP(0.34), GOLD, 1.05, 0x3a2600), 0, 11.15, 0);
+          put(
+            gate,
+            mk(new THREE.ConeGeometry(0.2, 1.1, 8), GOLD, 1.05, 0x3a2600),
+            0,
+            11.9,
+            0,
+          );
+          // biển tên chùa 2 mặt
+          const plqC = canv(1024, 256),
+            px = plqC.getContext("2d");
+          px.fillStyle = "#3a1f2b";
+          px.fillRect(0, 0, 1024, 256);
+          px.strokeStyle = "#ffd166";
+          px.lineWidth = 12;
+          px.strokeRect(10, 10, 1004, 236);
+          px.lineWidth = 4;
+          px.strokeRect(28, 28, 968, 200);
+          px.fillStyle = "#ffd978";
+          px.font = "800 124px system-ui,sans-serif";
+          px.textAlign = "center";
+          px.textBaseline = "middle";
+          px.fillText("CHÙA MEBI", 512, 136);
+          const plqT = new THREE.CanvasTexture(plqC);
+          plqT.anisotropy = 4;
+          bx(6.0, 1.7, 0.3, 0xd9a441, 0, 5.4, 0, 0);
+          [1, -1].forEach((s) => {
+            const m = new THREE.Mesh(
+              new THREE.PlaneGeometry(5.6, 1.4),
+              new THREE.MeshBasicMaterial({ map: plqT }),
+            );
+            m.position.set(0, 5.4, s * 0.17);
+            if (s < 0) m.rotation.y = Math.PI;
+            gate.add(m);
+          });
+          // đèn lồng trong lối đi
+          bx(0.3, 0.3, 4.2, RED, -1.7, 6.5, 0, 0);
+          bx(0.3, 0.3, 4.2, RED, 1.7, 6.5, 0, 0);
+          [-1.7, 1.7].forEach((x) => {
+            put(
+              gate,
+              new THREE.Mesh(
+                new THREE.CylinderGeometry(0.02, 0.02, 0.5, 4),
+                mGold,
+              ),
+              x,
+              6.2,
+              0,
+            );
+            put(
+              gate,
+              new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 14, 10),
+                tm(0xff5a4a, 0x9a2016),
+              ),
+              x,
+              5.45,
+              0,
+              [1.1, 1.3, 1.1],
+            );
+            put(
+              gate,
+              new THREE.Mesh(
+                new THREE.CylinderGeometry(0.2, 0.26, 0.16, 8),
+                mGold,
+              ),
+              x,
+              6.0,
+              0,
+            );
+          });
+          // tường chùa 2 bên
+          [-1, 1].forEach((s) => {
+            const len = 34.6,
+              cx = s * 26.7;
+            bx(len, 2, 0.9, 0xf2e6cf, cx, 1, 0, 1.01);
+            bx(len, 0.3, 0.96, 0xb8493c, cx, 1.65, 0, 0);
+            bx(len + 0.5, 0.12, 1.52, GOLD, cx, 2.05, 0, 0);
+            bx(len + 0.5, 0.3, 1.5, TEAL, cx, 2.28, 0, 0);
+            for (let i = 0; i < 5; i++) {
+              const x = s * (9.4 + i * 8.65);
+              bx(0.8, 2.6, 0.8, 0xe0d2b8, x, 1.3, 0, 1.04);
+              put(gate, mk(SP(0.26), GOLD, 1.05, 0x3a2600), x, 2.9, 0);
+            }
+          });
+          lamp(-3.9, 25);
+          lamp(3.9, 25);
+          // nối lối đi ra cổng
+          S.traverse((o) => {
+            if (
+              o.isMesh &&
+              o.geometry.type === "PlaneGeometry" &&
+              o.geometry.parameters.width === 5.6 &&
+              o.geometry.parameters.height === 31.4 &&
+              !S.userData.pathExt
+            ) {
+              S.userData.pathExt = 1;
+              const t2 = o.material.map.clone();
+              t2.needsUpdate = true;
+              t2.repeat.set(1, 1.6);
+              t2.wrapS = t2.wrapT = THREE.RepeatWrapping;
+              put(
+                S,
+                new THREE.Mesh(
+                  new THREE.PlaneGeometry(5.6, 9),
+                  new THREE.MeshToonMaterial({
+                    map: t2,
+                    polygonOffset: true,
+                    polygonOffsetFactor: -2,
+                    polygonOffsetUnits: -2,
+                  }),
+                ),
+                0,
+                0.03,
+                26.5,
+                null,
+                [-Math.PI / 2, 0, 0],
+              );
+            }
+          });
+        }
+
+        // ---------- TƯỢNG PHẬT LỚN HƠN + HÀO QUANG + PHÔNG VÀNG ----------
+        {
+          bud.scale.setScalar(1.0);
+          const k = 0.46;
+          bud.children.forEach((c) => {
+            const gm = c.geometry,
+              p = gm && gm.parameters;
+            if (!p) return;
+            const isHalo =
+              (gm.type === "CircleGeometry" && p.radius === 5.2) ||
+              (gm.type === "TorusGeometry" &&
+                (p.radius === 4.2 || p.radius === 3.7)) ||
+              (gm.type === "SphereGeometry" &&
+                p.radius === 0.09 &&
+                Math.abs(c.position.z + 1.85) < 0.01);
+            if (!isHalo) return;
+            c.position.y = 5.2 + (c.position.y - 5.2) * k;
+            c.position.x *= k;
+            if (gm.type !== "SphereGeometry") c.scale.multiplyScalar(k);
+          });
+          // phông sunburst vàng sau tượng
+          const bc = canv(1024, 300),
+            x = bc.getContext("2d");
+          const bg = x.createLinearGradient(0, 0, 0, 300);
+          bg.addColorStop(0, "#3a1f4a");
+          bg.addColorStop(1, "#6b2a46");
+          x.fillStyle = bg;
+          x.fillRect(0, 0, 1024, 300);
+          x.save();
+          x.translate(512, 150);
+          for (let i = 0; i < 36; i++) {
+            x.rotate(TAU / 36);
+            x.fillStyle =
+              i % 2 ? "rgba(255,214,120,.34)" : "rgba(255,170,90,.2)";
+            x.beginPath();
+            x.moveTo(0, 0);
+            x.lineTo(900, -26);
+            x.lineTo(900, 26);
+            x.closePath();
+            x.fill();
+          }
+          x.restore();
+          [
+            [130, "rgba(255,225,150,.9)", 6],
+            [100, "rgba(255,200,120,.7)", 3],
+            [160, "rgba(255,225,150,.5)", 2],
+          ].forEach(([r, c, w]) => {
+            x.strokeStyle = c;
+            x.lineWidth = w;
+            x.beginPath();
+            x.arc(512, 150, r, 0, TAU);
+            x.stroke();
+          });
+          for (let i = 0; i < 24; i++) {
+            const a = (i / 24) * TAU;
+            x.fillStyle = i % 2 ? "#ffd166" : "#ffb347";
+            x.beginPath();
+            x.arc(512 + Math.cos(a) * 190, 150 + Math.sin(a) * 190, 4, 0, TAU);
+            x.fill();
+          }
+          for (let i = 0; i < 90; i++) {
+            x.fillStyle = "rgba(255,240,200," + rnd(0.2, 0.7) + ")";
+            x.fillRect(rnd(0, 1024), rnd(0, 300), 2, 2);
+          }
+          const bt = new THREE.CanvasTexture(bc);
+          bt.anisotropy = 4;
+          put(
+            hall,
+            new THREE.Mesh(
+              new THREE.PlaneGeometry(24, 7),
+              new THREE.MeshBasicMaterial({ map: bt }),
+            ),
+            0,
+            H0 + 3.7,
+            -24.42,
+          );
+        }
+
+        // ---------- BÀN THỜ LỘNG LẪY: khăn, nến, đèn sen, lư hương + khói ----------
+        let smk = null;
+        {
+          const cl = canv(512, 96),
+            x = cl.getContext("2d");
+          const g = x.createLinearGradient(0, 0, 0, 96);
+          g.addColorStop(0, "#c63a34");
+          g.addColorStop(1, "#8f2226");
+          x.fillStyle = g;
+          x.fillRect(0, 0, 512, 96);
+          x.strokeStyle = "#ffd166";
+          x.lineWidth = 6;
+          x.strokeRect(4, 4, 504, 88);
+          x.fillStyle = "#ffd978";
+          for (let i = 0; i < 9; i++) {
+            x.save();
+            x.translate(28 + i * 57, 48);
+            for (let p = 0; p < 6; p++) {
+              x.rotate(TAU / 6);
+              x.beginPath();
+              x.ellipse(0, -13, 5, 12, 0, 0, TAU);
+              x.fill();
+            }
+            x.restore();
+          }
+          put(
+            altar,
+            new THREE.Mesh(
+              new THREE.PlaneGeometry(8.8, 1.0),
+              new THREE.MeshToonMaterial({
+                map: new THREE.CanvasTexture(cl),
+                gradientMap: GRAD,
+              }),
+            ),
+            0,
+            0.58,
+            1.32,
+          );
+          // nến phụ
+          [-1.0, 1.0, -2.7, 2.7, -4.1, 4.1].forEach((px, i) => {
+            const z = i < 4 ? 0.95 : 0.5;
+            put(
+              altar,
+              mk(
+                new THREE.CylinderGeometry(0.2, 0.24, 0.16, 8),
+                GOLD,
+                0,
+                0x3a2600,
+              ),
+              px,
+              1.32,
+              z,
+            );
+            put(
+              altar,
+              mk(new THREE.CylinderGeometry(0.08, 0.08, 0.5, 8), 0xfff3d6, 0),
+              px,
+              1.65,
+              z,
+            );
+            const f = put(
+              altar,
+              mk(new THREE.ConeGeometry(0.075, 0.24, 6), 0xffb347, 0, 0xff8a20),
+              px,
+              2.0,
+              z,
+            );
+            flames.push(f);
+          });
+          // đèn hoa sen vàng
+          [-1, 1].forEach((s) => {
+            const gl = new THREE.Group();
+            gl.position.set(s * 3.9, 1.25, -0.6);
+            altar.add(gl);
+            put(
+              gl,
+              mk(
+                new THREE.CylinderGeometry(0.25, 0.4, 0.3, 10),
+                GOLD,
+                1.04,
+                0x3a2600,
+              ),
+              0,
+              0.15,
+              0,
+            );
+            for (let i = 0; i < 8; i++) {
+              const pv = new THREE.Group();
+              pv.rotation.y = (i / 8) * TAU;
+              gl.add(pv);
+              const pt = mk(SP(1), i % 2 ? 0xffd978 : 0xffc2da, 1.05, 0x3a1a00);
+              pt.position.set(0, 0.55, 0.28);
+              pt.scale.set(0.12, 0.33, 0.06);
+              pt.rotation.x = 0.35;
+              pv.add(pt);
+            }
+            put(
+              gl,
+              mk(new THREE.CylinderGeometry(0.06, 0.06, 0.3, 6), 0xfff3d6, 0),
+              0,
+              0.55,
+              0,
+            );
+            flames.push(
+              put(
+                gl,
+                mk(new THREE.ConeGeometry(0.06, 0.2, 6), 0xffb347, 0, 0xff8a20),
+                0,
+                0.8,
+                0,
+              ),
+            );
+          });
+          // nụ sen dọc mép bàn
+          for (let i = 0; i < 9; i++) {
+            const bud2 = mk(
+              new THREE.ConeGeometry(0.17, 0.46, 8),
+              i % 2 ? 0xfff0f7 : 0xff9ec4,
+              1.05,
+            );
+            put(altar, bud2, -4 + i, 1.5, 1.2);
+          }
+          // lư hương nhỏ + khói bay lên
+          [-2.7, 2.7].forEach((px) => {
+            put(
+              altar,
+              mk(
+                new THREE.CylinderGeometry(0.34, 0.24, 0.34, 10),
+                GOLD,
+                1.05,
+                0x3a2600,
+              ),
+              px,
+              1.46,
+              -0.15,
+            );
+            put(
+              altar,
+              new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.05, 6, 14), mGold),
+              px,
+              1.63,
+              -0.15,
+              null,
+              [Math.PI / 2, 0, 0],
+            );
+          });
+          smk = pts(70, 1.7, 0xf4f1f6, 0.32, false);
+          smk.p.material.fog = false;
+          smk.st = [];
+          for (let i = 0; i < 70; i++)
+            smk.st.push({
+              a: Math.random() * 4.5,
+              s: i % 2 ? 2.7 : -2.7,
+              p: Math.random() * 6,
+            });
+          GA.push((t, dt) => {
+            smk.st.forEach((q, i) => {
+              q.a += dt;
+              if (q.a > 4.5) q.a = 0;
+              const wx = Math.sin(t * 0.9 + q.p + q.a * 1.3) * 0.25 * q.a;
+              smk.pos.set(
+                [
+                  q.s + wx,
+                  H0 + 1.8 + q.a * 0.85,
+                  -16.75 + Math.cos(t * 0.7 + q.p) * 0.12 * q.a,
+                ],
+                i * 3,
+              );
+            });
+            smk.p.geometry.attributes.position.needsUpdate = true;
+            smk.p.material.opacity = 0.34;
+          });
+        }
+
+        // ---------- MÕ 3D + hiệu ứng gõ ----------
+        const mo3 = new THREE.Group();
+        mo3.position.set(-2.8, H0, -13.4);
+        S.add(mo3);
+        put(
+          mo3,
+          mk(new THREE.CylinderGeometry(0.9, 1.0, 0.24, 18), 0xb8332f, 1.04),
+          0,
+          0.12,
+          0,
+        );
+        put(
+          mo3,
+          new THREE.Mesh(new THREE.TorusGeometry(0.92, 0.06, 6, 24), mGold),
+          0,
+          0.25,
+          0,
+          null,
+          [Math.PI / 2, 0, 0],
+        );
+        const moBody = new THREE.Group();
+        moBody.position.y = 0.24;
+        mo3.add(moBody);
+        put(
+          moBody,
+          mk(SP(0.62), 0xd8923f, 1.05, 0x2a1400),
+          0,
+          0.58,
+          0,
+          [1, 0.82, 0.86],
+        );
+        put(
+          moBody,
+          new THREE.Mesh(
+            new THREE.BoxGeometry(0.78, 0.07, 0.14),
+            new THREE.MeshBasicMaterial({ color: 0x2a1608 }),
+          ),
+          0,
+          0.52,
+          0.5,
+        );
+        put(moBody, mk(SP(0.17), 0xd8923f, 1.05), 0, 0.6, -0.62);
+        const mal = new THREE.Group();
+        mal.position.set(0.8, 1.5, 0.1);
+        mo3.add(mal);
+        put(
+          mal,
+          mk(new THREE.CylinderGeometry(0.05, 0.05, 0.95, 8), 0x8a5a2b, 0),
+          -0.48,
+          0,
+          0,
+          null,
+          [0, 0, Math.PI / 2],
+        );
+        put(mal, mk(SP(0.13), 0xc9873b, 1.05), -0.98, 0, 0);
+        mo3.userData.a = 99;
+        const kTex = ["cốc", "cộc", "cốc!"].map((w) => {
+          const c = canv(160, 80),
+            x = c.getContext("2d");
+          x.font = "800 52px system-ui,sans-serif";
+          x.textAlign = "center";
+          x.textBaseline = "middle";
+          x.lineWidth = 8;
+          x.strokeStyle = "rgba(60,30,70,.85)";
+          x.strokeText(w, 80, 42);
+          x.fillStyle = "#ffe08a";
+          x.fillText(w, 80, 42);
+          return new THREE.CanvasTexture(c);
+        });
+        const kfx = [];
+        window.knockFx = (p) => {
+          mo3.userData.a = 0;
+          if (!p) return;
+          const sp = new THREE.Sprite(
+            new THREE.SpriteMaterial({
+              map: kTex[(Math.random() * 3) | 0],
+              transparent: true,
+              depthTest: false,
+              fog: false,
+            }),
+          );
+          sp.scale.set(2.2, 1.1, 1);
+          sp.position.set(
+            p.x + (Math.random() - 0.5) * 0.6,
+            (p.y || 0) + 3.3,
+            p.z,
+          );
+          S.add(sp);
+          kfx.push({ sp, a: 0 });
+          if (kfx.length > 14) {
+            const o = kfx.shift();
+            S.remove(o.sp);
+            o.sp.material.dispose();
+          }
+        };
+        GA.push((t, dt) => {
+          for (let i = kfx.length - 1; i >= 0; i--) {
+            const q = kfx[i];
+            q.a += dt;
+            q.sp.position.y += dt * 1.4;
+            q.sp.material.opacity = Math.max(0, 1 - q.a);
+            if (q.a > 1) {
+              S.remove(q.sp);
+              q.sp.material.dispose();
+              kfx.splice(i, 1);
+            }
+          }
+          const a = (mo3.userData.a += dt);
+          mal.rotation.z =
+            a < 0.09
+              ? 0.55 - 0.6 * (a / 0.09)
+              : a < 0.3
+                ? -0.05 + 0.6 * ((a - 0.09) / 0.21)
+                : 0.55;
+          const s = 1 + 0.07 * Math.exp(-a * 16);
+          moBody.scale.set(s, 1 / s, s);
+        });
+
+        // ---------- AO SEN: nước trong, cầu đá, cá koi, sen nở, gợn sóng ----------
+        {
+          pond.children.slice().forEach((c) => {
+            const p = c.geometry && c.geometry.parameters;
+            if (!p) return;
+            if (
+              c.geometry.type === "ConeGeometry" &&
+              p.radius === 0.36 &&
+              p.height === 0.7
+            )
+              pond.remove(c);
+            if (c.geometry.type === "CircleGeometry" && p.radius === 4.6) {
+              c.material.opacity = 0.56;
+              c.material.color.setHex(0x8fd3ec);
+            }
+          });
+          put(
+            pond,
+            new THREE.Mesh(new THREE.CircleGeometry(4.55, 32), tm(0x3f86a8)),
+            0,
+            0.006,
+            0,
+            null,
+            [-Math.PI / 2, 0, 0],
+          );
+          // hoa sen nở
+          const blooms = [];
+          const lotus = (lx, lz, sc, ph) => {
+            const g = new THREE.Group();
+            g.position.set(lx, 0.12, lz);
+            g.scale.setScalar(sc);
+            pond.add(g);
+            const rings = [];
+            [
+              [9, 0xff9ec4, 0.5, 0.2],
+              [7, 0xffc2da, 0.4, 0.13],
+              [5, 0xfff0f7, 0.3, 0.07],
+            ].forEach(([n, col, len, rad], ri) => {
+              const piv = [];
+              for (let i = 0; i < n; i++) {
+                const py = new THREE.Group();
+                py.rotation.y = (i / n) * TAU + ri * 0.3;
+                g.add(py);
+                const px = new THREE.Group();
+                px.position.z = rad * 0.5;
+                py.add(px);
+                const pt = mk(SP(1), col, 1.06);
+                pt.position.set(0, len * 0.9, 0);
+                pt.scale.set(0.15, len * 0.9, 0.06);
+                px.add(pt);
+                piv.push(px);
+              }
+              rings.push(piv);
+            });
+            put(g, mk(SP(0.1), 0xffd23f, 0), 0, 0.28, 0);
+            blooms.push({ rings, ph });
+          };
+          [
+            [-1.5, 1.2],
+            [1.8, -1],
+            [0.5, 2.2],
+            [-2.2, -1.6],
+            [2.6, 1.6],
+            [-0.4, -0.4],
+          ].forEach(([x, z], i) =>
+            lotus(x + 0.25, z + 0.15, 0.85 + (i % 3) * 0.12, i * 1.1),
+          );
+          [
+            [1.0, -2.6],
+            [-2.8, 0.4],
+          ].forEach(([x, z]) =>
+            put(
+              pond,
+              mk(new THREE.ConeGeometry(0.16, 0.5, 8), 0xff9ec4, 1.05),
+              x,
+              0.35,
+              z,
+            ),
+          );
+          GA.push((t) =>
+            blooms.forEach((b) => {
+              const o = 0.5 + 0.5 * Math.sin(t * 0.35 + b.ph);
+              [0.15 + o * 1.0, 0.1 + o * 0.7, 0.05 + o * 0.45].forEach(
+                (ang, ri) => b.rings[ri].forEach((px) => (px.rotation.x = ang)),
+              );
+            }),
+          );
+          // cá koi
+          const KOI = [
+            [0xfff4ea, 0xff7a2f, 3.2, 0.42, 0, 1.0],
+            [0xff8a3d, 0xfff0e0, 2.4, -0.5, 1.3, 1.15],
+            [0xfff4ea, 0x2b2b33, 3.5, 0.36, 2.6, 0.9],
+            [0xffc247, 0xff7a2f, 1.9, -0.62, 3.9, 1.05],
+            [0xff5a3d, 0xfff4ea, 2.9, 0.5, 5.1, 0.95],
+          ];
+          const fish = KOI.map(([body, spot, rho, w, ph, sc]) => {
+            const g = new THREE.Group();
+            pond.add(g);
+            put(g, mk(SP(1), body, 1.05), 0, 0, 0, [0.14, 0.1, 0.4]);
+            put(
+              g,
+              new THREE.Mesh(SP(1), tm(spot)),
+              0,
+              0.075,
+              0.08,
+              [0.1, 0.05, 0.2],
+            );
+            put(
+              g,
+              new THREE.Mesh(SP(1), tm(spot)),
+              0.05,
+              0.07,
+              -0.14,
+              [0.07, 0.04, 0.13],
+            );
+            [-1, 1].forEach((s) =>
+              put(
+                g,
+                mk(SP(1), body, 0),
+                s * 0.15,
+                -0.02,
+                0.15,
+                [0.1, 0.02, 0.08],
+                [0, s * 0.5, 0],
+              ),
+            );
+            const tail = new THREE.Group();
+            tail.position.z = -0.38;
+            g.add(tail);
+            const tf = mk(new THREE.ConeGeometry(0.13, 0.34, 6), body, 0);
+            tf.rotation.x = -Math.PI / 2;
+            tf.position.z = -0.17;
+            tf.scale.set(1.5, 1, 0.18);
+            tail.add(tf);
+            g.scale.setScalar(sc);
+            return { g, tail, rho, w, ph };
+          });
+          const fpos = (f, t) => {
+            const a = f.ph + t * f.w,
+              r = f.rho + 0.35 * Math.sin(t * 0.6 + f.ph * 2);
+            return [Math.cos(a) * r, Math.sin(a) * r];
+          };
+          GA.push((t) =>
+            fish.forEach((f) => {
+              const [x, z] = fpos(f, t),
+                [x2, z2] = fpos(f, t + 0.05);
+              f.g.position.set(x, 0.018, z);
+              f.g.rotation.y = Math.atan2(x2 - x, z2 - z);
+              f.tail.rotation.y = Math.sin(t * 7 + f.ph) * 0.5;
+            }),
+          );
+          // gợn sóng
+          const rip = [];
+          for (let i = 0; i < 6; i++) {
+            const m = new THREE.Mesh(
+              new THREE.RingGeometry(0.14, 0.2, 32),
+              new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0,
+                depthWrite: false,
+                side: THREE.DoubleSide,
+              }),
+            );
+            m.rotation.x = -Math.PI / 2;
+            m.position.y = 0.045;
+            pond.add(m);
+            rip.push({ m, a: 99 });
+          }
+          let nr = 0,
+            rt = 0;
+          GA.push((t, dt) => {
+            rt -= dt;
+            if (rt <= 0) {
+              rt = rnd(0.5, 1.5);
+              const q = rip[nr++ % rip.length],
+                a = Math.random() * TAU,
+                r = rnd(0.5, 3.8);
+              q.a = 0;
+              q.m.position.x = Math.cos(a) * r;
+              q.m.position.z = Math.sin(a) * r;
+            }
+            rip.forEach((q) => {
+              q.a += dt;
+              const k = q.a / 1.8;
+              q.m.visible = k < 1;
+              q.m.scale.setScalar(1 + k * 6);
+              q.m.material.opacity = Math.max(0, 0.55 * (1 - k));
+            });
+          });
+          // cầu đá cong bắc qua ao (đi được)
+          const br = new THREE.Group();
+          pond.add(br);
+          const arch = (z) => 1.5 * (1 - (z / 5.8) * (z / 5.8)),
+            N = 14;
+          for (let i = 0; i < N; i++) {
+            const z = -5.8 + ((i + 0.5) * 11.6) / N,
+              slope = ((-3 * (z / 5.8)) / 5.8) * 1.0;
+            put(
+              br,
+              mk(
+                new THREE.BoxGeometry(2.0, 0.3, 0.95),
+                i % 2 ? 0xe2d8c6 : 0xd9cfbd,
+                1.03,
+              ),
+              0,
+              arch(z) - 0.16,
+              z,
+              null,
+              [-Math.atan(slope * 1.0), 0, 0],
+            );
+          }
+          [-1, 1].forEach((s) => {
+            const rail = [];
+            for (let i = 0; i <= 16; i++) {
+              const z = -5.8 + (i * 11.6) / 16;
+              rail.push(new THREE.Vector3(s * 1.0, arch(z) + 0.95, z));
+            }
+            br.add(
+              new THREE.Mesh(
+                new THREE.TubeGeometry(
+                  new THREE.CatmullRomCurve3(rail),
+                  40,
+                  0.07,
+                  6,
+                  false,
+                ),
+                tm(0xb8332f),
+              ),
+            );
+            for (let i = 0; i <= 8; i++) {
+              const z = -5.8 + (i * 11.6) / 8;
+              put(
+                br,
+                mk(new THREE.BoxGeometry(0.16, 1.0, 0.16), 0xb8332f, 1.04),
+                s * 1.0,
+                arch(z) + 0.45,
+                z,
+              );
+              put(
+                br,
+                mk(SP(0.12), GOLD, 1.05, 0x3a2600),
+                s * 1.0,
+                arch(z) + 1.0,
+                z,
+              );
+            }
+            [-1, 1].forEach((e) =>
+              put(
+                br,
+                new THREE.Mesh(
+                  new THREE.SphereGeometry(0.4, 14, 10),
+                  tm(0xff5a4a, 0x9a2016),
+                ),
+                s * 1.0,
+                arch(e * 5.2) + 1.45,
+                e * 5.2,
+                [0.7, 0.85, 0.7],
+              ),
+            );
+          });
+          put(
+            br,
+            mk(new THREE.BoxGeometry(2.4, 0.14, 0.8), 0xd2c6b2, 1.03),
+            0,
+            0.05,
+            -6.25,
+          );
+          put(
+            br,
+            mk(new THREE.BoxGeometry(2.4, 0.14, 0.8), 0xd2c6b2, 1.03),
+            0,
+            0.05,
+            6.25,
+          );
+        }
+
+        // ---------- MÔI TRƯỜNG: ngày/đêm + thời tiết ----------
+        const ENV = { night: 0, nv: 0, wx: 0, w: [0, 0] };
+        try {
+          const sv = localStorage.getItem("mebi-night"),
+            h = new Date().getHours();
+          ENV.night = sv == null ? (h >= 18 || h < 5 ? 1 : 0) : +sv;
+        } catch (e) {}
+        ENV.nv = ENV.night;
+        const hemi = S.children.find((o) => o.isHemisphereLight);
+        let moonM = null;
+        S.traverse((o) => {
+          if (
+            o.isMesh &&
+            o.geometry.type === "SphereGeometry" &&
+            o.geometry.parameters.radius === 11 &&
+            o.geometry.parameters.widthSegments === 24
+          )
+            moonM = o;
+        });
+        const stars2 = pts(260, 2.6, 0xfff6d8, 0.9, true);
+        stars2.p.material.fog = false;
+        for (let i = 0; i < 260; i++) {
+          const a = Math.random() * TAU,
+            e = 0.12 + Math.random() * 1.2,
+            r = 205;
+          stars2.pos.set(
+            [
+              Math.cos(a) * Math.cos(e) * r,
+              Math.sin(e) * r * 0.8 + 8,
+              -Math.sin(a) * Math.cos(e) * r,
+            ],
+            i * 3,
+          );
+        }
+        stars2.p.geometry.attributes.position.needsUpdate = true;
+        // ánh sáng đèn về đêm
+        const glowMat = new THREE.SpriteMaterial({
+          map: glowTex,
+          color: 0xffc070,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          fog: false,
+          opacity: 0,
+        });
+        const lanMats = new Set();
+        {
+          const add = [];
+          S.traverse((o) => {
+            if (!o.isMesh) return;
+            const g = o.geometry,
+              m = o.material;
+            let sc = 0;
+            if (
+              m &&
+              m.isMeshBasicMaterial &&
+              m.color &&
+              m.color.getHex() === 0xffd27a &&
+              (g.type === "PlaneGeometry" || g.type === "BoxGeometry")
+            )
+              sc = g.type === "BoxGeometry" ? 3.6 : 2.6;
+            else if (
+              g.type === "SphereGeometry" &&
+              ((g.parameters.radius === 0.4 &&
+                g.parameters.widthSegments === 14) ||
+                (g.parameters.radius === 0.3 &&
+                  g.parameters.widthSegments === 12))
+            ) {
+              sc = 3;
+              if (m.emissiveIntensity !== undefined) lanMats.add(m);
+            }
+            if (sc) add.push([o, sc]);
+          });
+          add.forEach(([o, sc]) => {
+            const s = new THREE.Sprite(glowMat);
+            s.scale.set(sc, sc, 1);
+            o.add(s);
+          });
+          flames.forEach((f) => {
+            const s = new THREE.Sprite(glowMat);
+            s.scale.set(3.2, 3.2, 1);
+            f.add(s);
+          });
+        }
+        // mưa hoa anh đào
+        const petalTex = (() => {
+          const c = canv(64, 64),
+            x = c.getContext("2d");
+          x.translate(32, 32);
+          x.rotate(-0.6);
+          const g = x.createRadialGradient(0, -6, 2, 0, 0, 26);
+          g.addColorStop(0, "#fff2f7");
+          g.addColorStop(1, "#ff9fc2");
+          x.fillStyle = g;
+          x.beginPath();
+          x.moveTo(0, -24);
+          x.bezierCurveTo(22, -18, 22, 12, 0, 24);
+          x.bezierCurveTo(-22, 12, -22, -18, 0, -24);
+          x.fill();
+          return new THREE.CanvasTexture(c);
+        })();
+        const NP = 520,
+          pg = new THREE.BufferGeometry(),
+          ppos = new Float32Array(NP * 3),
+          pst = [];
+        for (let i = 0; i < NP; i++)
+          pst.push({
+            x: rnd(-38, 38),
+            y: rnd(0, 30),
+            z: rnd(-36, 34),
+            v: rnd(1.1, 2.5),
+            p: rnd(0, 6),
+            d: rnd(0.4, 1.2),
+          });
+        pg.setAttribute("position", new THREE.BufferAttribute(ppos, 3));
+        const pm = new THREE.PointsMaterial({
+          map: petalTex,
+          size: 0.85,
+          transparent: true,
+          depthWrite: false,
+          opacity: 0,
+          sizeAttenuation: true,
+        });
+        const petals = new THREE.Points(pg, pm);
+        petals.frustumCulled = false;
+        petals.visible = false;
+        S.add(petals);
+        // sương mù
+        const mistTex = (() => {
+          const c = canv(256, 256),
+            x = c.getContext("2d");
+          for (let i = 0; i < 18; i++) {
+            const px = rnd(30, 226),
+              py = rnd(30, 226),
+              r = rnd(40, 90),
+              g = x.createRadialGradient(px, py, 0, px, py, r);
+            g.addColorStop(0, "rgba(255,255,255,.55)");
+            g.addColorStop(1, "rgba(255,255,255,0)");
+            x.fillStyle = g;
+            x.fillRect(0, 0, 256, 256);
+          }
+          return new THREE.CanvasTexture(c);
+        })();
+        const mist = [];
+        for (let i = 0; i < 6; i++) {
+          const m = new THREE.Mesh(
+            new THREE.PlaneGeometry(90, 90),
+            new THREE.MeshBasicMaterial({
+              map: mistTex,
+              transparent: true,
+              opacity: 0,
+              depthWrite: false,
+              fog: false,
+            }),
+          );
+          m.rotation.x = -Math.PI / 2;
+          m.rotation.z = i;
+          m.position.set(i % 2 ? 5 : -5, 0.5 + i * 0.75, (i % 3) * 3 - 3);
+          m.visible = false;
+          S.add(m);
+          mist.push(m);
+        }
+        let lastSky = -1;
+        GA.push((t, dt) => {
+          const k1 = Math.min(1, dt * 1.8),
+            k2 = Math.min(1, dt * 1.2);
+          ENV.nv += (ENV.night - ENV.nv) * k1;
+          if (Math.abs(ENV.nv - ENV.night) < 0.002) ENV.nv = ENV.night;
+          ENV.w[0] += ((ENV.wx === 1 ? 1 : 0) - ENV.w[0]) * k2;
+          ENV.w[1] += ((ENV.wx === 2 ? 1 : 0) - ENV.w[1]) * k2;
+          const nv = ENV.nv,
+            w0 = ENV.w[0],
+            w1 = ENV.w[1];
+          if (Math.abs(nv - lastSky) > 0.002) {
+            lastSky = nv;
+            const bgc =
+              "linear-gradient(" +
+              css(hexMix(0x7d6ddb, 0x070a26, nv)) +
+              "," +
+              css(hexMix(0xf0b4d8, 0x1d2160, nv)) +
+              " 58%," +
+              css(hexMix(0xffdcb8, 0x4b2f68, nv)) +
+              ")";
+            document.body.style.background = bgc;
+            document.documentElement.style.background = bgc;
+          }
+          const fogC = hexMix(
+            hexMix(0xf0c8dc, 0x20245a, nv),
+            hexMix(0xeae6f0, 0x2c3158, nv),
+            w1,
+          );
+          S.fog.color.setHex(fogC);
+          S.fog.near = lerp(60, 14, w1);
+          S.fog.far = lerp(170, 85, w1);
+          if (hemi) {
+            hemi.intensity = lerp(0.5, 0.3, nv);
+            hemi.color.setHex(hexMix(0xfff2ee, 0xaebcff, nv));
+            hemi.groundColor.setHex(hexMix(0x9d8fc0, 0x3a3470, nv));
+          }
+          sunL.intensity = lerp(0.45, 0.28, nv);
+          sunL.color.setHex(hexMix(0xffe2c4, 0x9db4ff, nv));
+          hallLight.intensity *= 1 + 0.7 * nv;
+          budL.intensity = 0.35 * (1 + 0.8 * nv);
+          stars.p.material.opacity = 0.9 * nv;
+          stars.p.visible = nv > 0.02;
+          stars2.p.material.opacity = nv * (0.7 + 0.25 * Math.sin(t * 2.3));
+          stars2.p.visible = nv > 0.02;
+          if (moonM) {
+            moonM.material.opacity = lerp(0.22, 0.95, nv);
+            moonM.material.color.setHex(hexMix(0xfff6d8, 0xfffbe8, nv));
+          }
+          glowMat.opacity = nv * (0.62 + 0.08 * Math.sin(t * 5));
+          lanMats.forEach((m) => (m.emissiveIntensity = 1 + nv * 1.4));
+          // hoa rơi
+          petals.visible = w0 > 0.01;
+          if (petals.visible) {
+            pm.opacity = 0.95 * w0;
+            pm.color.setHex(hexMix(0xffffff, 0xb8c4ff, nv * 0.6));
+            for (let i = 0; i < NP; i++) {
+              const q = pst[i];
+              q.y -= q.v * dt;
+              q.x += (Math.sin(t * 0.8 + q.p) * 0.9 + 0.7) * dt * q.d;
+              q.z += Math.cos(t * 0.6 + q.p) * 0.5 * dt;
+              if (q.y < 0) {
+                q.y = 30;
+                q.x = rnd(-38, 38);
+                q.z = rnd(-36, 34);
+              }
+              if (q.x > 40) q.x = -38;
+              ppos[i * 3] = q.x;
+              ppos[i * 3 + 1] = q.y;
+              ppos[i * 3 + 2] = q.z;
+            }
+            pg.attributes.position.needsUpdate = true;
+          }
+          // sương mù
+          mist.forEach((m, i) => {
+            m.visible = w1 > 0.01;
+            if (!m.visible) return;
+            m.material.opacity = 0.3 * w1;
+            m.material.color.setHex(hexMix(0xffffff, 0x7078a8, nv));
+            m.rotation.z += dt * 0.02 * (i % 2 ? 1 : -1);
+            m.position.x += Math.sin(t * 0.1 + i) * dt * 0.4;
+          });
+        });
+        // nút + phím
+        const acts = $("acts"),
+          mkBtn = (id, txt) => {
+            const b = document.createElement("button");
+            b.id = id;
+            b.className = "alt";
+            b.textContent = txt;
+            acts.appendChild(b);
+            return b;
+          };
+        const bDN = mkBtn("bDN", ""),
+          bWx = mkBtn("bWx", ""),
+          bBellB = mkBtn("bBell", "🔔 Chuông lầu");
+        const WXL = ["☀️ Trời quang", "🌸 Hoa rơi", "🌫 Sương mù"],
+          lbDN = () =>
+            (bDN.textContent = ENV.night ? "☀️ Ban ngày" : "🌙 Ban đêm"),
+          lbWx = () => (bWx.textContent = WXL[ENV.wx]);
+        lbDN();
+        lbWx();
+        const toggleDN = () => {
+          ENV.night = ENV.night ? 0 : 1;
+          try {
+            localStorage.setItem("mebi-night", ENV.night);
+          } catch (e) {}
+          lbDN();
+          toast(
+            ENV.night ? "🌙 Đêm xuống, đèn lồng thắp sáng" : "☀️ Trời sáng",
+          );
+        };
+        const cycleWx = () => {
+          ENV.wx = (ENV.wx + 1) % 3;
+          lbWx();
+          toast(
+            [
+              "☀️ Trời quang mây tạnh",
+              "🌸 Mưa hoa anh đào",
+              "🌫 Sương sớm giăng lối",
+            ][ENV.wx],
+          );
+        };
+        bDN.onclick = toggleDN;
+        bWx.onclick = cycleWx;
+
+        // ---------- ÂM THANH: chuông lầu, chuông gió, nước ao, dế đêm ----------
+        const AMB = { on: false, tb: 3, td: 2, tl: 40 };
+        AMB.start = (ac) => {
+          if (AMB.on || !M.master) return;
+          AMB.on = true;
+          AMB.out = ac.createGain();
+          AMB.out.gain.value = 0;
+          AMB.out.connect(M.master);
+          const len = ac.sampleRate * 2,
+            nb = ac.createBuffer(1, len, ac.sampleRate),
+            d = nb.getChannelData(0);
+          let l = 0;
+          for (let i = 0; i < len; i++) {
+            l = (l + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+            d[i] = l * 3.2;
+          }
+          const ws = ac.createBufferSource();
+          ws.buffer = nb;
+          ws.loop = true;
+          const wf = ac.createBiquadFilter();
+          wf.type = "lowpass";
+          wf.frequency.value = 700;
+          const wg = ac.createGain();
+          wg.gain.value = 0;
+          ws.connect(wf);
+          wf.connect(wg);
+          wg.connect(AMB.out);
+          ws.start();
+          AMB.water = wg;
+          const lf = ac.createOscillator(),
+            lg = ac.createGain();
+          lf.frequency.value = 0.35;
+          lg.gain.value = 220;
+          lf.connect(lg);
+          lg.connect(wf.frequency);
+          lf.start();
+          AMB.cr = ac.createGain();
+          AMB.cr.gain.value = 0;
+          AMB.cr.connect(AMB.out);
+          [
+            [4300, 13],
+            [4750, 9.5],
+          ].forEach(([f, r]) => {
+            const o = ac.createOscillator(),
+              am = ac.createGain(),
+              lo = ac.createOscillator(),
+              lg2 = ac.createGain();
+            o.frequency.value = f;
+            am.gain.value = 0.5;
+            lo.type = "square";
+            lo.frequency.value = r;
+            lg2.gain.value = 0.5;
+            lo.connect(lg2);
+            lg2.connect(am.gain);
+            o.connect(am);
+            am.connect(AMB.cr);
+            o.start();
+            lo.start();
+          });
+        };
+        const _aud = audio;
+        audio = function () {
+          const ac = _aud.apply(this, arguments);
+          if (ac && !AMB.on) AMB.start(ac);
+          return ac;
+        };
+        const chimeSfx = () => {
+          if (!M.ac || !M.sfx || !sfxOn) return;
+          const f = [1318.5, 1568, 1760, 2093, 2349][(Math.random() * 5) | 0];
+          osc(f, "sine", M.sfx, 0.022, 0.004, 1.5);
+          osc(f * 2.76, "sine", M.sfx, 0.008, 0.004, 0.7);
+        };
+        const waterDrop = () => {
+          const ac = M.ac;
+          if (!ac || !AMB.out) return;
+          const o = ac.createOscillator(),
+            g = ac.createGain(),
+            t0 = ac.currentTime,
+            f = 500 + Math.random() * 500;
+          o.frequency.setValueAtTime(f, t0);
+          o.frequency.exponentialRampToValueAtTime(f * 2.1, t0 + 0.09);
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.linearRampToValueAtTime(0.05 * (AMB.k || 1), t0 + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.16);
+          o.connect(g);
+          g.connect(AMB.out);
+          o.start(t0);
+          o.stop(t0 + 0.2);
+        };
+        const bigBell = () => {
+          if (!M.ac || !M.sfx) return;
+          window.BELLK.t = 0;
+          const f0 = 96;
+          [
+            [1, 0.2, 9],
+            [2.01, 0.13, 6.5],
+            [2.43, 0.1, 5],
+            [3.02, 0.07, 4],
+            [4.12, 0.05, 3],
+            [5.4, 0.035, 2.2],
+            [0.5, 0.08, 10],
+          ].forEach(([r, v, d]) => osc(f0 * r, "sine", M.sfx, v, 0.006, d));
+          osc(f0 + 0.8, "sine", M.sfx, 0.12, 0.006, 9);
+          toast("🔔 Chuông lầu ngân vang…");
+        };
+        const ringBell = () => {
+          audio();
+          bigBell();
+        };
+        bBellB.onclick = ringBell;
+        GA.push((t, dt) => {
+          window.BELLK.t += dt;
+          window.BELLK.sw =
+            window.BELLK.t < 9
+              ? 0.34 *
+                Math.exp(-window.BELLK.t * 0.45) *
+                Math.sin(window.BELLK.t * 3.4)
+              : 0;
+          if (!AMB.on) return;
+          const pd = Math.hypot(me.x - 14.5, me.z - 10);
+          AMB.k = Math.max(0.12, Math.min(1, 1.25 - pd / 20));
+          AMB.water.gain.value = lerp(
+            AMB.water.gain.value,
+            0.16 * AMB.k,
+            Math.min(1, dt * 3),
+          );
+          AMB.cr.gain.value = lerp(
+            AMB.cr.gain.value,
+            0.035 * ENV.nv,
+            Math.min(1, dt * 2),
+          );
+          AMB.out.gain.value = lerp(
+            AMB.out.gain.value,
+            sfxOn ? 1 : 0,
+            Math.min(1, dt * 6),
+          );
+          AMB.tb -= dt;
+          if (AMB.tb <= 0) {
+            AMB.tb = 2 + Math.random() * 4.5;
+            chimeSfx();
+          }
+          AMB.td -= dt;
+          if (AMB.td <= 0) {
+            AMB.td = 1.2 + Math.random() * 3;
+            waterDrop();
+          }
+          AMB.tl -= dt;
+          if (AMB.tl <= 0) {
+            AMB.tl = 70 + Math.random() * 50;
+            if (playing) bigBell();
+          }
+        });
+        addEventListener("keydown", (e) => {
+          if (e.target.tagName === "INPUT" || e.repeat) return;
+          if (e.code === "KeyN") toggleDN();
+          else if (e.code === "KeyK") cycleWx();
+          else if (e.code === "KeyC") ringBell();
+        });
+        const hint = $("hint");
+        hint.innerHTML =
+          "WASD / mũi tên: đi · Space: ngồi · B: lạy · H: thắp hương · M: gõ mõ (giữ để gõ liên tục) · N: ngày/đêm · K: thời tiết · C: chuông lầu · kéo chuột: xoay";
+        hint.style.whiteSpace = "normal";
+        hint.style.width = "min(92vw, 760px)";
+        hint.style.textAlign = "center";
+        hint.style.bottom = "calc(env(safe-area-inset-bottom, 0px) + 122px)";
+      }
 
       // ================= trạng thái + điều khiển =================
       const COLS = [0xffb3d1, 0xa8d8ff, 0xc9b6f2, 0xffd9a0, 0xb6e8c8, 0xffc2b0],
@@ -2460,7 +4028,9 @@
         lastBell = 0;
       $("bows").textContent = bows;
       function changeMerit(delta) {
-        window.MebiMerit.change(delta).catch(() => toast("Không lưu được công đức, hãy thử lại"));
+        window.MebiMerit.change(delta).catch(() =>
+          toast("Không lưu được công đức, hãy thử lại"),
+        );
       }
       window.addEventListener("mebi-merit-change", (event) => {
         bows = event.detail;
@@ -2573,8 +4143,19 @@
       }
       function mo() {
         audio();
+        const now = performance.now();
+        if (now - (mo.l || 0) < 170) return;
+        mo.l = now;
         moSound(1);
+        me.kt = 0.16;
+        if (window.knockFx) window.knockFx(me);
         send({ t: "ev", k: "m" });
+        mo.n = (mo.n || 0) + 1;
+        if (mo.n === 1) toast("🪘 Giữ phím M để gõ liên tục");
+        else if (mo.n % 30 === 0) {
+          changeMerit(1);
+          toast("🪘 +1 công đức · " + mo.n + " tiếng mõ");
+        }
       }
       $("bSit").onclick = toggleSit;
       $("bBow").onclick = bow;
@@ -2748,8 +4329,50 @@
         sfx(990, 1.8, 0.025 * v);
       }
       function moSound(v) {
-        sfx(220, 0.14, 0.16 * v, "triangle");
-        sfx(150, 0.22, 0.1 * v, "triangle");
+        const ac = M.ac;
+        if (!ac || !M.sfx) return;
+        const t0 = ac.currentTime,
+          f =
+            [780, 1180, 1560][(Math.random() * 3) | 0] *
+            (0.97 + Math.random() * 0.06);
+        [
+          [f, 0.3, 0.3],
+          [f * 1.52, 0.17, 0.16],
+          [f * 0.5, 0.34, 0.2],
+        ].forEach(([fr, vol, dec]) => {
+          const o = ac.createOscillator(),
+            g = ac.createGain();
+          o.type = "sine";
+          o.frequency.setValueAtTime(fr * 1.08, t0);
+          o.frequency.exponentialRampToValueAtTime(fr, t0 + 0.03);
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.linearRampToValueAtTime(vol * v, t0 + 0.003);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + dec);
+          o.connect(g);
+          g.connect(M.sfx);
+          o.start(t0);
+          o.stop(t0 + dec + 0.05);
+        });
+        const nb = ac.createBuffer(
+            1,
+            Math.floor(ac.sampleRate * 0.05),
+            ac.sampleRate,
+          ),
+          d = nb.getChannelData(0);
+        for (let i = 0; i < d.length; i++)
+          d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+        const src = ac.createBufferSource();
+        src.buffer = nb;
+        const bp = ac.createBiquadFilter();
+        bp.type = "bandpass";
+        bp.frequency.value = 1900;
+        bp.Q.value = 1.1;
+        const ng = ac.createGain();
+        ng.gain.value = 0.55 * v;
+        src.connect(bp);
+        bp.connect(ng);
+        ng.connect(M.sfx);
+        src.start(t0);
       }
 
       // ================= mạng (hiện diện) =================
@@ -2810,8 +4433,12 @@
           }
         } else if (m.t === "ev") {
           if (m.k === "h") addStick();
-          else if (m.k === "m") moSound(0.35);
-          else if (m.k === "b" && T - lastBell > 4) {
+          else if (m.k === "m") {
+            moSound(0.35);
+            const ko = others.get(m.id);
+            if (ko) ko.kt = 0.16;
+            if (window.knockFx) window.knockFx(ko);
+          } else if (m.k === "b" && T - lastBell > 4) {
             lastBell = T;
             bell(0.3);
           }
@@ -2929,7 +4556,9 @@
           const px = me.x - 14.5,
             pz = me.z - 10,
             pd = Math.hypot(px, pz);
-          if (pd < 5.2) {
+          if (Math.abs(pz) < 5.8 && Math.abs(px) < 1.2) {
+            me.x = 14.5 + Math.max(-0.85, Math.min(0.85, px));
+          } else if (pd < 5.2) {
             me.x = 14.5 + (px / pd) * 5.2;
             me.z = 10 + (pz / pd) * 5.2;
           }
@@ -3053,7 +4682,7 @@
             ? new THREE.Vector3(me.x, me.y + 1.4, me.z)
             : new THREE.Vector3(0, 3.2, -6),
           cp = playing ? 0.52 : 0.3,
-          d = playing ? dist : 30;
+          d = playing ? dist : 46;
         C.position.set(
           tgt.x + Math.sin(camYaw) * d * Math.cos(cp),
           tgt.y + d * Math.sin(cp) + 1,
