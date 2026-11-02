@@ -34,6 +34,7 @@ try{
     return {sessionId,evaluate,click,send:(method,params)=>send(method,params,sessionId)};
   }
   const a=await page(),b=await page(true);
+  for(const p of [a,b]){await p.evaluate('window.MebiMerit.ready');assert.equal(await p.evaluate('window.MebiMerit.get()'),0);await p.evaluate('window.MebiMerit.change(100000)');assert.equal(await p.evaluate("document.getElementById('meritBalance').textContent.includes('100.000')"),true);}
   await a.evaluate(`document.getElementById('name').value='Chủ bàn';document.getElementById('joinButton').click()`);
   const room=await until(()=>a.evaluate('window.__snap?.roomId'),'create');
   await b.evaluate(`document.getElementById('name').value='Bạn mobile';document.getElementById('joinButton').click()`);
@@ -52,19 +53,24 @@ try{
     await until(async()=>{
       for(const p of [a,b]){const turn=await p.evaluate(`window.__snap?.phase==='PLAYER_TURNS'&&window.__snap.turnId===window.__welcome?.id`);if(turn){const total=await p.evaluate('window.__snap.players.find(p=>p.id===window.__welcome.id).hand.total');await p.click(total>=16?'[data-action="stand"]':'[data-action="hit"]');}}
       return a.evaluate(`window.__snap?.phase==='ROUND_END'&&window.__snap.results.length===${count}`);
-    },'complete round with '+count,30000);
+    },'complete round with '+count,35000);
   }
-  await playBrowsers(2);assert.equal(await a.evaluate('window.__snap.results.length'),2);
+  await playBrowsers(2);
+  for(const p of [a,b])await until(()=>p.evaluate("window.MebiMerit.get()===window.__snap.players.find(p=>p.id===window.__welcome.id).balance"),'shared balance after settlement');
+  assert.equal(await a.evaluate('window.__snap.results.length'),2);
   console.log('PASS automatic matching, visible bets, turns, payouts and reload/reconnect');
   // Fill the same room to eight using six real WebSocket clients.
   for(let i=0;i<6;i++){
-    const ws=new NodeWebSocket(base.replace('http','ws')+'/__game/xi-dach/ws?room='+room);const peer={ws,id:null,state:null};extra.push(peer);
+    const initial=await fetch(base+'/api/merit');const cookie=initial.headers.get('set-cookie').split(';')[0];
+    await fetch(base+'/api/merit',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({delta:100000})});
+    const match=await (await fetch(base+'/__game/xi-dach/match',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({name:'Player '+i})})).json();assert.equal(match.room,room);
+    const ws=new NodeWebSocket(base.replace('http','ws')+'/__game/xi-dach/ws?room='+room,{headers:{Cookie:cookie}});const peer={ws,id:null,state:null};extra.push(peer);
     ws.on('message',raw=>{const m=JSON.parse(raw);if(m.type==='welcome')peer.id=m.id;if(m.type==='snapshot'){peer.state=m.state;const p=m.state.players.find(p=>p.id===peer.id);if(m.state.phase==='PLAYER_TURNS'&&m.state.turnId===peer.id){ws.send(JSON.stringify({type:p.hand.total>=16?'stand':'hit',roomId:room,roundId:m.state.roundId,actionId:crypto.randomUUID()}));}}});
-    await new Promise(resolve=>ws.once('open',resolve));ws.send(JSON.stringify({type:'hello',name:'Bạn '+(i+3),avatar:i}));await until(()=>peer.id,'extra peer');
+    await new Promise(resolve=>ws.once('open',resolve));ws.send(JSON.stringify({type:'hello',token:match.token}));await until(()=>peer.id,'extra peer');
   }
   await until(()=>a.evaluate('window.__snap.players.length===8'),'eight seats');
   const ninth=new NodeWebSocket(base.replace('http','ws')+'/__game/xi-dach/ws?room='+room);await new Promise(resolve=>ninth.once('open',resolve));let refusal='';ninth.on('message',raw=>{const m=JSON.parse(raw);if(m.type==='error')refusal=m.message;});ninth.send(JSON.stringify({type:'hello',name:'Người thứ 9'}));await until(()=>refusal,'ninth refused');assert.match(refusal,/8 người/);ninth.close();
-  const ninthMatch=await a.evaluate(`fetch('/__game/xi-dach/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Room two'})}).then(r=>r.json())`);
+  const ninthMatch=await (await fetch(base+'/__game/xi-dach/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Room two'})})).json();
   assert.notEqual(ninthMatch.room,room,'ninth player automatically enters another room');
   await until(()=>a.evaluate(`window.__snap.phase==='BETTING'`),'next betting');await a.click('#confirmBet');await b.click('#confirmBet');
   for(const p of extra){await until(()=>p.state?.phase==='BETTING','extra betting');p.ws.send(JSON.stringify({type:'bet',amount:3000,roomId:room,roundId:p.state.roundId,actionId:crypto.randomUUID()}));}
@@ -78,6 +84,9 @@ try{
   await a.send('Emulation.setDeviceMetricsOverride',{width:1440,height:1080,deviceScaleFactor:1,mobile:false});
   const desktop=await a.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true});await writeFile(new URL('../dist/xi-dach/desktop-check.png',import.meta.url),Buffer.from(desktop.data,'base64'));
   for(const p of [a,b]){assert.deepEqual(await p.evaluate('window.__errors'),[]);assert.equal(await p.evaluate(`document.body.innerText.includes('chip')`),false);}
+  await a.send('Network.enable');await a.send('Network.setBlockedURLs',{urls:['*/api/merit']});
+  await a.evaluate("window.dispatchEvent(new Event('focus'))");await until(()=>a.evaluate("document.getElementById('toast').textContent.includes('mới nhất')"),'visible merit API error');
+  await a.send('Network.setBlockedURLs',{urls:[]});await a.evaluate("window.dispatchEvent(new Event('focus'))");
   assert.deepEqual(errors,[]);console.log('PASS eight real players + dealer: full round, ninth refused, conserved eggs, desktop/mobile, no runtime errors');
   console.log('Screenshots: dist/xi-dach/mobile-check.png, dist/xi-dach/desktop-check.png');
 }finally{for(const p of extra)p.ws.terminate();socket?.close();chrome.kill();await app.close();console.log('Temporary browser profile: '+profile);}

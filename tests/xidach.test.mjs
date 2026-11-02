@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {RULES,score,classify,compare,decideBot,validateBet,deck52,shuffledDeck,formatEggs} from '../xi-dach/rules.js';
+import {RULES,score,classify,compare,decideBot,validateBet,deck52,shuffledDeck,formatMerit} from '../xi-dach/rules.js';
 import {XiDachEngine} from '../xi-dach/engine.js';
 import {XiDachService} from '../xi-dach/service.js';
 import {XiDachRoom} from '../src/xi-dach-room.js';
@@ -95,9 +95,9 @@ test('Xì Dách: bot fixed public strategy uses only own cards and handles A',()
 test('Xì Dách: bet validation rejects fractions, negatives, strings and wrong units',()=>{
   for(const n of [500,1500,-1000,1000.1,NaN,Infinity,0,11000,'1000'])assert.throws(()=>validateBet(n,100000,10000000));
   for(const n of [1000,3000,10000])assert.doesNotThrow(()=>validateBet(n,100000,10000000));
-  assert.throws(()=>validateBet(1000,999,100000),/Không đủ trứng/);
+  assert.throws(()=>validateBet(1000,999,100000),/Không đủ công đức/);
   assert.throws(()=>validateBet(1000,10000,999),/^Error: Nhà cái không đủ quỹ cho mức cược này. Vui lòng chọn mức thấp hơn\.$/);
-  assert.equal(formatEggs(100000),'100.000 trứng');
+  assert.equal(formatMerit(100000),'100.000 công đức');
 });
 test('Xì Dách: eight real seats, independent dealer, ninth refused, token resumes full room',()=>{
   const {e,ids}=room(8);assert.equal(e.state.players.length,8);assert.equal(e.state.dealer.length,0);

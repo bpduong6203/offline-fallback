@@ -6,7 +6,7 @@ export class XiDachEngine {
     this.rules=rules;
     this.state=state || {roomId,created:false,hostId:null,phase:'LOBBY',roundId:0,players:[],fund:rules.initialFund,deck:[],dealer:[],participants:[],turnId:null,deadline:null,history:[],seen:[],results:[]};
   }
-  join({name,avatar=0,token,create=false,auto=false},now=Date.now()) {
+  join({name,avatar=0,token,create=false,auto=false,meritId},now=Date.now()) {
     const s=this.state;
     if(token){const p=s.players.find(p=>p.token===token);if(!p)fail('Phiên chơi không hợp lệ.');return p.id;}
     if(create && s.created)fail('Mã phòng đã tồn tại. Hãy tạo phòng khác.');
@@ -15,12 +15,13 @@ export class XiDachEngine {
     if(typeof name!=='string'||!name.trim()||name.trim().length>24)fail('Tên cần có từ 1 đến 24 ký tự.');
     const p={id:crypto.randomUUID(),token:crypto.randomUUID()+crypto.randomUUID(),name:name.trim(),avatar:Number.isInteger(avatar)&&avatar>=0&&avatar<8?avatar:0,balance:this.rules.initialBalance,bet:0,cards:[],done:false};
     s.players.push(p);s.created=true;s.hostId ||=p.id;
+    if(meritId)p.meritId=meritId;
     if(auto && s.phase==='LOBBY')this.betting(now);
     this.updateReady(now);this.assertFunds();return p.id;
   }
   player(id){return this.state.players.find(p=>p.id===id)||fail('Không tìm thấy người chơi.');}
   total(){const s=this.state;return s.fund+s.players.reduce((sum,p)=>sum+p.balance+2*p.bet,0);}
-  assertFunds(){const s=this.state;if(s.fund<0||s.players.some(p=>p.balance<0)||this.total()!==this.rules.initialFund+s.players.length*this.rules.initialBalance)fail('Sai lệch quỹ trứng.');}
+  assertFunds(){const s=this.state;if(s.fund<0||s.players.some(p=>p.balance<0)||this.total()!==this.rules.initialFund+s.players.length*this.rules.initialBalance+(s.walletAdjustment||0))fail('Sai lệch quỹ công đức.');}
   action(id,m,now=Date.now()) {
     const s=this.state,p=this.player(id);
     if(!m||m.roomId!==s.roomId||m.roundId!==s.roundId)fail('Phòng hoặc ván đã thay đổi.');

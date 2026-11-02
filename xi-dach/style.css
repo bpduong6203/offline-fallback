@@ -27,3 +27,7 @@
   .action-dock .play-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 }
 @media(min-width:701px) and (max-width:1000px){.game-layout{grid-template-columns:minmax(0,1fr) 290px;gap:14px}.action-dock{padding:12px}}
+
+.merit-balance{color:var(--gold);font-size:12px;font-weight:600}
+
+#toast{z-index:100}

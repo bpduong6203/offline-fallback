@@ -31,11 +31,11 @@ export function decideBot(cards, rules=RULES) {
   return locked(cards,rules) || score(cards).total>=rules.botStand ? 'stand' : 'hit';
 }
 export function validateBet(amount, balance, fund, rules=RULES) {
-  if (!Number.isSafeInteger(amount) || amount<rules.minBet || amount>rules.maxBet || amount%rules.betUnit!==0) throw new Error('Mức cược phải từ 1.000 đến 10.000 trứng, chia hết cho 1.000.');
-  if (amount>balance) throw new Error('Không đủ trứng');
+  if (!Number.isSafeInteger(amount) || amount<rules.minBet || amount>rules.maxBet || amount%rules.betUnit!==0) throw new Error('Mức cược phải từ 1.000 đến 10.000 công đức, chia hết cho 1.000.');
+  if (amount>balance) throw new Error('Không đủ công đức');
   if (amount>fund) throw new Error('Nhà cái không đủ quỹ cho mức cược này. Vui lòng chọn mức thấp hơn.');
 }
-export function formatEggs(amount) { return `${amount.toLocaleString('vi-VN')} trứng`; }
+export function formatMerit(amount) { return `${amount.toLocaleString('vi-VN')} công đức`; }
 export function deck52() { return ['♠','♥','♦','♣'].flatMap(suit=>Array.from({length:13},(_,i)=>({rank:i+1,suit}))); }
 export function secureIndex(limit) {
   // Rejection sampling avoids modulo bias; works in Workers and modern Node.

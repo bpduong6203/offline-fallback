@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {localMerit} from '../scripts/local-merit.mjs';
 // Node does not import Wrangler's HTML text modules. Adapt only that import in memory.
 const entry=new URL('../worker.js',import.meta.url);
 const html=await readFile(new URL('../src/page/games/Mini_Motorways.html',import.meta.url),'utf8');
@@ -21,9 +22,28 @@ const source=(await readFile(entry,'utf8'))
   .replace(/from '(\.\/[^']+)'/g,(_,relative)=>`from '${new URL(relative,entry).href}'`);
 const worker=(await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).default;
 
+test('same Worker serves Xi Dach, merit.js and shared merit API',async t=>{
+ const env=localMerit();t.after(()=>env.close());
+ const html=await (await worker.fetch(new Request('https://game.mebidev.site/xi-dach'),env)).text();
+ assert.ok(html.indexOf('src="/merit.js"')<html.indexOf('window.MebiMerit.ready'));
+ const script=await worker.fetch(new Request('https://game.mebidev.site/merit.js'),env);
+ assert.equal(script.status,200);assert.match(script.headers.get('Content-Type'),/javascript/);assert.match(await script.text(),/fetch\('\/api\/merit'/);
+ const first=await worker.fetch(new Request('https://game.mebidev.site/api/merit'),env);
+ const cookie=first.headers.get('Set-Cookie').split(';')[0];assert.equal((await first.json()).balance,0);
+ const changed=await worker.fetch(new Request('https://game.mebidev.site/api/merit',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({delta:2000})}),env);
+ assert.equal((await changed.json()).balance,2000);
+ const other=await worker.fetch(new Request('https://other.mebidev.site/api/merit',{headers:{Cookie:cookie}}),env);
+ assert.equal((await other.json()).balance,2000);
+ let joinedProfile;
+ env.XIDACH={idFromName:name=>name,get:name=>({fetch:async request=>{assert.equal(name,'merit:matchmaker');joinedProfile=await request.json();return Response.json({room:'ABC234'});}})};
+ const match=await worker.fetch(new Request('https://game.mebidev.site/__game/xi-dach/match',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:JSON.stringify({name:'Display name',meritId:'forged-id'})}),env);
+ assert.equal(match.status,200);assert.equal(joinedProfile.meritId,cookie.split('=')[1]);
+ assert.notEqual(joinedProfile.meritId,joinedProfile.name);
+});
+
 test('Worker serves Xì Dách and validates login, room and socket origin',async()=>{
  for(const route of ['/xi-dach','/xi-dach/','/__game/xi-dach']){
-  const response=await worker.fetch(new Request('https://example.test'+route));assert.equal(response.status,200);assert.match(await response.text(),/Xì Dách · Bàn Trứng/);
+  const response=await worker.fetch(new Request('https://example.test'+route));assert.equal(response.status,200);assert.match(await response.text(),/Xì Dách · Bàn Công đức/);
   assert.equal((await worker.fetch(new Request('https://example.test'+route,{method:'HEAD'}))).status,200);
   assert.equal((await worker.fetch(new Request('https://example.test'+route,{method:'POST'}))).status,405);
   assert.equal((await worker.fetch(new Request('https://example.test'+route),{HOME_SESSION_SECRET:'test'})).status,302);
@@ -33,8 +53,8 @@ test('Worker serves Xì Dách and validates login, room and socket origin',async
  assert.equal((await worker.fetch(new Request(ws,{headers:{Upgrade:'websocket',Origin:'https://evil.test'}}))).status,403);
  assert.equal((await worker.fetch(new Request(ws,{headers:{Upgrade:'websocket'}}),{HOME_SESSION_SECRET:'test'})).status,401);
  assert.equal((await worker.fetch(new Request(ws.replace('ABC234','invalid'),{headers:{Upgrade:'websocket'}}))).status,400);
- const env={XIDACH:{idFromName:room=>{assert.equal(room,'ABC234');return room;},get:()=>({fetch:async()=>new Response('socket target')})}};
- assert.equal(await (await worker.fetch(new Request(ws,{headers:{Upgrade:'websocket'}}),env)).text(),'socket target');
+ const env={MERIT:{},XIDACH:{idFromName:room=>{assert.equal(room,'merit:ABC234');return room;},get:()=>({fetch:async()=>new Response('socket target')})}};
+ assert.equal(await (await worker.fetch(new Request(ws,{headers:{Upgrade:'websocket',Cookie:'mebi_merit_id=11111111-1111-1111-1111-111111111111'}}),env)).text(),'socket target');
 });
 
 test('Worker handles R2 image requests before origin fallback and denies uploads',async()=>{
