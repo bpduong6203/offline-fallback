@@ -50,6 +50,28 @@ function action(e,id,type,extra={},now=1){return e.action(id,{roomId:e.state.roo
 function begin(e,ids){action(e,ids[0],'open');for(const id of ids)action(e,id,'bet',{amount:1000});action(e,ids[0],'start');}
 function finish(e){let guard=100;while(e.state.phase!=='ROUND_END'&&--guard)e.tick(e.state.deadline);assert.ok(guard>0);}
 
+test('dealer xi dach or xi ban reveals immediately after dealing, bypassing player turns and 10 second wait',()=>{
+  for(const ranks of [[1,10],[1,11],[1,12],[1,13],[1,1]]){
+    const {e,ids}=room(2);begin(e,ids);
+    e.state.dealer=cards(...ranks);
+    for(const id of ids){e.player(id).cards=cards(10,6);e.player(id).done=false;}
+    const deadline=e.state.deadline;
+    assert.equal(e.snapshot(ids[0]).dealer.cards,undefined);
+    assert.equal(e.tick(deadline-1),false);
+    e.tick(deadline);
+    assert.equal(e.state.phase,'SHOWDOWN');assert.equal(e.state.turnId,null);
+    assert.equal(e.state.deadline,deadline+RULES.showdownMs);
+    for(const id of ids){
+      const snapshot=e.snapshot(id);
+      assert.deepEqual(snapshot.dealer.cards,cards(...ranks));
+      assert.equal(snapshot.dealer.hand.kind,ranks[1]===1?4:3);
+      assert.ok(snapshot.players.every(p=>p.cards.length===2));
+      assert.throws(()=>action(e,id,'hit',{},deadline),/lượt/);
+    }
+    finish(e);assert.ok(e.state.results.every(r=>r.result===-1));e.assertFunds();
+  }
+});
+
 test('Xì Dách: A scoring enumerates 1/10/11 and selects best valid sum',()=>{
   assert.equal(score(cards(1,9)).total,20);assert.equal(score(cards(1,7,3)).total,21);
   assert.deepEqual(score(cards(1,1)).totals,[2,11,12,20,21,22]);
