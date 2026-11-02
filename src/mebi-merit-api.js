@@ -13,6 +13,18 @@ export const MERIT_CLIENT_SCRIPT = `(() => {
     notify();
     return balance;
   };
+  const sendReward = async (action) => {
+    const response = await fetch('/api/merit/reward', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action })
+    });
+    if (!response.ok) throw new Error('Không lưu được công đức');
+    const data = await response.json();
+    balance = data.balance;
+    notify();
+    return data;
+  };
   const ready = fetch('/api/merit', { credentials: 'same-origin' }).then(async (response) => {
     if (!response.ok) throw new Error('Không tải được công đức');
     const data = await response.json();
@@ -32,7 +44,7 @@ export const MERIT_CLIENT_SCRIPT = `(() => {
   let queue = Promise.resolve();
   const change = (delta) => {
     const amount = Math.trunc(Number(delta));
-    if (!Number.isSafeInteger(amount) || Math.abs(amount) > 100000) return Promise.reject(new Error('Điểm thay đổi không hợp lệ'));
+    if (!Number.isSafeInteger(amount) || amount > 0 || Math.abs(amount) > 100000) return Promise.reject(new Error('Chỉ dùng change() để tiêu điểm; phần thưởng cần được xác nhận bởi máy chủ'));
     const operation = queue.then(async () => {
       await ready;
       return sendChange(amount);
@@ -40,7 +52,15 @@ export const MERIT_CLIENT_SCRIPT = `(() => {
     queue = operation.catch(() => {});
     return operation;
   };
-  window.MebiMerit = Object.freeze({ get: () => balance, ready, change });
+  const reward = (action) => {
+    const operation = queue.then(async () => {
+      await ready;
+      return sendReward(action);
+    });
+    queue = operation.catch(() => {});
+    return operation;
+  };
+  window.MebiMerit = Object.freeze({ get: () => balance, ready, change, reward });
 })();`;
 
 const MERIT_COOKIE = 'mebi_merit_id';
@@ -92,7 +112,10 @@ export async function getMeritIdentity(request, env) {
 
 export async function handleMeritRequest(request, env) {
   const url = new URL(request.url);
+  const isReward = url.pathname === '/api/merit/reward';
+  if (url.pathname !== '/api/merit' && !isReward) return new Response('Not Found', { status: 404 });
   if (!['GET', 'POST'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, POST' } });
+  if (isReward && request.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
   const origin = request.headers.get('Origin');
   if (origin) {
     try { if (new URL(origin).origin !== url.origin) return new Response('Forbidden', { status: 403 }); }
@@ -109,9 +132,9 @@ export async function handleMeritRequest(request, env) {
 
   const identity = await getMeritIdentity(request, env);
   const stub = env.MERIT.get(env.MERIT.idFromName(identity.id));
-  const internalRequest = new Request('https://merit.internal/balance', {
+  const internalRequest = new Request('https://merit.internal/' + (isReward ? 'reward' : 'balance'), {
     method: request.method,
-    ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({delta:body?.delta,legacyImport:body?.legacyImport === true}) })
+    ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(isReward ? { action: body?.action } : { delta: body?.delta, legacyImport: body?.legacyImport === true }) })
   });
   const result = await stub.fetch(internalRequest);
   const headers = new Headers(result.headers);

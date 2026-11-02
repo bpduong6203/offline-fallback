@@ -12,11 +12,34 @@ export class MebiMeritProfile {
         transaction_id TEXT PRIMARY KEY,
         delta INTEGER NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS merit_reward_cooldowns (
+        action TEXT PRIMARY KEY,
+        awarded_at INTEGER NOT NULL
+      );
     `);
   }
 
   async fetch(request) {
     const url = new URL(request.url);
+    if (url.pathname === '/reward') {
+      if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
+      let body;
+      try { body = await request.json(); } catch { return Response.json({ error: 'Invalid JSON' }, { status: 400 }); }
+      const rewards = { bow: { amount: 1, cooldownMs: 30000 }, incense: { amount: 2, cooldownMs: 60000 }, mallet: { amount: 1, cooldownMs: 30000 } };
+      const reward = rewards[body?.action];
+      if (!reward) return Response.json({ error: 'Unknown reward action' }, { status: 400 });
+      return this.ctx.storage.transactionSync(() => {
+        const now = Date.now();
+        const previous = this.ctx.storage.sql.exec('SELECT awarded_at FROM merit_reward_cooldowns WHERE action = ?', body.action).toArray()[0];
+        const retryAfterMs = previous ? reward.cooldownMs - (now - previous.awarded_at) : 0;
+        const balance = this.ctx.storage.sql.exec('SELECT balance FROM merit_balance WHERE id = 1').toArray()[0]?.balance || 0;
+        if (retryAfterMs > 0) return Response.json({ balance, rewarded: false, amount: 0, retryAfterMs }, { headers: { 'Cache-Control': 'no-store' } });
+        this.ctx.storage.sql.exec('INSERT INTO merit_reward_cooldowns (action, awarded_at) VALUES (?, ?) ON CONFLICT(action) DO UPDATE SET awarded_at = excluded.awarded_at', body.action, now);
+        this.ctx.storage.sql.exec('UPDATE merit_balance SET balance = balance + ?, legacy_imported = 1 WHERE id = 1', reward.amount);
+        const nextBalance = this.ctx.storage.sql.exec('SELECT balance FROM merit_balance WHERE id = 1').toArray()[0]?.balance || 0;
+        return Response.json({ balance: nextBalance, rewarded: true, amount: reward.amount, retryAfterMs: 0 }, { headers: { 'Cache-Control': 'no-store' } });
+      });
+    }
     if (url.pathname !== '/balance') return new Response('Not Found', { status: 404 });
     if (request.method === 'GET') return this.readBalance();
     if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, POST' } });
@@ -26,6 +49,9 @@ export class MebiMeritProfile {
     const delta = Number(body?.delta);
     if (!Number.isSafeInteger(delta) || Math.abs(delta) > 100000) {
       return Response.json({ error: 'Invalid point change' }, { status: 400 });
+    }
+    if (delta > 0 && body.legacyImport !== true && !body.transactionId) {
+      return Response.json({ error: 'Positive balance changes must use a server-verified reward' }, { status: 403 });
     }
 
     // Only internal game calls use this branch. Persist the balance and receipt

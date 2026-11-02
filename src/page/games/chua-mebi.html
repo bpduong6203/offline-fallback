@@ -2437,6 +2437,23 @@
             );
             return Promise.resolve(n);
           },
+          reward: (action) => {
+            const rules = { bow: [1, 30000], incense: [2, 60000], mallet: [1, 30000] };
+            const rule = rules[action];
+            if (!rule) return Promise.reject(new Error("Loại công đức không hợp lệ"));
+            const key = "chua-mebi-reward-" + action;
+            let last = 0;
+            try { last = Number(localStorage.getItem(key)) || 0; } catch (e) {}
+            const retryAfterMs = Math.max(0, rule[1] - (Date.now() - last));
+            if (retryAfterMs) return Promise.resolve({ balance: n, rewarded: false, amount: 0, retryAfterMs });
+            n += rule[0];
+            try {
+              localStorage.setItem("chua-mebi-merit-v1", String(n));
+              localStorage.setItem(key, String(Date.now()));
+            } catch (e) {}
+            window.dispatchEvent(new CustomEvent("mebi-merit-change", { detail: n }));
+            return Promise.resolve({ balance: n, rewarded: true, amount: rule[0], retryAfterMs: 0 });
+          },
         };
       }
       {
@@ -4027,10 +4044,19 @@
         incCd = 0,
         lastBell = 0;
       $("bows").textContent = bows;
-      function changeMerit(delta) {
-        window.MebiMerit.change(delta).catch(() =>
-          toast("Không lưu được công đức, hãy thử lại"),
-        );
+      const rewardCooldownMs = { bow: 30000, incense: 60000, mallet: 30000 };
+      const rewardBlockedUntil = {};
+      const rewardPending = new Set();
+      function rewardMerit(action, explainCooldown = false) {
+        if (rewardPending.has(action) || Date.now() < (rewardBlockedUntil[action] || 0)) return;
+        rewardPending.add(action);
+        window.MebiMerit.reward(action).then((result) => {
+          const wait = result.rewarded ? rewardCooldownMs[action] : result.retryAfterMs;
+          rewardBlockedUntil[action] = Date.now() + wait;
+          if (result.rewarded) toast("🙏 +" + result.amount + " công đức");
+          else if (explainCooldown) toast("Thử nhận công đức lại sau " + Math.ceil(wait / 1000) + " giây");
+        }).catch(() => toast("Không lưu được công đức, hãy thử lại"))
+          .finally(() => rewardPending.delete(action));
       }
       window.addEventListener("mebi-merit-change", (event) => {
         bows = event.detail;
@@ -4125,6 +4151,7 @@
         incCd = 20;
         addStick();
         send({ t: "ev", k: "h" });
+        rewardMerit("incense", true);
         toast("🪔 Bạn đã thắp một nén hương");
       }
       function addStick() {
@@ -4152,10 +4179,7 @@
         send({ t: "ev", k: "m" });
         mo.n = (mo.n || 0) + 1;
         if (mo.n === 1) toast("🪘 Giữ phím M để gõ liên tục");
-        else if (mo.n % 30 === 0) {
-          changeMerit(1);
-          toast("🪘 +1 công đức · " + mo.n + " tiếng mõ");
-        }
+        rewardMerit("mallet", true);
       }
       $("bSit").onclick = toggleSit;
       $("bBow").onclick = bow;
@@ -4569,8 +4593,7 @@
           if (me.bt >= 2.8) {
             me.st = me.prev || 0;
             me.bt = 0;
-            changeMerit(1);
-            toast("🙏 +1 công đức");
+            rewardMerit("bow");
           }
         }
         sendT += dt;
