@@ -2438,7 +2438,7 @@
             return Promise.resolve(n);
           },
           reward: (action) => {
-            const rules = { bow: [1, 30000], incense: [2, 60000], mallet: [1, 30000] };
+            const rules = { bow: [1, 5000], incense: [2, 60000], mallet: [1, 5000] };
             const rule = rules[action];
             if (!rule) return Promise.reject(new Error("Loại công đức không hợp lệ"));
             const key = "chua-mebi-reward-" + action;
@@ -4044,7 +4044,7 @@
         incCd = 0,
         lastBell = 0;
       $("bows").textContent = bows;
-      const rewardCooldownMs = { bow: 30000, incense: 60000, mallet: 30000 };
+      const rewardCooldownMs = { bow: 5000, incense: 60000, mallet: 5000 };
       const rewardBlockedUntil = {};
       const rewardPending = new Set();
       function rewardMerit(action, explainCooldown = false) {

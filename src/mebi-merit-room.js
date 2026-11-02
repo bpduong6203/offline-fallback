@@ -25,7 +25,7 @@ export class MebiMeritProfile {
       if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
       let body;
       try { body = await request.json(); } catch { return Response.json({ error: 'Invalid JSON' }, { status: 400 }); }
-      const rewards = { bow: { amount: 1, cooldownMs: 30000 }, incense: { amount: 2, cooldownMs: 60000 }, mallet: { amount: 1, cooldownMs: 30000 } };
+      const rewards = { bow: { amount: 1, cooldownMs: 5000 }, incense: { amount: 2, cooldownMs: 60000 }, mallet: { amount: 1, cooldownMs: 5000 } };
       const reward = rewards[body?.action];
       if (!reward) return Response.json({ error: 'Unknown reward action' }, { status: 400 });
       return this.ctx.storage.transactionSync(() => {
