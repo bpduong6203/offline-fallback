@@ -7,6 +7,7 @@ import {buildUno} from './build-uno.mjs';
 import {buildXiDach} from './build-xidach.mjs';
 import {buildSnake} from './build-snake.mjs';
 import {buildMonopoly} from './build-monopoly.mjs';
+import {buildTea} from './build-tea.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 export async function build(){
   const seen=new Set(),modules=[];
@@ -37,6 +38,7 @@ export async function build(){
   await buildXiDach();
   await buildMonopoly();
   await buildSnake();
+  await buildTea();
   try {
     let tc = '';
     try { tc = await readFile(path.join(root, 'Tower City.html'), 'utf8'); } catch {}

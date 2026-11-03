@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:tea:browser": "node scripts/tea-browser-check.mjs",
     "test:xidach:browser": "node scripts/xidach-browser-check.mjs",
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",

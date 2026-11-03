@@ -19,6 +19,7 @@ export const body = (hostname) => `  </style>
       <a class="tab" href="/?game=motorways"><span class="game-icon">🚗</span><span><b>Mini Motorways</b><small>Nối đường và điều phối xe</small></span></a>
       <a class="tab" href="/?game=bangbang"><span class="game-icon">🚀</span><span><b>Bang Bang</b><small>Đấu trường xe tăng</small></span></a>
       <a class="tab tab-link" href="/co-ca-ngua"><span class="game-icon">🐴</span><span><b>Cờ Cá Ngựa 3D</b><small>Chơi với máy hoặc bạn bè</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
+      <a class="tab tab-link" href="/goc-tra-nho"><span class="game-icon">❧</span><span><b>Mebi Trà</b><small>Pha trà, chăm vườn · Bán hàng nhận công đức</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/chua-mebi"><span class="game-icon">🪷</span><span><b>Chùa Mebi</b><small>Không gian 3D thư giãn cùng mọi người</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/tower-city"><span class="game-icon">🏗️</span><span><b>Tower City</b><small>Xây tháp và quy hoạch thành phố</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/chibi-rush"><span class="game-icon">🏃</span><span><b>Chibi Rush</b><small>Đua vượt chướng ngại vật, tối đa 8 người</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>

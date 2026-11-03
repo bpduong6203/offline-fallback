@@ -1,4 +1,6 @@
 import {handleChat,withSharedChat} from './src/shared-chat.js';
+import teaShop from './src/page/games/tea-shop.generated.js';
+import {handleTeaRequest} from './src/tea-api.js';
 import {SHARED_CHAT_CLIENT} from './src/shared-chat-client.js';
 export {SharedChatRoom} from './src/shared-chat-room.js';
 import snakeHtml from './src/page/games/mebi-snake.generated.js';
@@ -46,6 +48,7 @@ import {MERIT_CLIENT_SCRIPT,handleMeritRequest,getMeritIdentity} from './src/meb
 const app = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if(url.pathname==='/api/tea-shop')return handleTeaRequest(request,env);
     if(url.pathname==='/shared-chat.js')return new Response(request.method==='HEAD'?null:SHARED_CHAT_CLIENT,{headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store'}});
     if(url.pathname==='/api/chat')return handleChat(request,env);
     const snakeResponse=await routeSnake(request,env,snakeHtml);if(snakeResponse)return snakeResponse;
@@ -56,6 +59,10 @@ const app = {
         return Response.redirect(new URL('/', url), 302);
       }
       return new Response('Login required', { status: 401, headers: { 'Cache-Control': 'no-store' } });
+    }
+    if (['/goc-tra-nho','/goc-tra-nho/','/__game/goc-tra-nho'].includes(url.pathname)) {
+      if(!['GET','HEAD'].includes(request.method))return new Response('Method Not Allowed',{status:405,headers:{Allow:'GET, HEAD'}});
+      return new Response(request.method==='HEAD'?null:teaShop,{headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'}});
     }
     if (['/xi-dach', '/xi-dach/', '/__game/xi-dach'].includes(url.pathname)) {
       if (!['GET','HEAD'].includes(request.method)) return new Response('Method Not Allowed', {status:405,headers:{Allow:'GET, HEAD'}});
@@ -238,7 +245,7 @@ export default {
   async fetch(request,env,ctx){
     const response=await app.fetch(request,env,ctx);
     const path=new URL(request.url).pathname.replace(/\/$/,'');
-    const repoPage=path.startsWith('/__game/')||['/snake','/xi-dach','/ty-phu','/chibi-rush','/party-cats','/co-ca-ngua','/chua-mebi','/tower-city','/tower city','/tower city.html','/tower-city.html','/tien-len','/uno','/stickman-fight'].includes(decodeURIComponent(path).toLowerCase());
+    const repoPage=path.startsWith('/__game/')||['/goc-tra-nho','/snake','/xi-dach','/ty-phu','/chibi-rush','/party-cats','/co-ca-ngua','/chua-mebi','/tower-city','/tower city','/tower city.html','/tower-city.html','/tien-len','/uno','/stickman-fight'].includes(decodeURIComponent(path).toLowerCase());
     return request.method==='GET'&&repoPage&&response.ok?withSharedChat(response):response;
   }
 };

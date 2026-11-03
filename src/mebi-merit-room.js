@@ -1,3 +1,4 @@
+import {teaProfile} from '../tea-shop/profile.js';
 export class MebiMeritProfile {
   constructor(ctx) {
     this.ctx = ctx;
@@ -26,6 +27,7 @@ export class MebiMeritProfile {
 
   async fetch(request) {
     const url = new URL(request.url);
+    if (url.pathname === '/tea') return teaProfile(this,request);
     if (url.pathname === '/reward') {
       if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
       let body;

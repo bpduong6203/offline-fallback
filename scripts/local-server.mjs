@@ -1,4 +1,5 @@
 import {localChat} from './local-chat.mjs';
+import {buildTea} from './build-tea.mjs';
 import {localSnake} from './local-snake.mjs';
 import {localXiDach} from './local-xidach.mjs';
 import {buildSnake} from './build-snake.mjs';
@@ -25,6 +26,7 @@ export function localServer(getHtml,monopolyOptions={}){
   const server=createServer(async(req,res)=>{
     chat.decorate(res);if(await chat.http(req,res))return;
     const path=req.url?.split('?')[0];
+    if(['/goc-tra-nho','/goc-tra-nho/','/__game/goc-tra-nho'].includes(path)){if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);res.end();return;}const html=await buildTea();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);return;}
     if(await xidach.http(req,res))return;
     if(await snake.http(req,res))return;
     if(['/snake','/snake/'].includes(path)){if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);res.end();return;}const html=await buildSnake();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);return;}
