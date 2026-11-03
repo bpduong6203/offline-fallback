@@ -23,6 +23,16 @@ const source=(await readFile(entry,'utf8'))
   .replace(/from '(\.\/[^']+)'/g,(_,relative)=>`from '${new URL(relative,entry).href}'`);
 const worker=(await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).default;
 
+test('tea shop routes serve playable page, HEAD, reject writes and protect its API',async()=>{
+ for(const path of ['/goc-tra-nho','/goc-tra-nho/','/__game/goc-tra-nho']){
+  const response=await worker.fetch(new Request('https://example.test'+path));assert.equal(response.status,200);const html=await response.text();assert(html.includes('Mebi Trà'));assert(html.includes('src="/shared-chat.js"'));
+  const head=await worker.fetch(new Request('https://example.test'+path,{method:'HEAD'}));assert.equal(head.status,200);assert.equal(await head.text(),'');
+  assert.equal((await worker.fetch(new Request('https://example.test'+path,{method:'POST'}))).status,405);
+ }
+ assert.equal((await worker.fetch(new Request('https://example.test/api/tea-shop'))).status,503);
+ assert.equal((await worker.fetch(new Request('https://example.test/goc-tra-nho'),{HOME_SESSION_SECRET:'required'})).status,302);
+ assert.equal((await worker.fetch(new Request('https://example.test/api/tea-shop'),{HOME_SESSION_SECRET:'required'})).status,401);
+});
 test('shared chat is injected across repo game pages and served independently from game rooms',async()=>{
  for(const path of ['/snake','/xi-dach','/ty-phu','/chua-mebi','/uno','/tien-len','/stickman-fight','/party-cats','/chibi-rush','/co-ca-ngua','/tower-city','/__game/bomb-arena','/__game/mini-motorways']){
   const response=await worker.fetch(new Request('https://example.test'+path));assert.equal(response.status,200);assert.ok((await response.text()).includes('src="/shared-chat.js"'),path);

@@ -223,3 +223,7 @@ Luật theo Gameplay Specification 1.0, preset Việt Nam và cách kiểm tra: 
 Game rắn multiplayer tại `/snake`, tự ghép tối đa 10 người mỗi đấu trường, lái chuột/boost, mobile joystick, backend authoritative Cloudflare DO hoặc Node WebSocket thật. Có 1–4 bot tính riêng ngoài 10 người thật, không lobby/ready và không yêu cầu tài khoản. Chạy `npm.cmd run build`, `npm.cmd run dev`, mở `http://localhost:5173/snake`. Nút vào game cùng kiểu các nút thư viện hiện có.
 
 [Hướng dẫn, config, mạng, lệnh kiểm tra và giới hạn](mebi-snake/README.md). Thêm bindings SNAKE/SNAKE_MATCH và migration v11 trong cấu hình; chưa deploy. Không thay đổi R2 hay game khác.
+
+## Mebi Trà
+
+Game quán trà tại `/goc-tra-nho`, dùng chung ví công đức với các game hiện có. Hướng dẫn, điều khiển và kiểm thử: [tea-shop/README.md](tea-shop/README.md).
