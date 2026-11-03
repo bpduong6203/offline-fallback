@@ -106,6 +106,7 @@ async function matchesSecret(provided, expected) {
 }
 
 export function requiresGameLogin(url) {
+  if (url.hostname === 'game.mebidev.site') return false;
   if (url.searchParams.has('game')) return true;
   const path = url.pathname;
   return path.startsWith('/__game/') || path.startsWith('/api/monopoly/') || [

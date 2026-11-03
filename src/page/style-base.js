@@ -33,6 +33,7 @@ export const styleBase = `  <style>
       margin-bottom: 12px; word-break: break-all;
       box-shadow: inset 3px 3px 6px #e6d3be, inset -3px -3px 6px #ffffff;
       border: 0; font-family: inherit; line-height: inherit; cursor: pointer;
+      text-decoration: none;
     }
     .login-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 18px; background: rgba(15, 23, 42, 0.48); }
     .login-panel { position: relative; width: min(100%, 380px); padding: 26px 22px 18px; border: 1px solid #ffedd5; border-radius: 22px; background: #fff; text-align: left; box-shadow: 0 24px 70px rgba(51, 29, 15, 0.25); }
