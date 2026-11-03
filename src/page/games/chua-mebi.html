@@ -179,6 +179,7 @@
       #fResult b { font-size: 18px; }
       #fResult .win { color: #1f9d55; }
       #fResult .lose { color: #d23f5f; }
+      #fResult .draw { color: #c28a12; }
       #fortune details { margin-top: 12px; text-align: left; font-size: 12px; }
       #fortune summary { cursor: pointer; text-align: center; opacity: 0.85; }
       #fTable { width: 100%; border-collapse: collapse; margin-top: 6px; }
@@ -200,7 +201,7 @@
     </div>
     <div id="hint" class="card">
       WASD / mũi tên: đi · Space: ngồi/đứng · B: lạy · H: thắp hương (lại gần lư
-      hương) · M: gõ mõ · Q: gieo quẻ · kéo chuột: xoay góc nhìn
+      hương) · M: gõ mõ · Q: gieo quẻ (lại gần ống quẻ) · kéo chuột: xoay góc nhìn
     </div>
     <div id="acts">
       <button id="bSit">🧘 Ngồi</button><button id="bBow">🙏 Lạy</button
@@ -4151,6 +4152,80 @@
         if (ws && ws.readyState === 1) ws.send(JSON.stringify(m));
       }
       const near = () => Math.hypot(me.x - BXZ[0], me.z - BXZ[1]) < 3.4;
+      // ===== Bàn ống quẻ (điểm gieo quẻ): đứng gần mới xóc quẻ được =====
+      const FXZ = [9, 2.5],
+        nearFortune = () => Math.hypot(me.x - FXZ[0], me.z - FXZ[1]) < 3.2,
+        fStand = new THREE.Group(),
+        fTube = new THREE.Group(),
+        fSticks = [];
+      let fShake = 0, fPop = 0;
+      fStand.position.set(FXZ[0], 0, FXZ[1]);
+      S.add(fStand);
+      put(fStand, mk(new THREE.BoxGeometry(1.7, 0.16, 1.1), 0x8a5a2b), 0, 1.0, 0);
+      [[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]].forEach(([x, z]) =>
+        put(fStand, mk(new THREE.BoxGeometry(0.14, 1.0, 0.14), 0x6b431f, 0), x, 0.5, z));
+      put(fStand, mk(new THREE.BoxGeometry(1.35, 0.03, 0.8), 0xb3322a, 0), 0, 1.095, 0);
+      fTube.position.set(0, 1.08, 0);
+      fStand.add(fTube);
+      put(fTube, mk(new THREE.CylinderGeometry(0.3, 0.26, 0.75, 14), 0xc9a24a), 0, 0.38, 0);
+      put(fTube, mk(new THREE.TorusGeometry(0.3, 0.03, 6, 14), 0x8a6a2a, 0), 0, 0.74, 0, null, [Math.PI / 2, 0, 0]);
+      const fStickG = new THREE.CylinderGeometry(0.018, 0.018, 0.75, 5);
+      for (let i = 0; i < 9; i++) {
+        const a = (i / 9) * TAU, r = 0.05 + (i % 3) * 0.06;
+        const s = mk(fStickG, i === 0 ? 0xc8412a : 0xe9d3a3, 0);
+        s.position.set(Math.cos(a) * r, 0.9 + (i % 4) * 0.04, Math.sin(a) * r);
+        s.rotation.set(Math.sin(a) * 0.08, 0, -Math.cos(a) * 0.08);
+        fTube.add(s);
+        fSticks.push({ m: s, y: s.position.y });
+      }
+      {
+        const c = document.createElement("canvas");
+        c.width = 256; c.height = 80;
+        const x = c.getContext("2d");
+        x.fillStyle = "rgba(120,30,30,0.92)";
+        x.fillRect(0, 0, 256, 80);
+        x.strokeStyle = "#e8b84a"; x.lineWidth = 5;
+        x.strokeRect(4, 4, 248, 72);
+        x.fillStyle = "#ffe9b0"; x.font = "bold 40px system-ui,sans-serif";
+        x.textAlign = "center"; x.textBaseline = "middle";
+        x.fillText("Gieo quẻ", 128, 42);
+        const tex = new THREE.CanvasTexture(c);
+        const sg = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, fog: false }));
+        sg.scale.set(1.9, 0.6, 1);
+        sg.position.set(0, 2.9, 0);
+        fStand.add(sg);
+      }
+      GA.push((t, dt) => {
+        fShake = Math.max(0, fShake - dt);
+        fPop = Math.max(0, fPop - dt);
+        const k = Math.min(1, fShake / 0.4);
+        fTube.rotation.z = Math.sin(t * 38) * 0.22 * k;
+        fTube.rotation.x = Math.cos(t * 31) * 0.12 * k;
+        fSticks.forEach((s, i) => {
+          s.m.position.y = s.y + Math.sin(t * 45 + i * 1.7) * 0.07 * k +
+            (i === 0 && fPop > 0 ? Math.sin(Math.min(1, fPop / 1.6) * Math.PI) * 0.45 : 0);
+        });
+      });
+      function rattleSound(v) {
+        const ac = M.ac;
+        if (!ac || !M.sfx) return;
+        for (let i = 0; i < 9; i++) {
+          const t0 = ac.currentTime + i * 0.11 + Math.random() * 0.03;
+          const nb = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.04), ac.sampleRate),
+            d = nb.getChannelData(0);
+          for (let j = 0; j < d.length; j++) d[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / d.length, 2);
+          const src = ac.createBufferSource();
+          src.buffer = nb;
+          const bp = ac.createBiquadFilter();
+          bp.type = "bandpass";
+          bp.frequency.value = 2400 + Math.random() * 1600;
+          bp.Q.value = 2;
+          const g = ac.createGain();
+          g.gain.value = (0.25 + Math.random() * 0.2) * v;
+          src.connect(bp); bp.connect(g); g.connect(M.sfx);
+          src.start(t0);
+        }
+      }
       function toggleSit() {
         audio();
         if (me.st === 2) return;
@@ -4236,6 +4311,7 @@
       }
       function toggleFortune(open) {
         const show = open === undefined ? fortuneBox.style.display !== "block" : open;
+        if (show && !nearFortune()) { audio(); toast("Lại gần ống quẻ để xóc quẻ nhé"); return; }
         fortuneBox.style.display = show ? "block" : "none";
         if (show) { audio(); loadFortuneTable(); }
       }
@@ -4247,15 +4323,17 @@
         fortuneRequestId = fortuneRequestId || crypto.randomUUID();
         $("fStick").classList.add("shake");
         fortuneSetResult([fortuneLine("Đang xóc ống quẻ...")]);
+        audio(); fShake = 1.3; rattleSound(1); send({ t: "ev", k: "q" });
         try {
           const [data] = await Promise.all([window.MebiMerit.fortune(fortuneRequestId), new Promise((ok) => setTimeout(ok, 1000))]);
           fortuneRequestId = null;
+          fPop = 1.6;
           const f = data.fortune, good = f.net > 0;
-          $("fStick").textContent = f.payout === 0 ? "🥀" : f.payout >= 36 ? "🌟" : "🎋";
+          $("fStick").textContent = f.payout === 0 ? "🥀" : f.net === 0 ? "☯️" : f.payout >= 36 ? "🌟" : "🎋";
           fortuneSetResult([
             fortuneLine(f.hex + " · " + f.name, "b"),
             fortuneLine(f.prize + (f.meaning ? " — " + f.meaning : "") + " (số gieo " + f.roll + "/100)"),
-            fortuneLine(f.payout === 0 ? "Mất " + f.stake + " công đức" : "Nhận về " + fmt(f.payout) + " · lãi " + (good ? "+" : "") + fmt(f.net), "div", good ? "win" : "lose"),
+            fortuneLine(f.net === 0 ? "Hòa vốn, nhận lại " + fmt(f.payout) + " công đức" : f.payout === 0 ? "Mất " + f.stake + " công đức" : "Nhận về " + fmt(f.payout) + " · lãi " + (good ? "+" : "") + fmt(f.net), "div", f.net === 0 ? "draw" : good ? "win" : "lose"),
           ]);
           renderTempleMerit();
           if (f.payout >= 36) toast("🌟 " + f.hex + " " + f.name + "! +" + fmt(f.net) + " công đức");
@@ -4548,7 +4626,10 @@
             o.tf = m.f;
           }
         } else if (m.t === "ev") {
-          if (m.k === "h") addStick();
+          if (m.k === "q") {
+            fShake = 1.3;
+            rattleSound(0.3);
+          } else if (m.k === "h") addStick();
           else if (m.k === "m") {
             moSound(0.35);
             const ko = others.get(m.id);
@@ -4669,6 +4750,13 @@
             me.x = BXZ[0] + (bx / bd) * 1.7;
             me.z = BXZ[1] + (bz / bd) * 1.7;
           }
+          const qx = me.x - FXZ[0],
+            qz = me.z - FXZ[1],
+            qd = Math.hypot(qx, qz);
+          if (qd < 1.3) {
+            me.x = FXZ[0] + (qx / (qd || 1)) * 1.3;
+            me.z = FXZ[1] + (qz / (qd || 1)) * 1.3;
+          }
           const px = me.x - 14.5,
             pz = me.z - 10,
             pd = Math.hypot(px, pz);
@@ -4781,6 +4869,8 @@
         });
         $("cnt").textContent = others.size + 1;
         $("bInc").disabled = !near() || incCd > 0;
+        $("bFortune").disabled = !nearFortune();
+        if (fortuneBox.style.display === "block" && !nearFortune() && !fortuneBusy) fortuneBox.style.display = "none";
         $("bSit").textContent = me.st === 1 ? "🚶 Đứng dậy" : "🧘 Ngồi";
         $("bBow").disabled = me.st === 2;
       }

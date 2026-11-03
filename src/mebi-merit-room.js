@@ -4,14 +4,15 @@ const FORTUNE_COOLDOWN_MS = 2000;
 // chance = số ô trên thang 1..100; payout = tổng điểm nhận về (đã gồm lại vốn)
 const FORTUNE_TIERS = [
   { prize: 'Giải 1', name: 'Đại Cát', hex: 'Quẻ Càn', meaning: 'Số 108 viên mãn', chance: 1, payout: 108 },
-  { prize: 'Giải 2', name: 'Thượng Cát', hex: 'Quẻ Đoài', meaning: '64 quẻ Kinh Dịch', chance: 2, payout: 64 },
-  { prize: 'Giải 3', name: 'Trung Cát', hex: 'Quẻ Ly', meaning: '36 thiên cang', chance: 3, payout: 36 },
-  { prize: 'Giải 4', name: 'Tiểu Cát', hex: 'Quẻ Chấn', meaning: '', chance: 5, payout: 23 },
-  { prize: 'Giải 5', name: 'Bình Cát', hex: 'Quẻ Tốn', meaning: '', chance: 8, payout: 18 },
-  { prize: 'Giải 6', name: 'Cát', hex: 'Quẻ Khảm', meaning: '', chance: 15, payout: 13 },
-  { prize: 'Giải 7', name: 'Cát', hex: 'Quẻ Cấn', meaning: '', chance: 22, payout: 9 },
-  { prize: 'Giải 8', name: 'Phổ thông', hex: 'Quẻ Khôn', meaning: '', chance: 29, payout: 8 },
-  { prize: 'Quẻ HUNG', name: 'Hung', hex: 'Quẻ Bĩ', meaning: 'Mất toàn bộ vốn', chance: 15, payout: 0 },
+  { prize: 'Giải 2', name: 'Thượng Cát', hex: 'Quẻ Đoài', meaning: '64 quẻ Kinh Dịch', chance: 1, payout: 64 },
+  { prize: 'Giải 3', name: 'Trung Cát', hex: 'Quẻ Ly', meaning: '36 thiên cang', chance: 1, payout: 36 },
+  { prize: 'Giải 4', name: 'Tiểu Cát', hex: 'Quẻ Chấn', meaning: '', chance: 1, payout: 23 },
+  { prize: 'Giải 5', name: 'Bình Cát', hex: 'Quẻ Tốn', meaning: '', chance: 2, payout: 18 },
+  { prize: 'Giải 6', name: 'Cát', hex: 'Quẻ Khảm', meaning: '', chance: 4, payout: 13 },
+  { prize: 'Giải 7', name: 'Cát', hex: 'Quẻ Cấn', meaning: '', chance: 8, payout: 9 },
+  { prize: 'Giải 8', name: 'Phổ thông', hex: 'Quẻ Khôn', meaning: '', chance: 14, payout: 8 },
+  { prize: 'Quẻ HÒA', name: 'Hòa', hex: 'Quẻ Thái', meaning: 'Hòa vốn, nhận lại tiền cược', chance: 18, payout: 5 },
+  { prize: 'Quẻ HUNG', name: 'Hung', hex: 'Quẻ Bĩ', meaning: 'Mất toàn bộ vốn', chance: 50, payout: 0 },
 ];
 (() => { // kiểm tra lúc nạp module: bảng phải đủ đúng 100 ô
   const total = FORTUNE_TIERS.reduce((sum, tier) => sum + tier.chance, 0);
