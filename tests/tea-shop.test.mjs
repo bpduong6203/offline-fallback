@@ -40,6 +40,15 @@ test('pause, minigames and closing the browser stop game time; patience expires 
  const s=initialState();act(s,{action:'open'},0);advance(s,5,()=>0);assert.equal(s.orders.length,1);const o=s.orders[0];s.paused=true;advance(s,5);assert.equal(o.wait,0);s.paused=false;act(s,{action:'miniStart',kind:'clean'},0,100);advance(s,5);assert.equal(o.wait,0);act(s,{action:'miniEnd',cancel:true},0,200);o.wait=o.patience-1;advance(s,2,()=>0);assert(!s.orders.some(x=>x.id===o.id));assert.equal(s.report.lost,1);
  const t=s.time;advance(s,100000);assert.equal(s.time-t,5);
 });
+test('garden starts with six pots and old saves gain missing pots once without losing crops or refilling stock',async()=>{
+ const fresh=initialState();assert.equal(fresh.garden.length,6);act(fresh,{action:'plant',slot:5,seed:'green'},0);act(fresh,{action:'water',slot:5},0);assert(validateState(fresh));
+ act(fresh,{action:'upgrade',id:'pots'},100);assert.equal(fresh.garden.length,7);assert(validateState(fresh));
+ const env=localMerit();try{
+  const profile=env.MERIT.get('six-pots'),sql=profile.ctx.storage.sql,s=initialState();s.garden=[{seed:'black',watered:true,growth:44},null];s.stock.milk=7;
+  sql.exec('CREATE TABLE IF NOT EXISTS tea_save (id INTEGER PRIMARY KEY,data TEXT NOT NULL,backup TEXT NOT NULL)');const raw=JSON.stringify(s);sql.exec('INSERT INTO tea_save VALUES (?,?,?)',1,raw,raw);
+  const get=async()=>await(await profile.fetch(new Request('https://internal/tea'))).json();const first=await get();assert.equal(first.state.garden.length,6);assert.deepEqual(first.state.garden[0],s.garden[0]);assert(first.state.garden.slice(1).every(p=>p===null));assert.equal(first.state.stock.milk,7);assert.equal(first.balance,0);assert.equal(first.state.revision,1);assert.deepEqual(await get(),first);
+ }finally{env.close();}
+});
 test('garden matures in game time only, harvests once, does not overflow',()=>{
  const s=initialState();act(s,{action:'plant',slot:0,seed:'black'},0);advance(s,5);assert.equal(s.garden[0].growth,0);act(s,{action:'water',slot:0},0);act(s,{action:'open'},0);for(let i=0;i<18;i++)advance(s,5);assert.equal(s.garden[0].growth,90);s.stock.black=39;assert.throws(()=>act(s,{action:'harvest',slot:0},0),/đầy/);s.stock.black=12;act(s,{action:'harvest',slot:0},0);assert.equal(s.stock.black,16);assert.throws(()=>act(s,{action:'harvest',slot:0},0),/chưa/);
 });

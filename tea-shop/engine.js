@@ -1,8 +1,9 @@
 import {RECIPES,INGREDIENTS,UPGRADES,DECOR,PEOPLE,MINI} from './data.js';
 const fail = message => {throw new Error(message);};
+export const BASE_GARDEN_POTS=6;
 export const STARTER_STOCK=40;
 export const STARTER_STOCK_VERSION=2;
-export function initialState(){return {version:1,revision:0,economy:0,starterStockVersion:STARTER_STOCK_VERSION,ownerGender:'male',day:1,time:0,open:false,paused:false,speed:1,relaxed:true,reputation:0,clean:100,stock:Object.fromEntries(Object.keys(INGREDIENTS).map(k=>[k,STARTER_STOCK])),menu:['classic','pearl'],orders:[],drink:null,garden:Array.from({length:2},()=>null),upgrades:{},decor:[],friends:{},report:{sales:0,tips:0,cost:0,purchases:0,served:0,lost:0},history:[],spawn:0,mini:null,quality:{},practice:{},tasks:{},tutorial:0,lastReal:0,receipts:[],message:'Chào bạn! Nhận bộ nguyên liệu đầu tiên, chọn Mở cửa rồi chạm vào khách để pha ly đầu tiên.'};}
+export function initialState(){return {version:1,revision:0,economy:0,starterStockVersion:STARTER_STOCK_VERSION,ownerGender:'male',day:1,time:0,open:false,paused:false,speed:1,relaxed:true,reputation:0,clean:100,stock:Object.fromEntries(Object.keys(INGREDIENTS).map(k=>[k,STARTER_STOCK])),menu:['classic','pearl'],orders:[],drink:null,garden:Array.from({length:BASE_GARDEN_POTS},()=>null),upgrades:{},decor:[],friends:{},report:{sales:0,tips:0,cost:0,purchases:0,served:0,lost:0},history:[],spawn:0,mini:null,quality:{},practice:{},tasks:{},tutorial:0,lastReal:0,receipts:[],message:'Chào bạn! Nhận bộ nguyên liệu đầu tiên, chọn Mở cửa rồi chạm vào khách để pha ly đầu tiên.'};}
 export function validateState(s){
  const integer=n=>Number.isSafeInteger(n)&&n>=0;
  const record=v=>v&&typeof v==='object'&&!Array.isArray(v);
@@ -14,7 +15,7 @@ export function validateState(s){
   Array.isArray(s.orders)&&s.orders.length<=5&&s.orders.every(o=>typeof o.id==='string'&&integer(o.person)&&o.person<PEOPLE.length&&recipe(o.recipe)&&Number.isFinite(o.wait)&&o.wait>=0&&Number.isFinite(o.patience)&&o.patience>0&&[0,30,50,70,100].includes(o.sugar)&&[0,1,2].includes(o.ice))&&
   (!s.drink||(recipe(s.drink.recipe)&&typeof s.drink.order==='string'&&integer(s.drink.step)&&s.drink.step<=8&&Number.isFinite(s.drink.started)))&&
   Array.isArray(s.receipts)&&s.receipts.length<=100&&s.receipts.every(r=>typeof r==='string')&&
-  Array.isArray(s.garden)&&s.garden.length>=2&&s.garden.length<=5&&s.garden.every(p=>!p||(['black','green','jasmine','mint','lemon'].includes(p.seed)&&typeof p.watered==='boolean'&&Number.isFinite(p.growth)&&p.growth>=0&&p.growth<=90))&&
+  Array.isArray(s.garden)&&s.garden.length>=2&&s.garden.length<=BASE_GARDEN_POTS+3&&s.garden.every(p=>!p||(['black','green','jasmine','mint','lemon'].includes(p.seed)&&typeof p.watered==='boolean'&&Number.isFinite(p.growth)&&p.growth>=0&&p.growth<=90))&&
   record(s.upgrades)&&Object.entries(s.upgrades).every(([k,v])=>Object.hasOwn(UPGRADES,k)&&integer(v)&&v<=3)&&
   Array.isArray(s.decor)&&s.decor.every(k=>Object.hasOwn(DECOR,k))&&
   record(s.report)&&['sales','tips','cost','purchases','served','lost'].every(k=>integer(s.report[k]))&&
