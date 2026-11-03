@@ -57,6 +57,13 @@
       padding-left: max(16px, env(safe-area-inset-left, 0px));
       padding-right: max(16px, env(safe-area-inset-right, 0px));
       -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    input, textarea {
+      -webkit-user-select: text;
+      user-select: text;
     }
 
     button {
@@ -138,7 +145,32 @@
       min-height: 56px;
     }
 
-    .logo {
+    
+      .merit-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(10, 26, 102, 0.75);
+        border: 1px solid rgba(244, 201, 93, 0.5);
+        border-radius: 20px;
+        padding: 6px 14px;
+        font: 700 13px/1 var(--body);
+        color: var(--gold);
+        margin-right: auto;
+      }
+      .merit-chip .merit-icon {
+        font-size: 15px;
+      }
+      .merit-chip .merit-val {
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+        color: #fff;
+      }
+      .merit-chip .merit-lbl {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .logo {
       font: 900 22px/1 var(--display);
       letter-spacing: 0.02em;
       text-transform: uppercase;
@@ -839,8 +871,35 @@
         animation: none;
       }
     }
-  </style>
-</head>
+  
+      .anti-cheat-toast {
+        position: fixed;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-50px);
+        background: rgba(220, 38, 38, 0.95);
+        color: #fff;
+        padding: 10px 22px;
+        border-radius: 30px;
+        font: 700 13.5px/1.3 var(--body);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-align: center;
+      }
+      .anti-cheat-toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+    </style>
+    <script defer src="/merit.js"></script>
+  </head>
 
 <body>
   <div class="bg" aria-hidden="true">
@@ -852,6 +911,11 @@
   <div id="app">
     <header class="top">
       <div class="logo">Ai là <span>triệu phú</span></div>
+        <div class="merit-chip" id="meritChip" title="Số dư công đức tích lũy">
+          <span class="merit-icon">🙏</span>
+          <b class="merit-val" id="meritVal">—</b>
+          <span class="merit-lbl">công đức</span>
+        </div>
       <div class="lifelines" id="lifelines" role="group" aria-label="Quyền trợ giúp">
         <button class="life" id="lf-fifty" data-life="fifty" title="50:50, loại bỏ hai đáp án sai"
           aria-label="Quyền trợ giúp 50:50">
@@ -887,7 +951,7 @@
       <main id="stage">
         <div class="status">
           <span id="stNum">Câu 1 / 15</span><span class="tag" id="stTag" hidden>Mốc an toàn</span><b
-            id="stPrize">200.000 công đức</b>
+            id="stPrize">1 công đức</b>
         </div>
         <div id="qwrap" class="line">
           <div class="hex" id="qbox">
@@ -939,18 +1003,21 @@
         15 câu hỏi, 3 quyền trợ giúp. Trả lời đúng để leo lên thang công
         đức, sai thì chỉ giữ lại công đức ở mốc an toàn gần nhất.
       </p>
-      <ul class="rules">
-        <li>
-          <b>Mốc an toàn</b><span>Câu 5 (2.000.000 công đức) và câu 10 (22.000.000 công đức).</span>
-        </li>
-        <li>
-          <b>Trợ giúp</b><span>50:50, gọi điện thoại cho người thân, hỏi ý kiến khán giả. Mỗi
-            quyền dùng một lần.</span>
-        </li>
-        <li>
-          <b>Phím tắt</b><span>A B C D để chọn, Enter để khóa đáp án.</span>
-        </li>
-      </ul>
+              <ul class="rules">
+          <li>
+            <b>Mốc an toàn</b><span>Câu 5 (10 công đức) và câu 10 (100 công đức). Đỉnh cao 1.000 công đức.</span>
+          </li>
+          <li>
+            <b>Trợ giúp</b><span>50:50, gọi điện thoại cho người thân, hỏi ý kiến khán giả. Mỗi
+              quyền dùng một lần.</span>
+          </li>
+          <li>
+            <b>Chống gian lận</b><span>Khóa sao chép & chuột phải. Chuyển tab hoặc rời màn hình khi đang thi đấu sẽ bị truất quyền ngay lập tức.</span>
+          </li>
+          <li>
+            <b>Phím tắt</b><span>A B C D để chọn, Enter để khóa đáp án.</span>
+          </li>
+        </ul>
       <button class="btn gold" id="startBtn">Bắt đầu chơi</button>
       <div class="sub" id="introInfo"></div>
     </div>
@@ -1867,9 +1934,10 @@
       const TOTAL = TIERS.reduce((s, t) => s + QS[t].length, 0)
 
       const PRIZES = [
-        200000, 400000, 600000, 1000000, 2000000, 3000000, 6000000, 10000000,
-        14000000, 22000000, 30000000, 40000000, 60000000, 85000000, 150000000,
-      ]
+          1, 2, 3, 5, 10,
+          15, 25, 40, 60, 100,
+          150, 250, 400, 600, 1000,
+        ]
       const SAFE = [4, 9]
       const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".")
       const money = (n) => fmt(n) + " công đức"
@@ -2608,34 +2676,66 @@
         }, 1200)
       }
 
-      function finish(kind, prize) {
-        G.state = "over"
-        AU.stopBed()
-        renderLadder()
-        best.games++
-        if (prize > best.prize) best.prize = prize
-        store.set("altp.best", best)
-        const t = {
-          win: ["Chúc mừng!", "Triệu phú mới của chúng ta"],
-          lose: ["Rất tiếc", "Hành trình kết thúc"],
-          walk: ["Dừng cuộc chơi", "Một quyết định khôn ngoan"],
-        }[kind]
-        $("#endKicker").textContent = t[1]
-        $("#endTitle").textContent = t[0]
-        $("#endPrize").textContent = money(prize)
-        $("#endStats").textContent =
-          "Trả lời đúng " +
-          G.correct +
-          " / 15 câu. Kỷ lục của bạn: " +
-          money(best.prize) +
-          ". Đã gặp " +
-          seenCount() +
-          " / " +
-          TOTAL +
-          " câu trong ngân hàng."
-        $("#end").hidden = false
-        if (kind === "win") burst(120, innerWidth / 2, innerHeight * 0.8)
-      }
+              function updateMeritUI(val) {
+          const v = typeof val === "number" ? val : (window.MebiMerit && typeof window.MebiMerit.get === "function" ? window.MebiMerit.get() : null)
+          const el = $("#meritVal")
+          if (el && v !== null && !isNaN(v)) el.textContent = fmt(v)
+        }
+        if (window.MebiMerit) {
+          Promise.resolve(window.MebiMerit.ready).then(updateMeritUI).catch(() => {})
+        }
+        window.addEventListener("mebi-merit-change", (e) => updateMeritUI(e.detail))
+
+        function finish(kind, prize) {
+          G.state = "over"
+          AU.stopBed()
+          renderLadder()
+          best.games++
+          if (prize > best.prize) best.prize = prize
+          store.set("altp.best", best)
+          const t = {
+            win: ["Chúc mừng!", "Triệu phú mới của chúng ta"],
+            lose: ["Rất tiếc", "Hành trình kết thúc"],
+            walk: ["Dừng cuộc chơi", "Một quyết định khôn ngoan"],
+          }[kind]
+          $("#endKicker").textContent = t[1]
+          $("#endTitle").textContent = t[0]
+          $("#endPrize").textContent = money(prize)
+          let statsBase =
+            "Trả lời đúng " +
+            G.correct +
+            " / 15 câu. Kỷ lục của bạn: " +
+            money(best.prize) +
+            ". Đã gặp " +
+            seenCount() +
+            " / " +
+            TOTAL +
+            " câu trong ngân hàng."
+          if (prize > 0) {
+            $("#endStats").textContent = statsBase + " 🙏 Đang cộng " + money(prize) + " vào ví công đức..."
+            const reqId = (crypto.randomUUID ? crypto.randomUUID() : 'altp-' + Date.now() + '-' + Math.random().toString(36).slice(2)).slice(0, 36)
+            const claimPromise = window.MebiMerit && typeof window.MebiMerit.claim === 'function'
+              ? window.MebiMerit.claim(reqId, prize)
+              : fetch('/api/merit/claim', {
+                  method: 'POST',
+                  credentials: 'same-origin',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ requestId: reqId, prize })
+                }).then(r => r.json()).then(d => {
+                  if (d && typeof d.balance === 'number') updateMeritUI(d.balance)
+                  return d.balance
+                })
+            Promise.resolve(claimPromise).then(() => {
+              $("#endStats").textContent = statsBase + " 🙏 Đã cộng +" + money(prize) + " vào ví công đức của bạn!"
+            }).catch(() => {
+              $("#endStats").textContent = statsBase
+            })
+          } else {
+            $("#endStats").textContent = statsBase
+          }
+          $("#end").hidden = false
+          if (kind === "win") burst(120, innerWidth / 2, innerHeight * 0.8)
+        }
 
       /* ================= Quyền trợ giúp ================= */
       const modal = $("#modal"),
@@ -2792,6 +2892,89 @@
         say("Khán giả đã bỏ phiếu. Hãy xem kết quả.")
       }
 
+      
+      /* ================= Chống gian lận: Chặn copy, chuột phải, chuyển tab ================= */
+      let toastEl = null, toastHideTimer = null;
+      function showAntiCheatToast(msg) {
+        if (!toastEl) {
+          toastEl = document.createElement("div");
+          toastEl.className = "anti-cheat-toast";
+          document.body.appendChild(toastEl);
+        }
+        toastEl.innerHTML = "<span>🛡️</span> <span>" + msg + "</span>";
+        toastEl.classList.add("show");
+        clearTimeout(toastHideTimer);
+        toastHideTimer = setTimeout(() => {
+          if (toastEl) toastEl.classList.remove("show");
+        }, 2600);
+      }
+
+      function isGameActive() {
+        return $("#intro").hidden && $("#end").hidden && G && G.gid && G.state && G.state !== "over";
+      }
+
+      let blurTimeout = null;
+
+      function disqualify(reason) {
+        if (!isGameActive()) return;
+        clearTimeout(blurTimeout);
+        AU.stopBed();
+        AU.wrong();
+        closeModal();
+        G.state = "over";
+        renderLadder();
+        best.games++;
+        store.set("altp.best", best);
+
+        $("#endKicker").textContent = "Vi phạm quy chế thi đấu";
+        $("#endTitle").textContent = "Truất quyền thi đấu";
+        $("#endPrize").textContent = "0 công đức";
+        $("#endStats").textContent =
+          "Bạn bị truất quyền thi đấu do " +
+          (reason || "chuyển tab hoặc rời màn hình khi đang thi đấu") +
+          " nhằm chống tra cứu gian lận. Số công đức tích lũy ở lượt này bị hủy.";
+        $("#end").hidden = false;
+        say("Phát hiện hành vi gian lận! Bạn đã bị truất quyền thi đấu.");
+        showAntiCheatToast("Truất quyền thi đấu: Vi phạm quy định chống gian lận!");
+      }
+
+      document.addEventListener("copy", (e) => {
+        e.preventDefault();
+        showAntiCheatToast("Nội dung câu hỏi được bảo vệ chống sao chép gian lận!");
+      });
+      document.addEventListener("cut", (e) => {
+        e.preventDefault();
+      });
+      document.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        showAntiCheatToast("Nhấp chuột phải đã bị khóa để bảo đảm công bằng!");
+      });
+      document.addEventListener("selectstart", (e) => {
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+        e.preventDefault();
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden && isGameActive()) {
+          disqualify("chuyển tab sang ứng dụng khác");
+        }
+      });
+
+      window.addEventListener("blur", () => {
+        if (!isGameActive()) return;
+        showAntiCheatToast("Cảnh báo: Bạn đang rời khỏi màn hình! Hãy quay lại trong 3 giây.");
+        clearTimeout(blurTimeout);
+        blurTimeout = setTimeout(() => {
+          if (isGameActive()) {
+            disqualify("rời khỏi cửa sổ thi đấu quá 3 giây");
+          }
+        }, 3000);
+      });
+
+      window.addEventListener("focus", () => {
+        clearTimeout(blurTimeout);
+      });
+
       /* ================= Sự kiện ================= */
       ans.forEach((a) =>
         a.addEventListener("click", () => select(+a.dataset.i)),
@@ -2841,9 +3024,20 @@
         b.blur()
       })
       addEventListener("keydown", (e) => {
-        if (!$("#intro").hidden || !$("#end").hidden || !modal.hidden) return
-        const k = e.key.toUpperCase(),
-          i = "ABCD".indexOf(k)
+        const k = e.key ? e.key.toUpperCase() : "";
+        const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+        if (isCtrlOrMeta && ["C", "X", "A", "U", "S", "P"].includes(k)) {
+          e.preventDefault();
+          showAntiCheatToast("Phím tắt sao chép / tra cứu đã bị vô hiệu hóa!");
+          return;
+        }
+        if (e.key === "F12" || (isCtrlOrMeta && e.shiftKey && ["I", "J", "C"].includes(k))) {
+          e.preventDefault();
+          showAntiCheatToast("Công cụ kiểm tra đã bị khóa!");
+          return;
+        }
+        if (!$("#intro").hidden || !$("#end").hidden || !modal.hidden) return;
+        const i = "ABCD".indexOf(k)
         if (k.length === 1 && i >= 0) {
           select(i)
         } else if (e.key === "Enter" && G.state === "pick" && G.sel >= 0) {

@@ -15,7 +15,7 @@ export function localXiDach(){
     async http(req,res){const path=req.url?.split('?')[0];
       if(path==='/api/tea-shop'){let body='';for await(const chunk of req)body+=chunk;const result=await handleTeaRequest(new Request('http://'+req.headers.host+req.url,{method:req.method,headers:req.headers,...(req.method==='POST'?{body}:{})}),merit);res.writeHead(result.status,Object.fromEntries(result.headers));res.end(await result.text());return true;}
       if(path==='/merit.js'){res.writeHead(200,{'Content-Type':'application/javascript'});res.end(MERIT_CLIENT_SCRIPT);return true;}
-      if(path==='/api/merit'||path==='/api/merit/reward'){let body='';for await(const chunk of req)body+=chunk;const result=await handleMeritRequest(new Request('http://'+req.headers.host+req.url,{method:req.method,headers:req.headers,...(req.method==='POST'?{body}:{})}),merit);res.writeHead(result.status,Object.fromEntries(result.headers));res.end(await result.text());return true;}
+      if(path==='/api/merit'||path==='/api/merit/reward'||path==='/api/merit/claim'){let body='';for await(const chunk of req)body+=chunk;const result=await handleMeritRequest(new Request('http://'+req.headers.host+req.url,{method:req.method,headers:req.headers,...(req.method==='POST'?{body}:{})}),merit);res.writeHead(result.status,Object.fromEntries(result.headers));res.end(await result.text());return true;}
 if(path==='/__game/xi-dach/match'){
       if(req.method!=='POST'){res.writeHead(405);res.end();return true;}
       let body='';for await(const chunk of req)body+=chunk;
