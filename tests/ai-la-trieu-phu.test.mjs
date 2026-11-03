@@ -18,6 +18,13 @@ test('Ai Là Triệu Phú HTML files exist and are synchronized between root and
   assert.ok(rootHtml.includes('const TIERS = ["e", "m", "h"]'), 'must have tiers e, m, h');
   assert.ok(rootHtml.includes('const PRIZES = ['), 'must have prize milestones');
   assert.ok(rootHtml.includes('const AU ='), 'must have audio synthesis engine');
+
+  // Verify currency unit is "công đức"
+  assert.ok(rootHtml.includes('<h2>Thang công đức</h2>'), 'must display Thang công đức');
+  assert.ok(rootHtml.includes('const money = (n) => fmt(n) + " công đức"'), 'money formatting must use công đức');
+  assert.ok(rootHtml.includes('200.000 công đức'), 'initial prize displays công đức');
+  assert.ok(rootHtml.includes('2.000.000 công đức'), 'milestone displays công đức');
+  assert.ok(!rootHtml.includes('200.000 đ'), 'must not contain old đ unit');
 });
 
 test('Ai Là Triệu Phú question bank has valid 15-question progression with 4 options each', async () => {
