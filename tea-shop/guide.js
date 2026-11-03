@@ -1,5 +1,5 @@
 export const GUIDE_SECTIONS = [
- {label:'Ly đầu tiên',title:'Từ mở cửa đến ly trà đầu tiên',intro:'Bạn đã có sẵn nguyên liệu để bắt đầu, kể cả khi ví công đức đang bằng 0.',steps:[
+ {label:'Ly đầu tiên',title:'Từ mở cửa đến ly trà đầu tiên',intro:'Bạn có sẵn 40 phần mỗi loại nguyên liệu để bắt đầu, kể cả khi ví công đức đang bằng 0. Dùng dần số nguyên liệu này; khi thiếu mới cần mua thêm.',steps:[
   ['Chuẩn bị quán','Chọn chủ tiệm Nam hoặc Nữ phía trên cảnh quán. Ở Quầy nhận đơn, mở Sổ công thức & menu để xem món và chọn menu trước khi mở cửa.'],
   ['Mở cửa đón khách','Nhấn Mở cửa đón khách, chờ khách ghé tiệm rồi chọn Nhận đơn & pha trên phiếu khách hoặc chạm vào khách trong cảnh.'],
   ['Đọc đúng phiếu đơn','Nhớ tên món, mức đường và mức đá. Công thức ghim trên bàn pha cho biết loại trà, có sữa hay không và thành phần cần thêm.'],

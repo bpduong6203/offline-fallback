@@ -35,7 +35,7 @@ Hai chủ tiệm dùng PNG trong suốt cắt trực tiếp từ ảnh người 
 
 ## Công đức và độ an toàn thanh toán
 
-Toàn bộ giá bán, tip, mua nguyên liệu và nâng cấp dùng **ví công đức chung** với Chùa/Xì Dách. Không còn xu riêng. Không cấp 500 công đức khi khởi tạo; thay bằng 12 phần mỗi nguyên liệu, đủ để bắt đầu từ số dư 0 và tránh tạo ví mới/reset để nhận tiền miễn phí.
+Toàn bộ giá bán, tip, mua nguyên liệu và nâng cấp dùng **ví công đức chung** với Chùa/Xì Dách. Không còn xu riêng. Không cấp 500 công đức khi khởi tạo; thay bằng 40 phần mỗi nguyên liệu, đủ để bắt đầu từ số dư 0 và tránh tạo ví mới/reset để nhận tiền miễn phí.
 
 `MebiMeritProfile` lưu kho, đơn, tiến trình, receipt và balance trong **cùng SQLite transaction**. Server tự tính giá và thưởng từ công thức, kiểm tra đủ bước, thời gian pha tối thiểu (8 giây, máy dập nắp giảm tới 5 giây), tồn kho, số dư và giới hạn minigame. Client không gửi số tiền được nhận. `revision` chặn ghi đè nhiều tab, `requestId` xử lý retry/lost response mà không thanh toán hai lần. Đây không phải hệ thống chống mọi bot tự động pha món hợp lệ.
 
@@ -77,3 +77,5 @@ Cài đặt hỗ trợ xuất/nhập JSON. Mã archive do server cấp, ràng bu
 - `../src/tea-api.js`: route API, danh tính ví, same-origin và đăng nhập theo repo.
 
 Font Google có fallback hệ thống. Game cần kết nối server để lưu và nhận công đức. Không triển khai production trong bước phát triển này.
+
+Bản lưu cũ khởi đầu với 12 phần được bổ sung chênh lệch 28 phần mỗi loại đúng một lần, không vượt sức chứa và không thay đổi ví công đức. Phần đã tiêu hao vẫn được giữ đúng; tải lại hoặc chơi lại không cấp lại gói ban đầu.

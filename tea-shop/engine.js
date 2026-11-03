@@ -1,11 +1,13 @@
 import {RECIPES,INGREDIENTS,UPGRADES,DECOR,PEOPLE,MINI} from './data.js';
 const fail = message => {throw new Error(message);};
-export function initialState(){return {version:1,revision:0,economy:0,ownerGender:'male',day:1,time:0,open:false,paused:false,speed:1,relaxed:true,reputation:0,clean:100,stock:Object.fromEntries(Object.keys(INGREDIENTS).map(k=>[k,12])),menu:['classic','pearl'],orders:[],drink:null,garden:Array.from({length:2},()=>null),upgrades:{},decor:[],friends:{},report:{sales:0,tips:0,cost:0,purchases:0,served:0,lost:0},history:[],spawn:0,mini:null,quality:{},practice:{},tasks:{},tutorial:0,lastReal:0,receipts:[],message:'Chào bạn! Nhận bộ nguyên liệu đầu tiên, chọn Mở cửa rồi chạm vào khách để pha ly đầu tiên.'};}
+export const STARTER_STOCK=40;
+export const STARTER_STOCK_VERSION=2;
+export function initialState(){return {version:1,revision:0,economy:0,starterStockVersion:STARTER_STOCK_VERSION,ownerGender:'male',day:1,time:0,open:false,paused:false,speed:1,relaxed:true,reputation:0,clean:100,stock:Object.fromEntries(Object.keys(INGREDIENTS).map(k=>[k,STARTER_STOCK])),menu:['classic','pearl'],orders:[],drink:null,garden:Array.from({length:2},()=>null),upgrades:{},decor:[],friends:{},report:{sales:0,tips:0,cost:0,purchases:0,served:0,lost:0},history:[],spawn:0,mini:null,quality:{},practice:{},tasks:{},tutorial:0,lastReal:0,receipts:[],message:'Chào bạn! Nhận bộ nguyên liệu đầu tiên, chọn Mở cửa rồi chạm vào khách để pha ly đầu tiên.'};}
 export function validateState(s){
  const integer=n=>Number.isSafeInteger(n)&&n>=0;
  const record=v=>v&&typeof v==='object'&&!Array.isArray(v);
  const recipe=id=>RECIPES.some(r=>r.id===id);
- return !!(s?.version===1&&(s.ownerGender===undefined||['male','female'].includes(s.ownerGender))&&integer(s.revision)&&integer(s.economy)&&integer(s.day)&&s.day>0&&s.day<=100000&&
+ return !!(s?.version===1&&(s.starterStockVersion===undefined||[1,STARTER_STOCK_VERSION].includes(s.starterStockVersion))&&(s.ownerGender===undefined||['male','female'].includes(s.ownerGender))&&integer(s.revision)&&integer(s.economy)&&integer(s.day)&&s.day>0&&s.day<=100000&&
   Number.isFinite(s.time)&&s.time>=0&&s.time<=420&&typeof s.open==='boolean'&&typeof s.paused==='boolean'&&[.5,1,2].includes(s.speed)&&typeof s.relaxed==='boolean'&&integer(s.reputation)&&Number.isFinite(s.clean)&&s.clean>=0&&s.clean<=100&&
   record(s.stock)&&Object.keys(INGREDIENTS).every(k=>integer(s.stock[k]))&&
   Array.isArray(s.menu)&&s.menu.length>0&&s.menu.every(recipe)&&
