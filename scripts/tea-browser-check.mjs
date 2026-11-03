@@ -106,7 +106,12 @@ try{work:{
  await click('#pause');await wait(8200);await click('#workspace [data-action="serve"]');await until("document.querySelector('#workspace h2')?.textContent==='Bàn pha chế'",'sale');
  const sold=await read();assert.equal(sold.state.report.served,1);assert(sold.balance>=8);await cdp('Page.reload');await until("document.getElementById('saveStatus')?.textContent.includes('Đã lưu')",'reload');assert.equal((await read()).balance,sold.balance);assert.equal((await read()).state.report.served,1);
  if(process.argv.includes('--layout-only')||process.argv.includes('--stability-only')){assert.equal(errors.length,0,JSON.stringify(errors));console.log('Tea regression passed: stable controls across background ticks, real mouse/key shake feedback and progress, automatic lid step, sale/reload, 6 viewport sizes.');break work;}
- await click('[data-tab="stock"]');await evaluate("[...document.querySelectorAll('#workspace [data-action=" + '"buy"' + "]')].find(b=>JSON.parse(b.dataset.props).item==='cup'&&JSON.parse(b.dataset.props).amount===1).click()");await wait(200);assert.equal((await read()).balance,sold.balance-1);
+ await evaluate('window.confirm=()=>true');
+ for(let n=0;n<4;n++){await click('.order [data-action="start"]');await click('#workspace [data-action="discard"]');}
+ await click('[data-tab="stock"]');
+ assert(await evaluate("[...document.querySelectorAll('#workspace [data-action=buy]')].some(b=>b.textContent==='Mua 5 · 1 công đức')"));
+ await evaluate("[...document.querySelectorAll('#workspace [data-action=buy]')].find(b=>JSON.parse(b.dataset.props).item==='cup'&&JSON.parse(b.dataset.props).amount===5).click()");await wait(200);const bought=await read();assert.equal(bought.balance,sold.balance-1);assert.equal(bought.state.stock.cup,40);assert.equal(bought.state.report.purchases,1);
+ if(process.argv.includes('--purchase-only')){assert.equal(errors.length,0,JSON.stringify(errors));console.log('Tea purchase passed: UI buys 5 ingredients for 1 shared merit, stock and report persist correctly.');break work;}
  await click('[data-tab="garden"]');await click('[data-plant="0"]');await click('[data-action="water"]');assert((await read()).state.garden[0].watered);
  await click('[data-tab="counter"]');
  for(const kind of ['brew','pearls','shake','syrup','clean']){

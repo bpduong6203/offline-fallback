@@ -28,7 +28,7 @@ Hai chủ tiệm dùng PNG trong suốt cắt trực tiếp từ ảnh người 
 - Lắc theo nhịp: bấm luân phiên Trái/Phải (hoặc A/D, phím mũi tên) khi kim vào vùng xanh. Nút đến lượt được tô sáng; ly chuyển động, số lượt và điểm cập nhật ngay khi bấm. Hoàn thành minigame ở bước lắc sẽ chuyển thẳng sang đóng nắp, không cần lắc tiêu chuẩn thêm lần nữa. Hủy minigame giữ nguyên bước pha.
 - Mỗi ngày dài 7 phút ở tốc độ 1×. Có thể kết ngày từ phút thứ 6, sau đó chuẩn bị menu ngày mới. Tạm dừng, tốc độ 0.5×/1×/2×, chế độ thư giãn nằm trong cài đặt. Modal và minigame dừng thời gian phục vụ.
 - Vườn khởi đầu có 6 chậu; bản lưu cũ được thêm chậu còn thiếu mà vẫn giữ cây đang trồng. Nâng cấp chậu trồng vẫn mở thêm ô như trước. Trồng 5 loại cây, tưới một lần, thu 4 phần sau 90 giây thời gian game. Cây không chết khi rời trang.
-- Kho bán nguyên liệu giá 1 công đức/phần. Không trừ tồn âm; nguyên liệu trừ đúng một lần lúc nhận pha. Hủy ly không hoàn nguyên liệu. Khi thiếu tiền và nguyên liệu trà sữa truyền thống, gói hỗ trợ hàng xóm có thể cấp 2 ly truyền thống một lần/ngày.
+- Kho bán nguyên liệu theo gói 5 phần / 1 công đức hoặc 10 phần / 2 công đức. Không trừ tồn âm; nguyên liệu trừ đúng một lần lúc nhận pha. Hủy ly không hoàn nguyên liệu. Khi thiếu tiền và nguyên liệu trà sữa truyền thống, gói hỗ trợ hàng xóm có thể cấp 2 ly truyền thống một lần/ngày.
 - Sáu minigame thật: canh vùng ủ trà (mỗi loại có vùng riêng), khuấy trân châu theo nhịp, lắc trái/phải (phím A/D), vẽ syrup bằng pointer, chọn dụng cụ dọn từng loại rác, match-3 5×5 có đổi chỗ, rơi ô và xáo khi hết nước đi. Có hướng dẫn, kết quả, chơi lại. Mỗi lượt 15–25 giây; có thể hoàn thành từ giây thứ 10. Thưởng một lần mỗi loại/ngày, lượt tiếp theo luyện tập; không thưởng tiền trực tiếp. Luyện ủ trà và lắc mỗi loại 3 lần mở pha nhanh tiêu chuẩn.
 - Sáu nâng cấp, sáu đồ trang trí, năm nhóm khách, thân thiết và quà khách quen. Đèn, thảm, tranh, cây, mèo và biển hiệu được vẽ ngay trong cảnh; bàn ghế và chậu trồng tăng sức chứa thực tế.
 - Nhạc và hiệu ứng tổng hợp Web Audio, mặc định tắt, chỉ bắt đầu sau tương tác. Hỗ trợ âm lượng và giảm chuyển động.
@@ -39,7 +39,7 @@ Toàn bộ giá bán, tip, mua nguyên liệu và nâng cấp dùng **ví công 
 
 `MebiMeritProfile` lưu kho, đơn, tiến trình, receipt và balance trong **cùng SQLite transaction**. Server tự tính giá và thưởng từ công thức, kiểm tra đủ bước, thời gian pha tối thiểu (8 giây, máy dập nắp giảm tới 5 giây), tồn kho, số dư và giới hạn minigame. Client không gửi số tiền được nhận. `revision` chặn ghi đè nhiều tab, `requestId` xử lý retry/lost response mà không thanh toán hai lần. Đây không phải hệ thống chống mọi bot tự động pha món hợp lệ.
 
-Doanh thu = giá bán + tip. Lợi nhuận bán hàng = doanh thu − giá vốn nguyên liệu đã dùng. Dòng tiền = doanh thu − tiền thực chi mua nguyên liệu/đầu tư; không trừ giá vốn lần nữa khỏi ví. Quà khởi đầu/thu hoạch vẫn được ghi nhận theo giá vốn chuẩn 1/phần khi dùng.
+Doanh thu = giá bán + tip. Lợi nhuận bán hàng = doanh thu − giá vốn nguyên liệu đã dùng. Dòng tiền = doanh thu − tiền thực chi mua nguyên liệu/đầu tư; không trừ giá vốn lần nữa khỏi ví. Quà khởi đầu/thu hoạch vẫn được ghi nhận theo giá vốn chuẩn 0,2 công đức/phần khi dùng.
 
 ## Tiến trình 10 ngày
 

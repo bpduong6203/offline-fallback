@@ -25,15 +25,18 @@ test('recipes deduct inventory once, reject out-of-order steps and discarded dri
  const s=initialState(),o=makeOrder(s,()=>0),before={...s.stock};act(s,{action:'start',id:(s.orders=[o])[0].id},0,10000);
  assert.equal(s.stock.cup,before.cup-1);assert.throws(()=>act(s,{action:'start',id:o.id},0),/Đang có/);
  assert.throws(()=>act(s,{action:'step',kind:'tea',value:'black'},0),/thứ tự/);
- act(s,{action:'discard'},0);assert.equal(s.stock.cup,before.cup-1);assert.equal(s.report.cost,4);
+ act(s,{action:'discard'},0);assert.equal(s.stock.cup,before.cup-1);assert.equal(s.report.cost,.8);assert(validateState(s));
 });
 test('correct recipe earns server price and tips; wrong sugar reduces payment, no tip',()=>{
  for(const wrong of [false,true]){const s=initialState(),o=makeOrder(s,()=>0);prepare(s,o,10000,wrong);assert.throws(()=>act(s,{action:'serve'},0,11000),/ít nhất/);const delta=act(s,{action:'serve',delta:99999,amount:99999},0,19000);assert.equal(s.report.sales,wrong?3:8);assert.equal(s.report.tips,wrong?0:3);assert.equal(delta,wrong?3:11);assert.equal(s.drink,null);assert.throws(()=>act(s,{action:'serve'},0,20000),/đóng nắp/);}
 });
 test('no negative stock, insufficient money does not mutate inventory, capacity and upgrades apply',()=>{
  const s=initialState(),o=makeOrder(s,()=>0);s.stock.milk=0;s.orders=[o];assert.throws(()=>act(s,{action:'start',id:o.id},0),/Thiếu/);assert.equal(s.stock.black,40);
- assert.throws(()=>act(s,{action:'buy',item:'milk',amount:5},4),/Không đủ/);assert.equal(s.stock.milk,0);
- assert.equal(act(s,{action:'buy',item:'milk',amount:5},10),-5);assert.equal(s.stock.milk,5);s.stock.cup=40;assert.throws(()=>act(s,{action:'buy',item:'cup',amount:1},10),/đầy/);
+ assert.throws(()=>act(s,{action:'buy',item:'milk',amount:5},0),/Không đủ/);assert.equal(s.stock.milk,0);
+ assert.equal(act(s,{action:'buy',item:'milk',amount:5},1),-1);assert.equal(s.stock.milk,5);assert.equal(s.report.purchases,1);
+ assert.equal(act(s,{action:'buy',item:'milk',amount:10},2),-2);assert.equal(s.stock.milk,15);assert.equal(s.report.purchases,3);
+ for(const amount of [1,4,6,1.5])assert.throws(()=>act(s,{action:'buy',item:'milk',amount},100),/không hợp lệ/);
+ s.stock.cup=40;assert.throws(()=>act(s,{action:'buy',item:'cup',amount:5},10),/đầy/);
  act(s,{action:'upgrade',id:'fridge'},100);assert.equal(capacity(s),60);assert.throws(()=>act(s,{action:'buy',item:'__proto__',amount:1},100),/không hợp lệ/);
 });
 test('pause, minigames and closing the browser stop game time; patience expires without penalties to wallet',()=>{
@@ -71,12 +74,12 @@ test('match-3 starts without matches, always has a valid move and only adjacent 
 });
 test('SQLite commits order, balance and save together; replay, stale tab, restart and shared wallet are safe',async()=>{
  const env=localMerit();try{
-  const profile=env.MERIT.get('test'),sql=profile.ctx.storage.sql,s=initialState(),o=makeOrder(s,()=>0);prepare(s,o,Date.now()-20000);const raw=JSON.stringify(s);sql.exec('CREATE TABLE IF NOT EXISTS tea_save (id INTEGER PRIMARY KEY,data TEXT NOT NULL,backup TEXT NOT NULL)');sql.exec('INSERT INTO tea_save VALUES (?,?,?)',1,raw,raw);
+  const profile=env.MERIT.get('test'),sql=profile.ctx.storage.sql,s=initialState(),o=makeOrder(s,()=>0);s.stock.cup=35;prepare(s,o,Date.now()-20000);const raw=JSON.stringify(s);sql.exec('CREATE TABLE IF NOT EXISTS tea_save (id INTEGER PRIMARY KEY,data TEXT NOT NULL,backup TEXT NOT NULL)');sql.exec('INSERT INTO tea_save VALUES (?,?,?)',1,raw,raw);
   const id=crypto.randomUUID(),post=(body)=>profile.fetch(new Request('https://internal/tea',{method:'POST',body:JSON.stringify(body)}));
   const body={action:'serve',revision:0,requestId:id,amount:999999};let r=await post(body);assert.equal(r.status,200);let data=await r.json();const earned=data.balance;assert(earned>=8&&earned<=15);assert.equal(data.state.report.served,1);
   r=await post(body);assert.equal((await r.json()).balance,earned);r=await post({...body,requestId:crypto.randomUUID()});assert.equal(r.status,409);
   const refreshed=await (await profile.fetch(new Request('https://internal/tea'))).json();assert.equal(refreshed.state.drink,null);assert.equal(refreshed.balance,earned);
-  r=await post({action:'buy',item:'cup',amount:1,revision:1,requestId:crypto.randomUUID()});data=await r.json();assert.equal(data.balance,earned-1);const wallet=await(await profile.fetch(new Request('https://internal/balance'))).json();assert.equal(wallet.balance,data.balance);
+  r=await post({action:'buy',item:'cup',amount:5,revision:1,requestId:crypto.randomUUID()});data=await r.json();assert.equal(data.balance,earned-1);assert.equal(data.state.stock.cup,39);assert.equal(data.state.report.purchases,1);const wallet=await(await profile.fetch(new Request('https://internal/balance'))).json();assert.equal(wallet.balance,data.balance);
   sql.exec('UPDATE tea_save SET data = ? WHERE id = ?','broken JSON',1);data=await(await profile.fetch(new Request('https://internal/tea'))).json();assert.equal(data.state.revision,2);assert.equal(data.balance,earned-1);
  }finally{env.close();}
 });
