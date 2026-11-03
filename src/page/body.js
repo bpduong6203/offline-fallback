@@ -4,7 +4,7 @@ export const body = (hostname) => `  </style>
 </head>
 <body>
   <div class="card">
-    <a class="domain-badge" id="gameLibraryLink" href="https://game.mebidev.site" aria-label="Mở thư viện game">${hostname}</a>
+    <a class="domain-badge" id="gameLibraryLink" href="https://game.mebidev.site" target="_blank" rel="noopener noreferrer" aria-label="Mở thư viện game trong tab mới">${hostname}</a>
     <h1 id="homeTitle">Máy chủ local chưa bật 🐞</h1>
     <p class="sub" id="homeIntro">Đang chờ máy chủ kết nối lại. Trang sẽ tự tải khi máy chủ hoạt động.</p>
     <div class="status" id="homeStatus">Đang tự động thử kết nối lại...</div>
