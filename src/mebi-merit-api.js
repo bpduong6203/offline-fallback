@@ -82,7 +82,25 @@ export const MERIT_CLIENT_SCRIPT = `(() => {
     });
     queue=operation.catch(()=>{});return operation;
   };
-  window.MebiMerit = Object.freeze({ get: () => balance, getDebt: () => debt, getNet: () => balance-debt, ready, change, reward, borrow, repay });
+  const fortune = (requestId) => {
+    const operation = queue.then(async () => {
+      await ready;
+      const response = await fetch('/api/merit/fortune', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requestId }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const error = new Error(data.error || 'Không gieo được quẻ. Vui lòng thử lại.');
+        error.definitive = true; error.retryAfterMs = data.retryAfterMs || 0;
+        throw error;
+      }
+      update(data); notify(); return data;
+    });
+    queue = operation.catch(() => {}); return operation;
+  };
+  const fortuneTable = () => fetch('/api/merit/fortune', { credentials: 'same-origin' }).then(async (response) => {
+    if (!response.ok) throw new Error('Không tải được bảng quẻ');
+    return response.json();
+  });
+  window.MebiMerit = Object.freeze({ get: () => balance, getDebt: () => debt, getNet: () => balance-debt, ready, change, reward, borrow, repay, fortune, fortuneTable });
 })();`;
 
 const MERIT_COOKIE = 'mebi_merit_id';
@@ -135,7 +153,8 @@ export async function getMeritIdentity(request, env) {
 export async function handleMeritRequest(request, env) {
   const url = new URL(request.url);
   const isReward = url.pathname === '/api/merit/reward';
-  if (url.pathname !== '/api/merit' && !isReward) return new Response('Not Found', { status: 404 });
+  const isFortune = url.pathname === '/api/merit/fortune';
+  if (url.pathname !== '/api/merit' && !isReward && !isFortune) return new Response('Not Found', { status: 404 });
   if (!['GET', 'POST'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, POST' } });
   if (isReward && request.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
   const origin = request.headers.get('Origin');
@@ -154,9 +173,15 @@ export async function handleMeritRequest(request, env) {
 
   const identity = await getMeritIdentity(request, env);
   const stub = env.MERIT.get(env.MERIT.idFromName(identity.id));
-  const internalRequest = new Request('https://merit.internal/' + (isReward ? 'reward' : 'balance'), {
+  const internalPath = isReward ? 'reward' : isFortune ? 'fortune' : 'balance';
+  const internalPayload = isReward ? {action:body?.action}
+    : isFortune ? {requestId:body?.requestId}
+    : body?.action==='borrow' ? {action:'borrow',requestId:body.requestId}
+    : body?.action==='repay' ? {action:'repay',requestId:body.requestId,principal:body.principal}
+    : {delta:body?.delta,legacyImport:body?.legacyImport===true};
+  const internalRequest = new Request('https://merit.internal/' + internalPath, {
     method: request.method,
-    ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(isReward ? {action:body?.action} : body?.action==='borrow' ? {action:'borrow',requestId:body.requestId} : body?.action==='repay' ? {action:'repay',requestId:body.requestId,principal:body.principal} : {delta:body?.delta,legacyImport:body?.legacyImport===true}) })
+    ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(internalPayload) })
   });
   const result = await stub.fetch(internalRequest);
   const headers = new Headers(result.headers);

@@ -50,7 +50,7 @@ const app = {
     if(url.pathname==='/api/chat')return handleChat(request,env);
     const snakeResponse=await routeSnake(request,env,snakeHtml);if(snakeResponse)return snakeResponse;
     if (url.pathname.startsWith('/api/auth/')) return handleAuthRequest(request, env);
-    if (url.pathname === '/api/merit' || url.pathname === '/api/merit/reward') return handleMeritRequest(request, env);
+    if (url.pathname === '/api/merit' || url.pathname === '/api/merit/reward' || url.pathname === '/api/merit/fortune') return handleMeritRequest(request, env);
     if (requiresGameLogin(url) && !(await requireGameLogin(request, env))) {
       if ((request.headers.get('Upgrade') || '').toLowerCase() !== 'websocket' && ['GET', 'HEAD'].includes(request.method)) {
         return Response.redirect(new URL('/', url), 302);

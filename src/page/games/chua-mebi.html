@@ -158,6 +158,32 @@
         background: none;
         line-height: 0;
       }
+      #fortune {
+        display: none;
+        z-index: 20;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: min(420px, 92vw);
+        max-height: 86vh;
+        overflow-y: auto;
+        text-align: center;
+        padding: 18px 20px;
+      }
+      #fortune h3 { margin: 0 0 4px; }
+      #fortune p { margin: 0 0 10px; font-size: 13px; opacity: 0.85; }
+      #fStick { font-size: 54px; line-height: 1.1; min-height: 62px; }
+      #fStick.shake { animation: fshake 0.28s linear infinite; }
+      @keyframes fshake { 0%, 100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
+      #fResult { min-height: 78px; margin: 4px 0 10px; font-size: 15px; line-height: 1.5; }
+      #fResult b { font-size: 18px; }
+      #fResult .win { color: #1f9d55; }
+      #fResult .lose { color: #d23f5f; }
+      #fortune details { margin-top: 12px; text-align: left; font-size: 12px; }
+      #fortune summary { cursor: pointer; text-align: center; opacity: 0.85; }
+      #fTable { width: 100%; border-collapse: collapse; margin-top: 6px; }
+      #fTable th, #fTable td { padding: 3px 4px; border-bottom: 1px solid rgba(128, 128, 128, 0.25); text-align: right; font-weight: 600; }
+      #fTable th:first-child, #fTable td:first-child { text-align: left; }
     </style>
   </head>
   <body>
@@ -174,12 +200,13 @@
     </div>
     <div id="hint" class="card">
       WASD / mũi tên: đi · Space: ngồi/đứng · B: lạy · H: thắp hương (lại gần lư
-      hương) · M: gõ mõ · kéo chuột: xoay góc nhìn
+      hương) · M: gõ mõ · Q: gieo quẻ · kéo chuột: xoay góc nhìn
     </div>
     <div id="acts">
       <button id="bSit">🧘 Ngồi</button><button id="bBow">🙏 Lạy</button
       ><button id="bInc" class="alt">🪔 Thắp hương</button
-      ><button id="bMo" class="alt">🪘 Gõ mõ</button>
+      ><button id="bMo" class="alt">🪘 Gõ mõ</button
+      ><button id="bFortune" class="alt">🎋 Gieo quẻ</button>
       <button id="bMus" class="alt">🎵 Nhạc: tắt</button
       ><input
         id="vol"
@@ -189,6 +216,18 @@
         value="55"
         aria-label="Âm lượng"
       /><button id="bSnd" class="alt">🔔 Âm: bật</button>
+    </div>
+    <div id="fortune" class="card" role="dialog" aria-label="Gieo quẻ cầu may">
+      <h3>🎋 Gieo quẻ cầu may</h3>
+      <p>Mỗi lần gieo dùng <span id="fStake">5</span> công đức. Kết quả do máy chủ quyết định.</p>
+      <div id="fStick">🎋</div>
+      <div id="fResult">Thành tâm khấn nguyện rồi gieo quẻ.</div>
+      <button id="fCast">Gieo quẻ (-5)</button>
+      <button id="fClose" class="alt">Đóng</button>
+      <details id="fOdds">
+        <summary>Xem bảng tỉ lệ</summary>
+        <table id="fTable"></table>
+      </details>
     </div>
     <div id="start" class="card">
       <h2>🪷 Chùa MEBI</h2>
@@ -2428,6 +2467,8 @@
           get: () => 0,
           change: () => Promise.reject(new Error("Không lưu được công đức")),
           reward: () => Promise.reject(new Error("Merit API unavailable")),
+          fortune: () => Promise.reject(new Error("Merit API unavailable")),
+          fortuneTable: () => Promise.reject(new Error("Merit API unavailable")),
         };
       }
       {
@@ -4028,7 +4069,7 @@
         $("bows").textContent = "--";
         toast("Không tải được công đức, hãy tải lại trang để thử lại");
       });
-      const rewardCooldownMs = { bow: 5000, incense: 60000, mallet: 5000 };
+      const rewardCooldownMs = { bow: 5000, incense: 60000, mallet: 2000 };
       const rewardBlockedUntil = {};
       const rewardPending = new Set();
       function rewardMerit(action, explainCooldown = false) {
@@ -4060,6 +4101,7 @@
         } else if (e.code === "KeyB") bow();
         else if (e.code === "KeyH") incense();
         else if (e.code === "KeyM") mo();
+        else if (e.code === "KeyQ") toggleFortune();
         if (e.code.startsWith("Arrow")) e.preventDefault();
       });
       addEventListener("keyup", (e) => (keys[e.code] = 0));
@@ -4164,6 +4206,73 @@
         if (mo.n === 1) toast("🪘 Giữ phím M để gõ liên tục");
         rewardMerit("mallet", true);
       }
+      // ================= Gieo quẻ cầu may =================
+      const fortuneBox = $("fortune"), fCast = $("fCast");
+      let fortuneBusy = false, fortuneRequestId = null, fortuneLoaded = false;
+      const fmt = (n) => Number(n).toLocaleString("vi-VN");
+      function fortuneSetResult(nodes) { $("fResult").replaceChildren(...nodes); }
+      function fortuneLine(text, tag, cls) {
+        const el = document.createElement(tag || "div");
+        el.textContent = text;
+        if (cls) el.className = cls;
+        return el;
+      }
+      async function loadFortuneTable() {
+        if (fortuneLoaded) return;
+        try {
+          const data = await window.MebiMerit.fortuneTable();
+          $("fStake").textContent = data.stake;
+          fCast.textContent = "Gieo quẻ (-" + data.stake + ")";
+          const t = $("fTable");
+          t.replaceChildren();
+          const head = t.insertRow();
+          ["Kết quả", "Xác suất", "Nhận về", "Lãi/lỗ"].forEach((s) => { const c = document.createElement("th"); c.textContent = s; head.appendChild(c); });
+          for (const tier of data.tiers) {
+            const row = t.insertRow();
+            [tier.hex + " · " + tier.prize, tier.chance + "%", tier.payout, (tier.net > 0 ? "+" : "") + tier.net].forEach((s) => { row.insertCell().textContent = s; });
+          }
+          fortuneLoaded = true;
+        } catch { /* bảng chỉ để xem, gieo quẻ vẫn chạy bình thường */ }
+      }
+      function toggleFortune(open) {
+        const show = open === undefined ? fortuneBox.style.display !== "block" : open;
+        fortuneBox.style.display = show ? "block" : "none";
+        if (show) { audio(); loadFortuneTable(); }
+      }
+      async function castFortune() {
+        if (fortuneBusy) return;
+        fortuneBusy = true;
+        fCast.disabled = true;
+        // Giữ nguyên requestId nếu lỗi mạng, để gửi lại không bị trừ điểm hai lần.
+        fortuneRequestId = fortuneRequestId || crypto.randomUUID();
+        $("fStick").classList.add("shake");
+        fortuneSetResult([fortuneLine("Đang xóc ống quẻ...")]);
+        try {
+          const [data] = await Promise.all([window.MebiMerit.fortune(fortuneRequestId), new Promise((ok) => setTimeout(ok, 1000))]);
+          fortuneRequestId = null;
+          const f = data.fortune, good = f.net > 0;
+          $("fStick").textContent = f.payout === 0 ? "🥀" : f.payout >= 36 ? "🌟" : "🎋";
+          fortuneSetResult([
+            fortuneLine(f.hex + " · " + f.name, "b"),
+            fortuneLine(f.prize + (f.meaning ? " — " + f.meaning : "") + " (số gieo " + f.roll + "/100)"),
+            fortuneLine(f.payout === 0 ? "Mất " + f.stake + " công đức" : "Nhận về " + fmt(f.payout) + " · lãi " + (good ? "+" : "") + fmt(f.net), "div", good ? "win" : "lose"),
+          ]);
+          renderTempleMerit();
+          if (f.payout >= 36) toast("🌟 " + f.hex + " " + f.name + "! +" + fmt(f.net) + " công đức");
+        } catch (err) {
+          $("fStick").textContent = "🎋";
+          if (err && err.definitive) fortuneRequestId = null;
+          fortuneSetResult([fortuneLine(err && err.message ? err.message : "Không gieo được quẻ, hãy thử lại", "div", "lose")]);
+        } finally {
+          $("fStick").classList.remove("shake");
+          fortuneBusy = false;
+          fCast.disabled = false;
+        }
+      }
+      $("bFortune").onclick = () => toggleFortune();
+      $("fClose").onclick = () => toggleFortune(false);
+      fCast.onclick = castFortune;
+      addEventListener("keydown", (e) => { if (e.code === "Escape") toggleFortune(false); });
       $("bSit").onclick = toggleSit;
       $("bBow").onclick = bow;
       $("bInc").onclick = incense;
