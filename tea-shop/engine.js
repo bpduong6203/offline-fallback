@@ -47,8 +47,30 @@ export function act(s,b,balance,now=Date.now()){
  case 'plant':if(!Number.isInteger(b.slot)||b.slot<0||b.slot>=s.garden.length||s.garden[b.slot]||!['black','green','jasmine','mint','lemon'].includes(b.seed))fail('Ô trồng không hợp lệ.');s.garden[b.slot]={seed:b.seed,watered:false,growth:0};break;
  case 'water':if(!s.garden[b.slot])fail('Hãy gieo hạt trước.');s.garden[b.slot].watered=true;break;
  case 'harvest':{const p=s.garden[b.slot];if(!p||p.growth<90)fail('Cây chưa trưởng thành.');if(s.stock[p.seed]+4>capacity(s))fail('Kho đầy.');s.stock[p.seed]+=4;s.garden[b.slot]=null;break;}
- case 'miniStart':if(!Object.hasOwn(MINI,b.kind)||s.mini)fail('Hoạt động không hợp lệ.');if(b.kind==='match'&&s.open)fail('Ghép nguyên liệu khi quán đóng cửa.');s.mini={kind:b.kind,started:now};break;
- case 'miniEnd':{if(!s.mini)fail('Chưa bắt đầu hoạt động.');const {kind,started}=s.mini;if(!b.cancel&&now-started<10000)fail('Hãy chơi ít nhất 10 giây.');s.mini=null;if(b.cancel)break;const score=Math.max(0,Math.min(100,Number(b.score)||0));s.practice[kind]=(s.practice[kind]||0)+1;const key=s.day+':'+kind;if(!s.tasks[key]){s.tasks[key]=true;if(kind==='clean')s.clean=Math.min(100,s.clean+30+score*.2);else if(kind==='match'||kind==='pearls'){const k=kind==='match'?'milk':'pearl';s.stock[k]=Math.min(capacity(s),s.stock[k]+(score>=60?3:1));if(kind==='pearls')s.quality.pearls=Math.floor(score/10);}else s.quality[kind]=Math.floor(score/10);s.message=`Hoàn thành ${MINI[kind]}: ${score}/100. Đã nhận phần thưởng hôm nay.`;}else s.message=`${score}/100. Đang luyện tập; mỗi hoạt động chỉ thưởng một lần/ngày.`;break;}
+ case 'miniStart':if(!Object.hasOwn(MINI,b.kind)||s.mini)fail('Hoạt động không hợp lệ.');if(b.kind==='match'&&s.open)fail('Ghép nguyên liệu khi quán đóng cửa.');s.mini={kind:b.kind,started:now,...(b.kind==='shake'&&s.drink?.step===6?{orderId:s.drink.order}:{})};break;
+ case 'miniEnd':{
+  if(!s.mini)fail('Chưa bắt đầu hoạt động.');
+  const {kind,started,orderId}=s.mini;
+  if(!b.cancel&&now-started<10000)fail('Hãy chơi ít nhất 10 giây.');
+  s.mini=null;if(b.cancel)break;
+  const score=Math.max(0,Math.min(100,Number(b.score)||0));
+  s.practice[kind]=(s.practice[kind]||0)+1;
+  const key=s.day+':'+kind;
+  if(!s.tasks[key]){
+   s.tasks[key]=true;
+   if(kind==='clean')s.clean=Math.min(100,s.clean+30+score*.2);
+   else if(kind==='match'||kind==='pearls'){
+    const k=kind==='match'?'milk':'pearl';s.stock[k]=Math.min(capacity(s),s.stock[k]+(score>=60?3:1));
+    if(kind==='pearls')s.quality.pearls=Math.floor(score/10);
+   }else s.quality[kind]=Math.floor(score/10);
+   s.message=`Hoàn thành ${MINI[kind]}: ${score}/100. Đã nhận phần thưởng hôm nay.`;
+  }else s.message=`${score}/100. Đang luyện tập; mỗi hoạt động chỉ thưởng một lần/ngày.`;
+  if(kind==='shake'&&orderId&&s.drink?.order===orderId&&s.drink.step===6){
+   const message=s.message;act(s,{action:'step',kind:'mix',value:true},balance,now);
+   s.message=message+' Đã lắc xong; tiếp tục đóng nắp và giao khách.';
+  }
+  break;
+ }
  case 'end':if(s.time<360)fail('Ngày chơi kéo dài 6–8 phút. Có thể đóng cửa từ phút thứ 6.');if(s.mini)fail('Kết thúc hoạt động trước.');s.history.push({day:s.day,...s.report,profit:s.report.sales+s.report.tips-s.report.cost});s.history=s.history.slice(-30);s.day++;s.time=0;s.open=false;s.orders=[];s.drink=null;s.quality={};s.tasks={};s.report={sales:0,tips:0,cost:0,purchases:0,served:0,lost:0};s.message='Ngày mới! Kiểm tra vườn, kho và menu trước khi mở cửa.';break;
  case 'reset':{const stock=s.stock,receipts=s.receipts,revision=s.revision,economy=s.economy,tasks=s.tasks,ownerGender=s.ownerGender||'male';Object.assign(s,initialState(),{stock,receipts,revision,economy,tasks,ownerGender});s.message='Đã bắt đầu lại câu chuyện. Ví và nguyên liệu được giữ để tránh nhận lại quà khởi đầu.';break;}
  default:fail('Thao tác không hợp lệ.');

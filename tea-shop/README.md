@@ -16,10 +16,13 @@ Build riêng: `node scripts/build-tea.mjs`. HTML tự chứa ở `dist/tea-shop/
 
 ## Điều khiển và vòng chơi
 
+Nút **Hướng dẫn** ở đầu màn hình mở sổ chơi gồm: ly đầu tiên, quản lý quán, sáu minigame và cách xử lý khi gặp khó. Sổ tự hiện lần đầu với người mới trên trình duyệt này; có thể mở lại bất cứ lúc nào. Khi mở trong giờ phục vụ, game tạm dừng và tiếp tục sau khi đóng; nếu đã tự tạm dừng thì vẫn giữ trạng thái đó.
+
 Bảng thao tác nằm cạnh cảnh quán trên máy tính và ngay dưới cảnh trên điện thoại; kho, vườn và nâng cấp cuộn bên trong bảng. Chọn **Chủ tiệm → Nam / Nữ** ngay trên cảnh để đổi nhân vật. Lựa chọn lưu cùng tiến trình, giữ khi chơi lại; bản lưu cũ mặc định Nam.
 
 - Chọn menu trong **Sổ công thức & menu**, mở cửa, chạm phiếu đơn hoặc khách trong cảnh quán.
 - Pha theo 8 bước: ly → trà → sữa → đường → đá → topping/thành phần → lắc/khuấy → nắp. Đối chiếu công thức ghim và phiếu khách, rồi giao món. Trên desktop có thể kéo lựa chọn vào ly; trên điện thoại chỉ cần chạm nút.
+- Lắc theo nhịp: bấm luân phiên Trái/Phải (hoặc A/D, phím mũi tên) khi kim vào vùng xanh. Nút đến lượt được tô sáng; ly chuyển động, số lượt và điểm cập nhật ngay khi bấm. Hoàn thành minigame ở bước lắc sẽ chuyển thẳng sang đóng nắp, không cần lắc tiêu chuẩn thêm lần nữa. Hủy minigame giữ nguyên bước pha.
 - Mỗi ngày dài 7 phút ở tốc độ 1×. Có thể kết ngày từ phút thứ 6, sau đó chuẩn bị menu ngày mới. Tạm dừng, tốc độ 0.5×/1×/2×, chế độ thư giãn nằm trong cài đặt. Modal và minigame dừng thời gian phục vụ.
 - Trồng 5 loại cây, tưới một lần, thu 4 phần sau 90 giây thời gian game. Cây không chết khi rời trang.
 - Kho bán nguyên liệu giá 1 công đức/phần. Không trừ tồn âm; nguyên liệu trừ đúng một lần lúc nhận pha. Hủy ly không hoàn nguyên liệu. Khi thiếu tiền và nguyên liệu trà sữa truyền thống, gói hỗ trợ hàng xóm có thể cấp 2 ly truyền thống một lần/ngày.
