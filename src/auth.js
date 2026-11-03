@@ -112,7 +112,8 @@ export function requiresGameLogin(url) {
     '/ty-phu', '/ty-phu/', '/chibi-rush', '/chibi-rush/',
     '/xi-dach', '/xi-dach/', '/tien-len', '/tien-len/', '/uno', '/uno/', '/stickman-fight', '/stickman-fight/',
     '/party-cats', '/party-cats/', '/tower-city', '/tower-city/', '/co-ca-ngua', '/co-ca-ngua/',
-    '/chua-mebi', '/chua-mebi/', '/goc-tra-nho', '/goc-tra-nho/'
+    '/chua-mebi', '/chua-mebi/', '/goc-tra-nho', '/goc-tra-nho/',
+    '/ai-la-trieu-phu', '/ai-la-trieu-phu/', '/trieu-phu', '/trieu-phu/'
   ].includes(path);
 }
 

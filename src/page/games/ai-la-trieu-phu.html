@@ -1,0 +1,2667 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title>Ai Là Triệu Phú</title>
+    <meta name="claude:viewport-fit-sides" content="cover" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap"
+    />
+    <style> 
+      :root {
+        /* Layout: a TV-studio stage. A header strip holds the lifelines; the centre column stacks the question hexagon over four answer hexagons; the prize ladder sits on the right on wide screens and slides in as a panel on phones. */
+        --bg0: #020418;
+        --bg1: #07123f;
+        --bg2: #10298f;
+        --gold: #f4c95d;
+        --gold-deep: #9b6f14;
+        --ink: #f1f5ff;
+        --muted: #a3b3ea;
+        --orange: #ff9d1c;
+        --orange-deep: #c95f00;
+        --green: #2ed26f;
+        --green-deep: #0c7a37;
+        --red: #f0505c;
+        --red-deep: #8f1420;
+        --face: #0a1a66;
+        --face-2: #06104a;
+        --panel: rgba(4, 10, 50, 0.94);
+        --display: "Playfair Display", Georgia, "Times New Roman", serif;
+        --body:
+          "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      html {
+        background: var(--bg0);
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg0);
+        color: var(--ink);
+        font: 500 15px/1.45 var(--body);
+        padding-block: 12px 28px;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+        -webkit-tap-highlight-color: transparent;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 2px;
+      }
+
+      .bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+        background: radial-gradient(
+          ellipse at 50% 28%,
+          var(--bg2) 0,
+          var(--bg1) 38%,
+          var(--bg0) 82%
+        );
+      }
+      .beam {
+        position: absolute;
+        top: -8%;
+        left: 50%;
+        width: 46vmax;
+        height: 130vmax;
+        margin-left: -23vmax;
+        transform-origin: 50% 0;
+        background: linear-gradient(
+          to bottom,
+          rgba(130, 170, 255, 0.2),
+          rgba(130, 170, 255, 0) 72%
+        );
+        clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
+        animation: sway 11s ease-in-out infinite alternate;
+      }
+      .beam.b2 {
+        animation-duration: 14s;
+        animation-direction: alternate-reverse;
+        opacity: 0.7;
+      }
+      @keyframes sway {
+        from {
+          transform: rotate(-24deg);
+        }
+        to {
+          transform: rotate(24deg);
+        }
+      }
+      .dots {
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(
+          rgba(255, 255, 255, 0.35) 1px,
+          transparent 1.5px
+        );
+        background-size: 46px 46px;
+        opacity: 0.12;
+        mask-image: linear-gradient(to bottom, #000, transparent 70%);
+        -webkit-mask-image: linear-gradient(to bottom, #000, transparent 70%);
+      }
+
+      #app {
+        position: relative;
+        z-index: 1;
+        max-width: 1080px;
+        margin: 0 auto;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        min-height: 56px;
+      }
+      .logo {
+        font: 900 22px/1 var(--display);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--gold);
+        margin-right: auto;
+        min-width: 0;
+      }
+      .logo span {
+        color: var(--ink);
+      }
+      .lifelines {
+        display: flex;
+        gap: 10px;
+      }
+      .life {
+        position: relative;
+        width: 64px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        background: linear-gradient(180deg, #14308f, var(--face-2));
+        border: 2px solid var(--gold);
+        border-radius: 50%/50%;
+        font: 800 14px/1 var(--body);
+        letter-spacing: 0.02em;
+      }
+      .life svg {
+        width: 22px;
+        height: 22px;
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .life:hover:not(:disabled) {
+        background: linear-gradient(180deg, #2146c9, #0b1f7e);
+      }
+      .life:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+      .life.used {
+        opacity: 0.4;
+        border-color: #7a7f99;
+      }
+      .life.used::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: -4px;
+        width: 3px;
+        height: calc(100% + 8px);
+        background: var(--red);
+        transform: translateX(-50%) rotate(45deg);
+        border-radius: 2px;
+      }
+      .ico {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        background: rgba(10, 26, 102, 0.7);
+        border: 1px solid rgba(244, 201, 93, 0.5);
+        border-radius: 10px;
+      }
+      .ico svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: var(--ink);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      #ladderBtn {
+        display: none;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 232px;
+        gap: 22px;
+        align-items: start;
+        margin-top: 10px;
+      }
+      .status {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .status b {
+        font: 900 26px/1 var(--display);
+        letter-spacing: 0.01em;
+        color: var(--gold);
+        font-variant-numeric: lining-nums tabular-nums;
+        text-transform: none;
+      }
+      .status .tag {
+        color: var(--green);
+        font-size: 12px;
+      }
+
+      .line {
+        background: linear-gradient(var(--gold-deep), var(--gold-deep))
+          center/100% 2px no-repeat;
+      }
+      .hex {
+        --c: 24px;
+        position: relative;
+        display: block;
+        width: 100%;
+        padding: 3px;
+        border: 0;
+        text-align: left;
+        background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+        clip-path: polygon(
+          var(--c) 0,
+          calc(100% - var(--c)) 0,
+          100% 50%,
+          calc(100% - var(--c)) 100%,
+          var(--c) 100%,
+          0 50%
+        );
+      }
+      .hex .in {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        background: linear-gradient(180deg, var(--face), var(--face-2));
+        clip-path: polygon(
+          calc(var(--c) - 1px) 0,
+          calc(100% - var(--c) + 1px) 0,
+          100% 50%,
+          calc(100% - var(--c) + 1px) 100%,
+          calc(var(--c) - 1px) 100%,
+          0 50%
+        );
+      }
+      #qwrap {
+        padding: 0 6px;
+        margin-bottom: 16px;
+      }
+      #qbox .in {
+        min-height: 104px;
+        padding: 16px 46px;
+        justify-content: center;
+        text-align: center;
+        font: 600 clamp(17px, 2.5vw, 24px)/1.35 var(--body);
+        text-wrap: balance;
+      }
+      #qbox.in-anim {
+        animation: rise 0.5s ease-out;
+      }
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      .answers {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        row-gap: 12px;
+      }
+      .cell {
+        padding: 0 6px;
+        background: linear-gradient(var(--gold-deep), var(--gold-deep))
+          center/100% 2px no-repeat;
+      }
+      .ans {
+        cursor: pointer;
+        transition:
+          opacity 0.25s,
+          transform 0.25s;
+      }
+      .ans .in {
+        min-height: 60px;
+        padding: 12px 34px;
+        font: 600 clamp(15px, 2vw, 18px)/1.3 var(--body);
+      }
+      .ans b {
+        color: var(--orange);
+        font-weight: 800;
+        flex: none;
+      }
+      .ans:not(.sel):hover:not(:disabled) .in {
+        background: linear-gradient(180deg, #1a3bb0, #0c2082);
+      }
+      .ans:focus-visible {
+        outline: none;
+      }
+      .ans:focus-visible .in {
+        box-shadow: inset 0 0 0 3px #fff;
+      }
+      .ans:disabled {
+        cursor: default;
+      }
+      .ans.hide {
+        opacity: 0;
+        transform: translateY(8px);
+        pointer-events: none;
+      }
+      .ans.sel .in {
+        background: linear-gradient(180deg, var(--orange), var(--orange-deep));
+        color: #1b0f00;
+      }
+      .ans.sel b,
+      .ans.win b {
+        color: #1b0f00;
+      }
+      .ans.locked .in {
+        animation: pulse 0.6s ease-in-out infinite alternate;
+      }
+      @keyframes pulse {
+        from {
+          filter: brightness(1);
+        }
+        to {
+          filter: brightness(1.35);
+        }
+      }
+      .ans.win .in {
+        background: linear-gradient(180deg, var(--green), var(--green-deep));
+        color: #03200f;
+      }
+      .ans.lose .in {
+        background: linear-gradient(180deg, var(--red), var(--red-deep));
+        color: #fff;
+      }
+      .ans.lose b {
+        color: #fff;
+      }
+      .ans.flash .in {
+        animation: flash 0.26s steps(1) 8;
+      }
+      @keyframes flash {
+        50% {
+          background: linear-gradient(180deg, var(--face), var(--face-2));
+          color: var(--ink);
+        }
+      }
+      .ans.gone {
+        visibility: hidden;
+      }
+
+      .host {
+        margin: 18px 0 12px;
+        min-height: 3.2em;
+        padding: 12px 16px;
+        border-left: 3px solid var(--gold);
+        background: rgba(8, 18, 80, 0.55);
+        border-radius: 0 10px 10px 0;
+        font-size: 15.5px;
+      }
+      .host small {
+        display: block;
+        color: var(--gold);
+        font: 700 11px/1 var(--body);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      #actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        cursor: pointer;
+        padding: 12px 20px;
+        border-radius: 999px;
+        border: 1px solid rgba(244, 201, 93, 0.6);
+        background: rgba(10, 26, 102, 0.8);
+        font: 700 15px/1 var(--body);
+        letter-spacing: 0.02em;
+      }
+      .btn:hover {
+        background: rgba(26, 59, 176, 0.9);
+      }
+      .btn.gold {
+        background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+        color: #2a1a00;
+        border-color: transparent;
+        box-shadow: 0 3px 0 #5e4309;
+      }
+      .btn.gold:hover {
+        filter: brightness(1.08);
+      }
+      .btn.gold:active {
+        transform: translateY(2px);
+        box-shadow: 0 1px 0 #5e4309;
+      }
+      .btn.ghost {
+        background: transparent;
+      }
+
+      .ladder {
+        background: var(--panel);
+        border: 1px solid rgba(244, 201, 93, 0.35);
+        border-radius: 12px;
+        padding: 12px 12px 10px;
+      }
+      .ladder h2 {
+        margin: 0 0 8px;
+        font: 700 12px/1 var(--body);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      #ladderList {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      #ladderList li {
+        display: grid;
+        grid-template-columns: 24px 12px 1fr;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font: 700 14px/1.2 var(--body);
+        color: var(--orange);
+        font-variant-numeric: tabular-nums;
+      }
+      #ladderList li.safe {
+        color: #fff;
+      }
+      #ladderList li .n {
+        text-align: right;
+        font-size: 13px;
+      }
+      #ladderList li .d {
+        width: 7px;
+        height: 7px;
+        background: currentColor;
+        transform: rotate(45deg);
+        justify-self: center;
+      }
+      #ladderList li .p {
+        text-align: right;
+      }
+      #ladderList li.done {
+        opacity: 0.45;
+      }
+      #ladderList li.cur {
+        background: linear-gradient(180deg, var(--orange), var(--orange-deep));
+        color: #1b0f00;
+        opacity: 1;
+        box-shadow: 0 0 14px rgba(255, 157, 28, 0.55);
+      }
+
+      .screen {
+        position: fixed;
+        inset: 0;
+        z-index: 22;
+        display: grid;
+        place-items: center;
+        padding: 20px max(16px, env(safe-area-inset-left, 0px));
+        background: radial-gradient(
+          ellipse at 50% 35%,
+          rgba(16, 41, 143, 0.96),
+          rgba(2, 4, 24, 0.98) 75%
+        );
+        overflow: auto;
+      }
+      .screen .box {
+        max-width: 560px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        text-align: center;
+      }
+      .screen h1 {
+        margin: 0;
+        font: 900 clamp(40px, 11vw, 76px)/0.95 var(--display);
+        color: var(--gold);
+        text-transform: uppercase;
+        text-wrap: balance;
+        text-shadow: 0 0 30px rgba(244, 201, 93, 0.35);
+      }
+      .screen h1 span {
+        display: block;
+        color: var(--ink);
+        font-size: 0.58em;
+        letter-spacing: 0.2em;
+        margin-bottom: 6px;
+      }
+      .screen p {
+        margin: 0;
+        color: var(--muted);
+        max-width: 44ch;
+      }
+      .rules {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+        text-align: left;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .rules li {
+        display: flex;
+        gap: 10px;
+      }
+      .rules b {
+        color: var(--gold);
+        min-width: 92px;
+        font-weight: 700;
+      }
+      .big {
+        font: 900 clamp(36px, 9vw, 60px)/1 var(--display);
+        color: var(--gold);
+        font-variant-numeric: lining-nums tabular-nums;
+      }
+      .sub {
+        font: 700 12px/1 var(--body);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .end-stats {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        background: rgba(2, 4, 24, 0.72);
+        backdrop-filter: blur(3px);
+      }
+      .card {
+        width: min(460px, 100%);
+        background: linear-gradient(180deg, #0e237f, #06104a);
+        border: 2px solid var(--gold);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .card h3 {
+        margin: 0;
+        font: 700 12px/1 var(--body);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--gold);
+      }
+      .chat {
+        min-height: 4.6em;
+        font-size: 16px;
+      }
+      .bars {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-around;
+        gap: 10px;
+        height: 190px;
+        padding-top: 6px;
+        border-bottom: 2px solid rgba(244, 201, 93, 0.5);
+      }
+      .bar {
+        flex: 1;
+        max-width: 70px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 6px;
+        height: 100%;
+      }
+      .bar i {
+        display: block;
+        width: 100%;
+        height: 0;
+        background: linear-gradient(180deg, var(--orange), var(--orange-deep));
+        border-radius: 6px 6px 0 0;
+        transition: height 1.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      .bar span {
+        font: 800 14px/1 var(--body);
+        font-variant-numeric: tabular-nums;
+      }
+      .barlabels {
+        display: flex;
+        justify-content: space-around;
+        gap: 10px;
+        font: 800 16px/1 var(--body);
+        color: var(--orange);
+      }
+      .barlabels b {
+        flex: 1;
+        max-width: 70px;
+        text-align: center;
+      }
+      .dim {
+        opacity: 0.3;
+      }
+
+      #fx {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 30;
+        pointer-events: none;
+      }
+      .shake {
+        animation: shake 0.5s;
+      }
+      @keyframes shake {
+        20% {
+          transform: translateX(-9px);
+        }
+        40% {
+          transform: translateX(8px);
+        }
+        60% {
+          transform: translateX(-6px);
+        }
+        80% {
+          transform: translateX(4px);
+        }
+      }
+
+      @media (max-width: 899px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        #ladderBtn {
+          display: grid;
+        }
+        .ladder {
+          position: fixed;
+          top: 0;
+          bottom: 0;
+          right: 0;
+          z-index: 18;
+          width: min(290px, 86vw);
+          border-radius: 12px 0 0 12px;
+          padding-top: max(14px, env(safe-area-inset-top, 0px));
+          padding-right: max(12px, env(safe-area-inset-right, 0px));
+          transform: translateX(105%);
+          transition: transform 0.3s;
+          overflow: auto;
+        }
+        .ladder.open {
+          transform: none;
+        }
+      }
+      @media (max-width: 640px) {
+        .answers {
+          grid-template-columns: 1fr;
+        }
+        .hex {
+          --c: 18px;
+        }
+        #qbox .in {
+          padding: 14px 30px;
+          min-height: 92px;
+        }
+        .ans .in {
+          padding: 10px 26px;
+        }
+        .logo {
+          font-size: 18px;
+        }
+        .life {
+          width: 56px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .beam,
+        .ans.locked .in {
+          animation: none;
+        }
+        .ans.flash .in {
+          animation-duration: 0.5s;
+          animation-iteration-count: 3;
+        }
+        .shake {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg" aria-hidden="true">
+      <div class="dots"></div>
+      <i class="beam"></i><i class="beam b2"></i>
+    </div>
+    <canvas id="fx" aria-hidden="true"></canvas>
+
+    <div id="app">
+      <header class="top">
+        <div class="logo">Ai là <span>triệu phú</span></div>
+        <div
+          class="lifelines"
+          id="lifelines"
+          role="group"
+          aria-label="Quyền trợ giúp"
+        >
+          <button
+            class="life"
+            id="lf-fifty"
+            data-life="fifty"
+            title="50:50, loại bỏ hai đáp án sai"
+            aria-label="Quyền trợ giúp 50:50"
+          >
+            50:50
+          </button>
+          <button
+            class="life"
+            id="lf-phone"
+            data-life="phone"
+            title="Gọi điện thoại cho người thân"
+            aria-label="Gọi điện thoại cho người thân"
+          >
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"
+              />
+            </svg>
+          </button>
+          <button
+            class="life"
+            id="lf-aud"
+            data-life="aud"
+            title="Hỏi ý kiến khán giả trong trường quay"
+            aria-label="Hỏi ý kiến khán giả"
+          >
+            <svg viewBox="0 0 24 24">
+              <path d="M5 20V11M12 20V4M19 20v-7" />
+            </svg>
+          </button>
+        </div>
+        <button class="ico" id="ladderBtn" aria-label="Xem thang tiền thưởng">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+        </button>
+        <button
+          class="ico"
+          id="mute"
+          aria-label="Tắt âm thanh"
+          aria-pressed="false"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M4 9v6h4l5 4V5L8 9H4z" />
+            <path id="waves" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="layout">
+        <main id="stage">
+          <div class="status">
+            <span id="stNum">Câu 1 / 15</span
+            ><span class="tag" id="stTag" hidden>Mốc an toàn</span
+            ><b id="stPrize">200.000 đ</b>
+          </div>
+          <div id="qwrap" class="line">
+            <div class="hex" id="qbox">
+              <div class="in"><span id="qtext"></span></div>
+            </div>
+          </div>
+          <div class="answers" id="answers">
+            <div class="cell">
+              <button class="hex ans hide" data-i="0">
+                <span class="in"><b>A:</b><span class="t"></span></span>
+              </button>
+            </div>
+            <div class="cell">
+              <button class="hex ans hide" data-i="1">
+                <span class="in"><b>B:</b><span class="t"></span></span>
+              </button>
+            </div>
+            <div class="cell">
+              <button class="hex ans hide" data-i="2">
+                <span class="in"><b>C:</b><span class="t"></span></span>
+              </button>
+            </div>
+            <div class="cell">
+              <button class="hex ans hide" data-i="3">
+                <span class="in"><b>D:</b><span class="t"></span></span>
+              </button>
+            </div>
+          </div>
+          <div class="host" aria-live="polite">
+            <small>Người dẫn chương trình</small><span id="hostText"></span>
+          </div>
+          <div id="actions"></div>
+        </main>
+        <aside class="ladder" id="ladder" aria-label="Thang tiền thưởng">
+          <h2>Thang tiền thưởng</h2>
+          <ol id="ladderList"></ol>
+        </aside>
+      </div>
+    </div>
+
+    <section class="modal" id="modal" hidden>
+      <div class="card" id="modalCard" role="dialog" aria-modal="true"></div>
+    </section>
+
+    <section class="screen" id="intro">
+      <div class="box">
+        <h1><span>Chương trình đố vui</span>Ai là triệu phú</h1>
+        <p>
+          15 câu hỏi, 3 quyền trợ giúp. Trả lời đúng để leo lên thang tiền
+          thưởng, sai thì chỉ giữ lại số tiền ở mốc an toàn gần nhất.
+        </p>
+        <ul class="rules">
+          <li>
+            <b>Mốc an toàn</b
+            ><span>Câu 5 (2.000.000 đ) và câu 10 (22.000.000 đ).</span>
+          </li>
+          <li>
+            <b>Trợ giúp</b
+            ><span
+              >50:50, gọi điện thoại cho người thân, hỏi ý kiến khán giả. Mỗi
+              quyền dùng một lần.</span
+            >
+          </li>
+          <li>
+            <b>Phím tắt</b><span>A B C D để chọn, Enter để khóa đáp án.</span>
+          </li>
+        </ul>
+        <button class="btn gold" id="startBtn">Bắt đầu chơi</button>
+        <div class="sub" id="introInfo"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="end" hidden>
+      <div class="box">
+        <div class="sub" id="endKicker"></div>
+        <h1 id="endTitle" style="font-size: clamp(34px, 9vw, 60px)"></h1>
+        <div class="big" id="endPrize"></div>
+        <div class="end-stats" id="endStats"></div>
+        <div
+          id="endBtns"
+          style="
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+          "
+        >
+          <button class="btn gold" id="againBtn">Chơi lại</button>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      ;(function () {
+        "use strict"
+        const $ = (s) => document.querySelector(s),
+          $$ = (s) => [...document.querySelectorAll(s)]
+
+        /* ================= Ngân hàng câu hỏi: [câu hỏi, đáp án đúng, sai, sai, sai] ================= */
+        /* Mỗi nhóm xếp gần đúng theo độ khó tăng dần. */
+        const QS = {
+          e: [
+            [
+              "Một tuần lễ có bao nhiêu ngày?",
+              "7 ngày",
+              "5 ngày",
+              "6 ngày",
+              "8 ngày",
+            ],
+            [
+              "Cơ quan nào của cơ thể dùng để nghe âm thanh?",
+              "Tai",
+              "Mắt",
+              "Mũi",
+              "Lưỡi",
+            ],
+            [
+              "Quả nào khi chín thường có vỏ màu vàng?",
+              "Chuối",
+              "Cà chua",
+              "Nho",
+              "Dâu tây",
+            ],
+            ["Số nào sau đây là số chẵn?", "18", "15", "21", "33"],
+            ["5 nhân 6 bằng bao nhiêu?", "30", "25", "35", "36"],
+            [
+              "Một ngày có bao nhiêu giờ?",
+              "24 giờ",
+              "12 giờ",
+              "36 giờ",
+              "48 giờ",
+            ],
+            [
+              "Mặt Trời mọc ở hướng nào?",
+              "Hướng Đông",
+              "Hướng Tây",
+              "Hướng Nam",
+              "Hướng Bắc",
+            ],
+            [
+              "Cơ quan nào bơm máu đi khắp cơ thể?",
+              "Tim",
+              "Phổi",
+              "Gan",
+              "Dạ dày",
+            ],
+            [
+              "Đồng tiền chính thức của Việt Nam là gì?",
+              "Đồng",
+              "Yên",
+              "Baht",
+              "Rúp",
+            ],
+            [
+              "Thủ đô của Việt Nam là thành phố nào?",
+              "Hà Nội",
+              "Huế",
+              "Đà Nẵng",
+              "Cần Thơ",
+            ],
+            [
+              "Quốc kỳ Việt Nam có hình gì ở giữa nền đỏ?",
+              "Ngôi sao vàng năm cánh",
+              "Mặt trời đỏ",
+              "Búa liềm",
+              "Hoa sen",
+            ],
+            [
+              "Đất nước nào thường được ví với hình chữ S?",
+              "Việt Nam",
+              "Lào",
+              "Thái Lan",
+              "Campuchia",
+            ],
+            [
+              "Ngày Quốc khánh của Việt Nam là ngày nào?",
+              "2 tháng 9",
+              "30 tháng 4",
+              "1 tháng 5",
+              "19 tháng 8",
+            ],
+            ["Công thức hóa học của nước là gì?", "H2O", "CO2", "O2", "NaCl"],
+            [
+              "Một đội bóng đá có bao nhiêu cầu thủ trên sân, tính cả thủ môn?",
+              "11",
+              "9",
+              "10",
+              "12",
+            ],
+            [
+              "Môn thể thao nào thường được gọi là “môn thể thao vua”?",
+              "Bóng đá",
+              "Bóng rổ",
+              "Cờ vua",
+              "Bơi lội",
+            ],
+            [
+              "Ai là Chủ tịch đầu tiên của nước Việt Nam Dân chủ Cộng hòa?",
+              "Hồ Chí Minh",
+              "Võ Nguyên Giáp",
+              "Phạm Văn Đồng",
+              "Tôn Đức Thắng",
+            ],
+            [
+              "Loài hoa nào thường được xem là quốc hoa của Việt Nam?",
+              "Hoa sen",
+              "Hoa mai",
+              "Hoa đào",
+              "Hoa cúc",
+            ],
+            [
+              "Dòng sông nào chảy qua thủ đô Hà Nội?",
+              "Sông Hồng",
+              "Sông Hương",
+              "Sông Đồng Nai",
+              "Sông Cả",
+            ],
+            [
+              "Tháp Eiffel nằm ở thành phố nào?",
+              "Paris",
+              "Luân Đôn",
+              "Rome",
+              "Berlin",
+            ],
+            [
+              "Loài vật nào cao nhất thế giới?",
+              "Hươu cao cổ",
+              "Voi",
+              "Lạc đà",
+              "Đà điểu",
+            ],
+            [
+              "Màu nào KHÔNG nằm trong bảy sắc cầu vồng?",
+              "Hồng",
+              "Đỏ",
+              "Vàng",
+              "Tím",
+            ],
+            [
+              "Bánh nào là món truyền thống trong dịp Tết ở miền Bắc?",
+              "Bánh chưng",
+              "Bánh xèo",
+              "Bánh tráng",
+              "Bánh mì",
+            ],
+            [
+              "Nước mắm truyền thống được làm chủ yếu từ nguyên liệu nào?",
+              "Cá",
+              "Đậu nành",
+              "Gạo",
+              "Thịt bò",
+            ],
+            [
+              "Vịnh Hạ Long thuộc tỉnh nào?",
+              "Quảng Ninh",
+              "Hải Phòng",
+              "Thanh Hóa",
+              "Nghệ An",
+            ],
+            [
+              "Trong truyện cổ tích Tấm Cám, ai hiện lên giúp đỡ Tấm mỗi khi cô khóc?",
+              "Bụt",
+              "Thần Kim Quy",
+              "Ông Địa",
+              "Phù thủy",
+            ],
+            [
+              "Hành tinh nào gần Mặt Trời nhất?",
+              "Sao Thủy",
+              "Sao Kim",
+              "Trái Đất",
+              "Sao Hỏa",
+            ],
+            [
+              "Mặt Trăng quay quanh hành tinh nào?",
+              "Trái Đất",
+              "Sao Hỏa",
+              "Sao Kim",
+              "Sao Mộc",
+            ],
+            [
+              "Thủ đô của Nhật Bản là thành phố nào?",
+              "Tokyo",
+              "Osaka",
+              "Kyoto",
+              "Seoul",
+            ],
+            [
+              "Đại dương nào lớn nhất thế giới?",
+              "Thái Bình Dương",
+              "Đại Tây Dương",
+              "Ấn Độ Dương",
+              "Bắc Băng Dương",
+            ],
+            [
+              "Thành phố nào được mệnh danh là “Thành phố ngàn hoa”?",
+              "Đà Lạt",
+              "Huế",
+              "Vũng Tàu",
+              "Nha Trang",
+            ],
+            [
+              "Tác giả của “Truyện Kiều” là ai?",
+              "Nguyễn Du",
+              "Nguyễn Trãi",
+              "Hồ Xuân Hương",
+              "Nguyễn Đình Chiểu",
+            ],
+            [
+              "Đỉnh núi nào được mệnh danh là “Nóc nhà Đông Dương”?",
+              "Fansipan",
+              "Bạch Mã",
+              "Tam Đảo",
+              "Núi Bà Đen",
+            ],
+            [
+              "Theo truyền thuyết, Lạc Long Quân kết duyên cùng ai?",
+              "Âu Cơ",
+              "Mỵ Nương",
+              "Tiên Dung",
+              "Mị Châu",
+            ],
+          ],
+          m: [
+            [
+              "Bảng chữ cái tiếng Việt hiện nay có bao nhiêu chữ cái?",
+              "29",
+              "26",
+              "24",
+              "32",
+            ],
+            [
+              "Kim loại nào ở thể lỏng ở nhiệt độ phòng?",
+              "Thủy ngân",
+              "Sắt",
+              "Nhôm",
+              "Đồng",
+            ],
+            [
+              "Thủ đô của nước Úc là thành phố nào?",
+              "Canberra",
+              "Sydney",
+              "Melbourne",
+              "Perth",
+            ],
+            ["Số Pi xấp xỉ bằng bao nhiêu?", "3,14", "2,71", "1,62", "4,13"],
+            [
+              "Nguyên tố hóa học có ký hiệu Au là gì?",
+              "Vàng",
+              "Bạc",
+              "Nhôm",
+              "Đồng",
+            ],
+            ["Đơn vị đo cường độ dòng điện là gì?", "Ampe", "Vôn", "Ôm", "Oát"],
+            [
+              "Quốc kỳ của quốc gia nào có hình chiếc lá phong?",
+              "Canada",
+              "Úc",
+              "New Zealand",
+              "Thụy Sĩ",
+            ],
+            [
+              "Tác giả bộ tiểu thuyết Harry Potter là ai?",
+              "J. K. Rowling",
+              "J. R. R. Tolkien",
+              "Stephen King",
+              "Roald Dahl",
+            ],
+            [
+              "Bức họa “Mona Lisa” là của họa sĩ nào?",
+              "Leonardo da Vinci",
+              "Michelangelo",
+              "Raphael",
+              "Vincent van Gogh",
+            ],
+            [
+              "Ai là người đầu tiên đặt chân lên Mặt Trăng?",
+              "Neil Armstrong",
+              "Buzz Aldrin",
+              "Yuri Gagarin",
+              "Michael Collins",
+            ],
+            [
+              "Ai là nhà vật lý học nêu ra thuyết tương đối?",
+              "Albert Einstein",
+              "Isaac Newton",
+              "Galileo Galilei",
+              "Stephen Hawking",
+            ],
+            [
+              "Kỳ World Cup năm 2022 được tổ chức tại quốc gia nào?",
+              "Qatar",
+              "Nga",
+              "Brazil",
+              "Đức",
+            ],
+            [
+              "Thế vận hội Mùa hè 2024 được tổ chức tại thành phố nào?",
+              "Paris",
+              "Tokyo",
+              "Los Angeles",
+              "Luân Đôn",
+            ],
+            [
+              "Loài động vật nào lớn nhất hành tinh?",
+              "Cá voi xanh",
+              "Voi châu Phi",
+              "Cá mập voi",
+              "Hươu cao cổ",
+            ],
+            [
+              "Quốc gia nào có diện tích lớn nhất thế giới?",
+              "Nga",
+              "Canada",
+              "Trung Quốc",
+              "Hoa Kỳ",
+            ],
+            [
+              "Thang âm tự nhiên có bao nhiêu nốt nhạc cơ bản?",
+              "7",
+              "5",
+              "8",
+              "12",
+            ],
+            [
+              "Cuộc chạy marathon có chiều dài chuẩn là bao nhiêu?",
+              "42,195 km",
+              "40 km",
+              "42 km",
+              "21,0975 km",
+            ],
+            [
+              "Khí nào chiếm tỉ lệ lớn nhất trong bầu khí quyển Trái Đất?",
+              "Nitơ",
+              "Oxi",
+              "Cacbonic",
+              "Argon",
+            ],
+            [
+              "Châu lục nào có nhiều quốc gia nhất?",
+              "Châu Phi",
+              "Châu Á",
+              "Châu Âu",
+              "Châu Mỹ",
+            ],
+            [
+              "Cơ quan nào trong cơ thể tiết ra hormone insulin?",
+              "Tuyến tụy",
+              "Gan",
+              "Thận",
+              "Dạ dày",
+            ],
+            [
+              "Nhật thực xảy ra khi thiên thể nào nằm giữa Mặt Trời và Trái Đất?",
+              "Mặt Trăng",
+              "Sao Kim",
+              "Sao Hỏa",
+              "Sao Thủy",
+            ],
+            [
+              "Đỉnh Everest cao xấp xỉ bao nhiêu?",
+              "Khoảng 8.848 m",
+              "Khoảng 7.848 m",
+              "Khoảng 9.848 m",
+              "Khoảng 6.848 m",
+            ],
+            [
+              "Tác phẩm “Dế Mèn phiêu lưu ký” là của nhà văn nào?",
+              "Tô Hoài",
+              "Nam Cao",
+              "Ngô Tất Tố",
+              "Nguyên Hồng",
+            ],
+            [
+              "Cố đô Huế là kinh đô của triều đại nào?",
+              "Nhà Nguyễn",
+              "Nhà Lý",
+              "Nhà Trần",
+              "Nhà Lê",
+            ],
+            [
+              "Trước năm 1976, Thành phố Hồ Chí Minh có tên gọi là gì?",
+              "Sài Gòn",
+              "Phú Xuân",
+              "Thăng Long",
+              "Đồng Nai",
+            ],
+            [
+              "Món cà phê trứng nổi tiếng bắt nguồn từ thành phố nào?",
+              "Hà Nội",
+              "Huế",
+              "Đà Nẵng",
+              "Cần Thơ",
+            ],
+            [
+              "Hòn đảo lớn nhất của Việt Nam là đảo nào?",
+              "Phú Quốc",
+              "Cát Bà",
+              "Lý Sơn",
+              "Côn Đảo",
+            ],
+            [
+              "Nghệ thuật sân khấu Chèo phổ biến nhất ở vùng nào?",
+              "Đồng bằng Bắc Bộ",
+              "Nam Bộ",
+              "Tây Nguyên",
+              "Duyên hải Nam Trung Bộ",
+            ],
+            [
+              "Chiến thắng Điện Biên Phủ diễn ra vào năm nào?",
+              "1954",
+              "1945",
+              "1968",
+              "1975",
+            ],
+            [
+              "Việt Nam gia nhập ASEAN vào năm nào?",
+              "1995",
+              "1989",
+              "2000",
+              "2007",
+            ],
+            [
+              "Bài thơ “Tây Tiến” là của nhà thơ nào?",
+              "Quang Dũng",
+              "Tố Hữu",
+              "Xuân Diệu",
+              "Huy Cận",
+            ],
+            [
+              "Thái Lan trước đây có tên gọi là gì?",
+              "Xiêm",
+              "Chân Lạp",
+              "Ai Lao",
+              "Miến Điện",
+            ],
+            [
+              "Sông Mê Kông chảy qua tổng cộng bao nhiêu quốc gia?",
+              "6",
+              "4",
+              "5",
+              "7",
+            ],
+            [
+              "Vị vua nào đã dời đô từ Hoa Lư về Thăng Long năm 1010?",
+              "Lý Thái Tổ",
+              "Trần Nhân Tông",
+              "Lê Thánh Tông",
+              "Đinh Tiên Hoàng",
+            ],
+            [
+              "Hai Bà Trưng khởi nghĩa năm 40 chống lại triều đại nào của Trung Quốc?",
+              "Nhà Hán",
+              "Nhà Tống",
+              "Nhà Minh",
+              "Nhà Nguyên",
+            ],
+            [
+              "Ai chỉ huy quân dân nhà Trần giành chiến thắng trên sông Bạch Đằng năm 1288?",
+              "Trần Hưng Đạo",
+              "Ngô Quyền",
+              "Lê Lợi",
+              "Quang Trung",
+            ],
+          ],
+          h: [
+            [
+              "Ai là vị vua cuối cùng của triều Nguyễn?",
+              "Bảo Đại",
+              "Khải Định",
+              "Duy Tân",
+              "Thành Thái",
+            ],
+            [
+              "Thủ đô của Canada là thành phố nào?",
+              "Ottawa",
+              "Toronto",
+              "Vancouver",
+              "Montreal",
+            ],
+            [
+              "Nguyên tố nhẹ nhất trong bảng tuần hoàn là gì?",
+              "Hiđro",
+              "Heli",
+              "Liti",
+              "Cacbon",
+            ],
+            [
+              "Nhà bác học nào phát hiện ra penicillin?",
+              "Alexander Fleming",
+              "Louis Pasteur",
+              "Marie Curie",
+              "Robert Koch",
+            ],
+            [
+              "Ai là người đầu tiên bay vào vũ trụ?",
+              "Yuri Gagarin",
+              "Neil Armstrong",
+              "Alan Shepard",
+              "Valentina Tereshkova",
+            ],
+            [
+              "Đội tuyển nào vô địch World Cup 2018?",
+              "Pháp",
+              "Croatia",
+              "Đức",
+              "Brazil",
+            ],
+            [
+              "Họa sĩ nào đã vẽ bức “Đêm đầy sao”?",
+              "Vincent van Gogh",
+              "Claude Monet",
+              "Pablo Picasso",
+              "Salvador Dalí",
+            ],
+            [
+              "Thủ đô của Brazil là thành phố nào?",
+              "Brasília",
+              "Rio de Janeiro",
+              "São Paulo",
+              "Salvador",
+            ],
+            [
+              "Nguyên tố có số hiệu nguyên tử là 6 là gì?",
+              "Cacbon",
+              "Nitơ",
+              "Oxi",
+              "Bo",
+            ],
+            [
+              "Quốc gia nào đông dân nhất thế giới hiện nay?",
+              "Ấn Độ",
+              "Trung Quốc",
+              "Hoa Kỳ",
+              "Indonesia",
+            ],
+            [
+              "Ai là tác giả “Bình Ngô đại cáo”?",
+              "Nguyễn Trãi",
+              "Lê Lợi",
+              "Lý Thường Kiệt",
+              "Trần Hưng Đạo",
+            ],
+            [
+              "Nữ sĩ nào được mệnh danh là “Bà chúa thơ Nôm”?",
+              "Hồ Xuân Hương",
+              "Đoàn Thị Điểm",
+              "Bà Huyện Thanh Quan",
+              "Nguyễn Thị Lộ",
+            ],
+            [
+              "Lê Lợi lãnh đạo cuộc khởi nghĩa nào chống quân Minh?",
+              "Khởi nghĩa Lam Sơn",
+              "Khởi nghĩa Tây Sơn",
+              "Khởi nghĩa Yên Thế",
+              "Khởi nghĩa Bà Triệu",
+            ],
+            [
+              "Hiệp định Genève về chấm dứt chiến tranh ở Đông Dương được ký năm nào?",
+              "1954",
+              "1946",
+              "1960",
+              "1973",
+            ],
+            [
+              "Hiệp định Paris về chấm dứt chiến tranh, lập lại hòa bình ở Việt Nam được ký năm nào?",
+              "1973",
+              "1968",
+              "1971",
+              "1975",
+            ],
+            [
+              "Bài thơ “Nam quốc sơn hà” gắn liền với cuộc kháng chiến chống quân xâm lược nào?",
+              "Quân Tống",
+              "Quân Nguyên",
+              "Quân Minh",
+              "Quân Thanh",
+            ],
+            [
+              "Hang Sơn Đoòng nằm trong vườn quốc gia nào?",
+              "Phong Nha – Kẻ Bàng",
+              "Cúc Phương",
+              "Cát Tiên",
+              "Bạch Mã",
+            ],
+            [
+              "Nhà soạn nhạc nào sáng tác Bản giao hưởng số 9 có đoạn “Ode to Joy”?",
+              "Ludwig van Beethoven",
+              "Wolfgang Mozart",
+              "Johann Sebastian Bach",
+              "Pyotr Tchaikovsky",
+            ],
+            [
+              "Tiểu thuyết “Chiến tranh và Hòa bình” là của nhà văn nào?",
+              "Lev Tolstoy",
+              "Fyodor Dostoevsky",
+              "Anton Chekhov",
+              "Alexander Pushkin",
+            ],
+            [
+              "Nhà văn nào là tác giả của “Những người khốn khổ”?",
+              "Victor Hugo",
+              "Alexandre Dumas",
+              "Honoré de Balzac",
+              "Gustave Flaubert",
+            ],
+            [
+              "Ai là người lập ra bảng tuần hoàn các nguyên tố hóa học?",
+              "Dmitri Mendeleev",
+              "Antoine Lavoisier",
+              "John Dalton",
+              "Niels Bohr",
+            ],
+            [
+              "Thủ đô của Thụy Sĩ là thành phố nào?",
+              "Bern",
+              "Zurich",
+              "Geneva",
+              "Basel",
+            ],
+            [
+              "Thủ đô của Thổ Nhĩ Kỳ là thành phố nào?",
+              "Ankara",
+              "Istanbul",
+              "Izmir",
+              "Bursa",
+            ],
+            [
+              "Thủ đô của New Zealand là thành phố nào?",
+              "Wellington",
+              "Auckland",
+              "Christchurch",
+              "Hamilton",
+            ],
+            [
+              "Chiến tranh Trăm năm diễn ra giữa hai quốc gia nào?",
+              "Anh và Pháp",
+              "Pháp và Đức",
+              "Anh và Tây Ban Nha",
+              "Ý và Áo",
+            ],
+            [
+              "Việt Nam lần đầu vô địch AFF Cup vào năm nào?",
+              "2008",
+              "2004",
+              "2012",
+              "2018",
+            ],
+            [
+              "Chùa Một Cột ở Hà Nội có tên chữ là gì?",
+              "Diên Hựu",
+              "Quán Sứ",
+              "Trấn Quốc",
+              "Tây Phương",
+            ],
+            [
+              "Vịnh Hạ Long lần đầu được UNESCO công nhận là Di sản thế giới vào năm nào?",
+              "1994",
+              "1999",
+              "2003",
+              "2010",
+            ],
+            [
+              "Hoàng thành Thăng Long được UNESCO công nhận là Di sản thế giới năm nào?",
+              "2010",
+              "2003",
+              "1999",
+              "2014",
+            ],
+            [
+              "Nhà toán học Việt Nam nào đoạt Huy chương Fields năm 2010?",
+              "Ngô Bảo Châu",
+              "Lê Văn Thiêm",
+              "Hoàng Tụy",
+              "Phan Đình Diệu",
+            ],
+            [
+              "“Trăm năm cô đơn” là tác phẩm của nhà văn nào?",
+              "Gabriel García Márquez",
+              "Mario Vargas Llosa",
+              "Haruki Murakami",
+              "Paulo Coelho",
+            ],
+            [
+              "Vận động viên nào giành Huy chương Vàng Olympic đầu tiên cho thể thao Việt Nam?",
+              "Hoàng Xuân Vinh",
+              "Trần Hiếu Ngân",
+              "Nguyễn Thị Ánh Viên",
+              "Lê Văn Công",
+            ],
+            [
+              "Quốc gia đầu tiên trên thế giới trao quyền bầu cử cho phụ nữ (năm 1893) là nước nào?",
+              "New Zealand",
+              "Anh",
+              "Hoa Kỳ",
+              "Pháp",
+            ],
+            [
+              "Ai là người Việt Nam đầu tiên bay vào vũ trụ?",
+              "Phạm Tuân",
+              "Bùi Thanh Liêm",
+              "Trần Đại Nghĩa",
+              "Tôn Thất Tùng",
+            ],
+            [
+              "Năm 1973, nhân vật Việt Nam nào được trao giải Nobel Hòa bình nhưng từ chối nhận?",
+              "Lê Đức Thọ",
+              "Võ Nguyên Giáp",
+              "Phạm Văn Đồng",
+              "Nguyễn Thị Bình",
+            ],
+          ],
+        }
+        const TIERS = ["e", "m", "h"]
+        const TOTAL = TIERS.reduce((s, t) => s + QS[t].length, 0)
+
+        const PRIZES = [
+          200000, 400000, 600000, 1000000, 2000000, 3000000, 6000000, 10000000,
+          14000000, 22000000, 30000000, 40000000, 60000000, 85000000, 150000000,
+        ]
+        const SAFE = [4, 9]
+        const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+        const money = (n) => fmt(n) + " đ"
+        const LET = "ABCD"
+        const rnd = (a, b) => a + Math.random() * (b - a)
+        const ri = (n) => Math.floor(Math.random() * n)
+        function shuffle(a) {
+          for (let i = a.length - 1; i > 0; i--) {
+            const j = ri(i + 1)
+            ;[a[i], a[j]] = [a[j], a[i]]
+          }
+          return a
+        }
+        const tierOf = (qi) => (qi < 5 ? 0 : qi < 10 ? 1 : 2)
+
+        /* ================= Lưu trữ ================= */
+        const store = {
+          get(k, d) {
+            try {
+              const v = localStorage.getItem(k)
+              return v ? JSON.parse(v) : d
+            } catch (e) {
+              return d
+            }
+          },
+          set(k, v) {
+            try {
+              localStorage.setItem(k, JSON.stringify(v))
+            } catch (e) {}
+          },
+        }
+        let seen = store.get("altp.seen", null)
+        if (!seen || typeof seen !== "object") seen = {}
+        TIERS.forEach((t) => {
+          if (!Array.isArray(seen[t])) seen[t] = []
+          seen[t] = seen[t].filter(
+            (i) => Number.isInteger(i) && i < QS[t].length,
+          )
+        })
+        let best = store.get("altp.best", null)
+        if (!best || typeof best.prize !== "number")
+          best = { prize: 0, games: 0 }
+        const seenCount = () => TIERS.reduce((s, t) => s + seen[t].length, 0)
+
+        /* ================= Âm thanh (tổng hợp bằng WebAudio) ================= */
+        const AU = (() => {
+          let ctx = null,
+            master = null,
+            noiseBuf = null,
+            muted = false,
+            drone = null,
+            arp = null,
+            step = 0
+          const mf = (n) => 440 * Math.pow(2, (n - 69) / 12)
+          function init() {
+            if (ctx) {
+              if (ctx.state === "suspended") ctx.resume()
+              return
+            }
+            try {
+              const AC = window.AudioContext || window.webkitAudioContext
+              ctx = new AC()
+              master = ctx.createGain()
+              master.gain.value = muted ? 0 : 0.8
+              const comp = ctx.createDynamicsCompressor()
+              master.connect(comp)
+              comp.connect(ctx.destination)
+              noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate)
+              const d = noiseBuf.getChannelData(0)
+              for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1
+            } catch (e) {
+              ctx = null
+            }
+          }
+          function tone(f, t, d, o) {
+            if (!ctx || muted) return
+            o = o || {}
+            const os = ctx.createOscillator(),
+              g = ctx.createGain()
+            os.type = o.type || "sine"
+            os.frequency.setValueAtTime(f, t)
+            if (o.to) os.frequency.exponentialRampToValueAtTime(o.to, t + d)
+            const v = o.vol == null ? 0.1 : o.vol,
+              a = Math.min(o.a || 0.006, d * 0.9)
+            g.gain.setValueAtTime(0.0001, t)
+            g.gain.exponentialRampToValueAtTime(v, t + a)
+            g.gain.exponentialRampToValueAtTime(0.0001, t + d)
+            if (o.lp) {
+              const fl = ctx.createBiquadFilter()
+              fl.type = "lowpass"
+              fl.frequency.value = o.lp
+              os.connect(fl)
+              fl.connect(g)
+            } else os.connect(g)
+            g.connect(master)
+            os.start(t)
+            os.stop(t + d + 0.05)
+          }
+          function noise(t, d, vol, f0, f1, type) {
+            if (!ctx || muted) return
+            const s = ctx.createBufferSource()
+            s.buffer = noiseBuf
+            s.loop = true
+            const fl = ctx.createBiquadFilter()
+            fl.type = type || "bandpass"
+            fl.frequency.setValueAtTime(f0, t)
+            if (f1) fl.frequency.exponentialRampToValueAtTime(f1, t + d)
+            fl.Q.value = 0.8
+            const g = ctx.createGain()
+            g.gain.setValueAtTime(0.0001, t)
+            g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.02, d / 3))
+            g.gain.exponentialRampToValueAtTime(0.0001, t + d)
+            s.connect(fl)
+            fl.connect(g)
+            g.connect(master)
+            s.start(t, Math.random())
+            s.stop(t + d + 0.05)
+          }
+          const brass = (n, t, d, v) => {
+            const f = mf(n)
+            tone(f, t, d, { type: "sawtooth", vol: v, lp: 2000, a: 0.04 })
+            tone(f * 1.005, t, d, {
+              type: "sawtooth",
+              vol: v * 0.7,
+              lp: 1600,
+              a: 0.05,
+            })
+          }
+          function applause(dur) {
+            if (!ctx || muted) return
+            const t = ctx.currentTime
+            for (let i = 0; i < Math.round(dur * 28); i++) {
+              const at = t + Math.random() * dur,
+                fade = Math.min(1, (at - t) / 0.4, (t + dur - at) / 0.8)
+              noise(
+                at,
+                rnd(0.03, 0.08),
+                Math.max(0.002, rnd(0.02, 0.06) * fade),
+                rnd(1200, 3600),
+              )
+            }
+          }
+          function stopBed() {
+            if (arp) {
+              clearInterval(arp)
+              arp = null
+            }
+            if (drone && ctx) {
+              const d = drone,
+                t = ctx.currentTime
+              d.g.gain.cancelScheduledValues(t)
+              d.g.gain.setValueAtTime(d.g.gain.value, t)
+              d.g.gain.linearRampToValueAtTime(0.0001, t + 0.35)
+              d.o.forEach((o) => {
+                try {
+                  o.stop(t + 0.4)
+                } catch (e) {}
+              })
+              drone = null
+            }
+          }
+          function startBed(tier) {
+            if (!ctx || muted) return
+            stopBed()
+            const root = 45 + [0, 2, 3][tier],
+              t = ctx.currentTime
+            const g = ctx.createGain()
+            g.gain.setValueAtTime(0.0001, t)
+            g.gain.linearRampToValueAtTime(0.04, t + 1.2)
+            const fl = ctx.createBiquadFilter()
+            fl.type = "lowpass"
+            fl.frequency.value = 240
+            const o1 = ctx.createOscillator(),
+              o2 = ctx.createOscillator()
+            o1.type = "sawtooth"
+            o2.type = "sawtooth"
+            o1.frequency.value = mf(root)
+            o2.frequency.value = mf(root) * 1.007
+            const lfo = ctx.createOscillator(),
+              lg = ctx.createGain()
+            lfo.frequency.value = 0.25
+            lg.gain.value = 90
+            lfo.connect(lg)
+            lg.connect(fl.frequency)
+            o1.connect(fl)
+            o2.connect(fl)
+            fl.connect(g)
+            g.connect(master)
+            o1.start()
+            o2.start()
+            lfo.start()
+            drone = { g, o: [o1, o2, lfo] }
+            const pat = [0, 7, 12, 15, 12, 7, 3, 7]
+            step = 0
+            arp = setInterval(() => {
+              if (!ctx || muted) return
+              const n =
+                root +
+                12 +
+                pat[step % pat.length] +
+                (Math.floor(step / 8) % 2 ? 2 : 0)
+              tone(mf(n), ctx.currentTime, 0.34, {
+                type: "triangle",
+                vol: 0.022 + tier * 0.006,
+                lp: 1800,
+              })
+              if (step % 4 === 0)
+                tone(mf(root - 12), ctx.currentTime, 0.3, {
+                  type: "sine",
+                  vol: 0.09,
+                  to: mf(root - 12) * 0.8,
+                })
+              step++
+            }, 360)
+          }
+          function thump(t, v) {
+            tone(85, t, 0.2, { to: 42, vol: 0.24 * v })
+          }
+          return {
+            init,
+            setMuted(m) {
+              muted = m
+              if (master) master.gain.value = m ? 0 : 0.8
+              if (m) stopBed()
+            },
+            stopBed,
+            startBed,
+            applause,
+            intro() {
+              if (!ctx) return
+              const t = ctx.currentTime
+              ;[62, 66, 69, 74].forEach((n, i) =>
+                brass(n, t + i * 0.17, i === 3 ? 1.6 : 0.35, 0.05),
+              )
+              brass(50, t + 0.55, 1.4, 0.07)
+              brass(57, t + 0.55, 1.4, 0.05)
+              ;[86, 90, 93, 98].forEach((n, i) =>
+                tone(mf(n), t + 0.7 + i * 0.09, 0.7, {
+                  type: "sine",
+                  vol: 0.025,
+                }),
+              )
+              noise(t, 0.7, 0.05, 300, 5000, "bandpass")
+            },
+            question() {
+              if (!ctx) return
+              const t = ctx.currentTime
+              noise(t, 0.55, 0.07, 400, 3200, "bandpass")
+              tone(110, t, 0.5, { to: 46, vol: 0.18 })
+            },
+            blip(i) {
+              if (!ctx) return
+              tone(mf(72 + i * 2), ctx.currentTime, 0.12, {
+                type: "square",
+                vol: 0.035,
+                lp: 2400,
+              })
+            },
+            select() {
+              if (!ctx) return
+              tone(mf(79), ctx.currentTime, 0.1, {
+                type: "triangle",
+                vol: 0.06,
+              })
+            },
+            lock() {
+              if (!ctx) return
+              stopBed()
+              const t = ctx.currentTime
+              tone(75, t, 0.6, { to: 34, vol: 0.32 })
+              noise(t, 0.25, 0.08, 200, 900, "lowpass")
+            },
+            suspense(sec) {
+              if (!ctx) return
+              const t = ctx.currentTime
+              let tt = 0.15,
+                gap = 0.82
+              while (tt < sec - 0.2) {
+                thump(t + tt, 1)
+                thump(t + tt + 0.17, 0.65)
+                tt += gap
+                gap = Math.max(0.4, gap * 0.9)
+              }
+              tone(mf(33), t, sec, { type: "sine", vol: 0.09, a: 0.4 })
+              tone(mf(57), t, sec, {
+                type: "sawtooth",
+                to: mf(88),
+                vol: 0.03,
+                lp: 1400,
+                a: sec * 0.85,
+              })
+            },
+            correct() {
+              if (!ctx) return
+              const t = ctx.currentTime
+              ;[60, 64, 67, 72, 76].forEach((n, i) =>
+                brass(n, t + i * 0.085, i === 4 ? 1 : 0.3, 0.05),
+              )
+              ;[84, 88, 91, 96].forEach((n, i) =>
+                tone(mf(n), t + 0.4 + i * 0.06, 0.5, { vol: 0.03 }),
+              )
+            },
+            milestone() {
+              if (!ctx) return
+              const t = ctx.currentTime
+              ;[60, 64, 67, 72].forEach((n, i) =>
+                brass(n, t + i * 0.1, 0.3, 0.05),
+              )
+              ;[67, 72, 76, 79].forEach((n, i) =>
+                brass(n, t + 0.5 + i * 0.12, i === 3 ? 1.4 : 0.3, 0.05),
+              )
+              brass(48, t + 0.5, 1.6, 0.07)
+              applause(2.6)
+            },
+            wrong() {
+              if (!ctx) return
+              const t = ctx.currentTime
+              tone(196, t, 1, { type: "sawtooth", to: 52, vol: 0.13, lp: 900 })
+              tone(98, t, 1.2, { type: "square", to: 38, vol: 0.08, lp: 500 })
+              tone(70, t, 0.7, { to: 30, vol: 0.3 })
+            },
+            win() {
+              if (!ctx) return
+              const t = ctx.currentTime
+              const seq = [
+                [60, 64, 67],
+                [62, 66, 69],
+                [64, 68, 71],
+                [67, 71, 74],
+                [72, 76, 79],
+              ]
+              seq.forEach((c, i) =>
+                c.forEach((n) =>
+                  brass(n, t + i * 0.28, i === 4 ? 2.4 : 0.4, 0.045),
+                ),
+              )
+              brass(48, t + 1.12, 2.4, 0.08)
+              for (let i = 0; i < 14; i++)
+                tone(mf(84 + [0, 4, 7, 12][i % 4]), t + 1.2 + i * 0.1, 0.5, {
+                  vol: 0.025,
+                })
+              applause(5)
+            },
+            life() {
+              if (!ctx) return
+              const t = ctx.currentTime
+              ;[84, 88, 91, 96].forEach((n, i) =>
+                tone(mf(n), t + i * 0.07, 0.35, {
+                  type: "triangle",
+                  vol: 0.06,
+                }),
+              )
+            },
+            zap(i) {
+              if (!ctx) return
+              tone(1000, ctx.currentTime + i * 0.28, 0.22, {
+                type: "square",
+                to: 180,
+                vol: 0.05,
+                lp: 3000,
+              })
+            },
+            ring() {
+              if (!ctx) return
+              const t = ctx.currentTime
+              for (let k = 0; k < 2; k++) {
+                tone(440, t + k * 1, 0.5, { vol: 0.05, a: 0.02 })
+                tone(480, t + k * 1, 0.5, { vol: 0.05, a: 0.02 })
+              }
+            },
+            pickup() {
+              if (!ctx) return
+              noise(ctx.currentTime, 0.05, 0.12, 2000, 800)
+            },
+          }
+        })()
+
+        /* ================= Pháo giấy ================= */
+        const fx = $("#fx"),
+          fc = fx.getContext("2d")
+        let parts = [],
+          fxRaf = 0,
+          fxW = 0,
+          fxH = 0
+        function fxSize() {
+          fxW = fx.width = innerWidth
+          fxH = fx.height = innerHeight
+        }
+        function burst(n, x, y) {
+          const cols = [
+            "#f4c95d",
+            "#ff9d1c",
+            "#2ed26f",
+            "#6fa0ff",
+            "#ffffff",
+            "#f0505c",
+          ]
+          for (let i = 0; i < n; i++) {
+            const a = rnd(-Math.PI * 0.95, -Math.PI * 0.05),
+              s = rnd(5, 15)
+            parts.push({
+              x,
+              y,
+              vx: Math.cos(a) * s,
+              vy: Math.sin(a) * s,
+              w: rnd(5, 10),
+              h: rnd(3, 6),
+              r: rnd(0, 6),
+              vr: rnd(-0.3, 0.3),
+              c: cols[ri(cols.length)],
+              life: rnd(110, 190),
+            })
+          }
+          if (!fxRaf) fxRaf = requestAnimationFrame(fxLoop)
+        }
+        function fxLoop() {
+          fc.clearRect(0, 0, fxW, fxH)
+          for (const p of parts) {
+            p.vy += 0.22
+            p.vx *= 0.992
+            p.x += p.vx
+            p.y += p.vy
+            p.r += p.vr
+            p.life--
+            fc.save()
+            fc.translate(p.x, p.y)
+            fc.rotate(p.r)
+            fc.globalAlpha = Math.min(1, p.life / 30)
+            fc.fillStyle = p.c
+            fc.fillRect(-p.w / 2, -p.h / 2, p.w, p.h)
+            fc.restore()
+          }
+          parts = parts.filter((p) => p.life > 0 && p.y < fxH + 40)
+          fxRaf = parts.length ? requestAnimationFrame(fxLoop) : 0
+        }
+        fxSize()
+        addEventListener("resize", fxSize)
+
+        /* ================= Trạng thái trò chơi ================= */
+        let G = {
+          gid: 0,
+          qi: 0,
+          state: "idle",
+          used: {},
+          removed: new Set(),
+          sel: -1,
+          qs: [],
+        }
+        const ans = $$(".ans"),
+          host = $("#hostText"),
+          actions = $("#actions")
+        const wait = (ms, gid) =>
+          new Promise((r) => setTimeout(() => r(gid === G.gid), ms))
+        const say = (t) => {
+          host.textContent = t
+        }
+
+        function pickTier(t) {
+          const n = QS[t].length
+          let un = []
+          for (let i = 0; i < n; i++) if (!seen[t].includes(i)) un.push(i)
+          if (un.length < 5) {
+            seen[t] = []
+            un = [...Array(n).keys()]
+          }
+          shuffle(un)
+          const ch = un.slice(0, 5).sort((a, b) => a - b)
+          seen[t].push(...ch)
+          return ch.map((i) => {
+            const r = QS[t][i]
+            return {
+              text: r[0],
+              tier: TIERS.indexOf(t),
+              opts: shuffle([
+                { t: r[1], ok: true },
+                { t: r[2] },
+                { t: r[3] },
+                { t: r[4] },
+              ]),
+            }
+          })
+        }
+        function newGame() {
+          const qs = [].concat(pickTier("e"), pickTier("m"), pickTier("h"))
+          store.set("altp.seen", seen)
+          G = {
+            gid: G.gid + 1,
+            qi: 0,
+            state: "idle",
+            used: { fifty: false, phone: false, aud: false },
+            removed: new Set(),
+            sel: -1,
+            qs,
+            correct: 0,
+          }
+        }
+
+        function renderLadder() {
+          const ol = $("#ladderList")
+          ol.innerHTML = ""
+          for (let i = 14; i >= 0; i--) {
+            const li = document.createElement("li")
+            li.className =
+              (SAFE.includes(i) ? "safe " : "") +
+              (i === G.qi && G.state !== "over" ? "cur " : "") +
+              (i < G.qi ? "done" : "")
+            li.innerHTML =
+              '<span class="n">' +
+              (i + 1) +
+              '</span><span class="d"></span><span class="p">' +
+              fmt(PRIZES[i]) +
+              "</span>"
+            ol.appendChild(li)
+          }
+        }
+        function renderStatus() {
+          $("#stNum").textContent = "Câu " + (G.qi + 1) + " / 15"
+          $("#stPrize").textContent = money(PRIZES[G.qi])
+          $("#stTag").hidden = !SAFE.includes(G.qi)
+        }
+        function updateLifelines() {
+          const on = G.state === "pick"
+          ;[
+            ["fifty", "#lf-fifty"],
+            ["phone", "#lf-phone"],
+            ["aud", "#lf-aud"],
+          ].forEach(([k, s]) => {
+            const b = $(s)
+            b.classList.toggle("used", !!G.used[k])
+            b.disabled = !on || !!G.used[k]
+          })
+        }
+        function updateActions() {
+          actions.innerHTML = ""
+          const add = (act, label, cls) => {
+            const b = document.createElement("button")
+            b.className = "btn " + cls
+            b.dataset.act = act
+            b.textContent = label
+            actions.appendChild(b)
+            return b
+          }
+          if (G.state === "pick") {
+            if (G.sel >= 0) {
+              add("lock", "Đáp án cuối cùng", "gold")
+              add("redo", "Chọn lại", "ghost")
+            }
+            if (G.qi > 0)
+              add(
+                "walk",
+                "Dừng cuộc chơi, nhận " + money(PRIZES[G.qi - 1]),
+                "ghost",
+              )
+          } else if (G.state === "next") {
+            add(
+              "next",
+              G.qi === 14 ? "Nhận giải thưởng" : "Câu tiếp theo",
+              "gold",
+            )
+          }
+        }
+        function safePrize(qi) {
+          return qi >= 10 ? PRIZES[9] : qi >= 5 ? PRIZES[4] : 0
+        }
+
+        async function showQ() {
+          const gid = G.gid,
+            q = G.qs[G.qi]
+          G.sel = -1
+          G.state = "reveal"
+          G.removed = new Set()
+          renderLadder()
+          renderStatus()
+          updateLifelines()
+          updateActions()
+          ans.forEach((a) => {
+            a.className = "hex ans hide"
+            a.disabled = true
+          })
+          const qb = $("#qbox")
+          qb.classList.remove("in-anim")
+          void qb.offsetWidth
+          qb.classList.add("in-anim")
+          $("#qtext").textContent = q.text
+          AU.question()
+          say(
+            G.qi === 0
+              ? "Xin chào và chào mừng bạn đến với Ai Là Triệu Phú! Câu hỏi đầu tiên dành cho " +
+                  money(PRIZES[0]) +
+                  "."
+              : "Câu hỏi số " +
+                  (G.qi + 1) +
+                  ", trị giá " +
+                  money(PRIZES[G.qi]) +
+                  "." +
+                  (SAFE.includes(G.qi) ? " Đây là câu hỏi mốc an toàn." : ""),
+          )
+          q.opts.forEach((o, i) => {
+            ans[i].querySelector(".t").textContent = o.t
+          })
+          if (!(await wait(900, gid))) return
+          for (let i = 0; i < 4; i++) {
+            ans[i].classList.remove("hide")
+            AU.blip(i)
+            if (!(await wait(340, gid))) return
+          }
+          ans.forEach((a) => {
+            a.disabled = false
+          })
+          G.state = "pick"
+          AU.startBed(q.tier)
+          say("Hãy chọn một đáp án, hoặc dùng quyền trợ giúp nếu cần.")
+          updateLifelines()
+          updateActions()
+        }
+
+        function select(i) {
+          if (G.state !== "pick" || G.removed.has(i)) return
+          G.sel = i
+          ans.forEach((a, k) => a.classList.toggle("sel", k === i))
+          AU.select()
+          say(
+            "Bạn chọn đáp án " +
+              LET[i] +
+              ". Đây có phải là đáp án cuối cùng của bạn?",
+          )
+          updateActions()
+        }
+        function redo() {
+          if (G.state !== "pick") return
+          G.sel = -1
+          ans.forEach((a) => a.classList.remove("sel"))
+          say("Được thôi, bạn hãy chọn lại.")
+          updateActions()
+        }
+
+        async function lock() {
+          if (G.state !== "pick" || G.sel < 0) return
+          const gid = G.gid,
+            tier = G.qs[G.qi].tier
+          G.state = "locked"
+          updateActions()
+          updateLifelines()
+          closeModal()
+          ans.forEach((a) => {
+            a.disabled = true
+          })
+          ans[G.sel].classList.add("locked")
+          AU.lock()
+          say(
+            "Đáp án cuối cùng là " +
+              LET[G.sel] +
+              ". Chúng ta cùng xem kết quả…",
+          )
+          const dur = [2400, 3400, 4800][tier]
+          AU.suspense(dur / 1000)
+          if (!(await wait(dur, gid))) return
+          reveal()
+        }
+
+        async function reveal() {
+          const gid = G.gid,
+            q = G.qs[G.qi],
+            ci = q.opts.findIndex((o) => o.ok),
+            ok = G.sel === ci
+          ans[G.sel].classList.remove("locked", "sel")
+          if (ok) {
+            ans[ci].classList.add("win", "flash")
+            const ms = SAFE.includes(G.qi)
+            G.correct++
+            if (G.qi === 14) {
+              AU.win()
+              burst(160, innerWidth / 2, innerHeight * 0.7)
+            } else if (ms) {
+              AU.milestone()
+              burst(90, innerWidth / 2, innerHeight * 0.7)
+            } else AU.correct()
+            G.state = "shown"
+            say(
+              G.qi === 14
+                ? "Chính xác! Bạn đã vượt qua cả 15 câu hỏi!"
+                : ms
+                  ? "Chính xác! Bạn đã vượt qua mốc an toàn, số tiền " +
+                    money(PRIZES[G.qi]) +
+                    " đã nằm chắc trong tay bạn."
+                  : "Chính xác! Bạn đã có " + money(PRIZES[G.qi]) + ".",
+            )
+            if (!(await wait(G.qi === 14 ? 3600 : 2200, gid))) return
+            G.state = "next"
+            updateActions()
+          } else {
+            ans[G.sel].classList.add("lose")
+            ans[ci].classList.add("win", "flash")
+            AU.wrong()
+            $("#stage").classList.remove("shake")
+            void $("#stage").offsetWidth
+            $("#stage").classList.add("shake")
+            G.state = "shown"
+            const sp = safePrize(G.qi)
+            say(
+              "Rất tiếc, đáp án đúng là " +
+                LET[ci] +
+                ": " +
+                q.opts[ci].t +
+                "." +
+                (sp
+                  ? " Bạn ra về với " + money(sp) + "."
+                  : " Bạn ra về với hai bàn tay trắng."),
+            )
+            if (!(await wait(3600, gid))) return
+            finish("lose", sp)
+          }
+        }
+
+        function next() {
+          if (G.state !== "next") return
+          if (G.qi === 14) {
+            finish("win", PRIZES[14])
+            return
+          }
+          G.qi++
+          showQ()
+        }
+        function walk() {
+          if (G.state !== "pick" || G.qi < 1) return
+          AU.stopBed()
+          closeModal()
+          G.state = "locked"
+          updateActions()
+          updateLifelines()
+          const p = PRIZES[G.qi - 1]
+          say("Bạn quyết định dừng cuộc chơi và mang về " + money(p) + ".")
+          const gid = G.gid
+          setTimeout(() => {
+            if (gid === G.gid) finish("walk", p)
+          }, 1200)
+        }
+
+        function finish(kind, prize) {
+          G.state = "over"
+          AU.stopBed()
+          renderLadder()
+          best.games++
+          if (prize > best.prize) best.prize = prize
+          store.set("altp.best", best)
+          const t = {
+            win: ["Chúc mừng!", "Triệu phú mới của chúng ta"],
+            lose: ["Rất tiếc", "Hành trình kết thúc"],
+            walk: ["Dừng cuộc chơi", "Một quyết định khôn ngoan"],
+          }[kind]
+          $("#endKicker").textContent = t[1]
+          $("#endTitle").textContent = t[0]
+          $("#endPrize").textContent = money(prize)
+          $("#endStats").textContent =
+            "Trả lời đúng " +
+            G.correct +
+            " / 15 câu. Kỷ lục của bạn: " +
+            money(best.prize) +
+            ". Đã gặp " +
+            seenCount() +
+            " / " +
+            TOTAL +
+            " câu trong ngân hàng."
+          $("#end").hidden = false
+          if (kind === "win") burst(120, innerWidth / 2, innerHeight * 0.8)
+        }
+
+        /* ================= Quyền trợ giúp ================= */
+        const modal = $("#modal"),
+          card = $("#modalCard")
+        function openModal(html) {
+          card.innerHTML = html
+          modal.hidden = false
+          const b = card.querySelector("[data-close]")
+          if (b) b.focus()
+        }
+        function closeModal() {
+          modal.hidden = true
+          card.innerHTML = ""
+        }
+        function aliveIdx() {
+          return [0, 1, 2, 3].filter((i) => !G.removed.has(i))
+        }
+
+        function useFifty() {
+          const q = G.qs[G.qi],
+            wrong = aliveIdx().filter((i) => !q.opts[i].ok)
+          shuffle(wrong)
+            .slice(0, 2)
+            .forEach((i, k) => {
+              G.removed.add(i)
+              setTimeout(() => {
+                ans[i].classList.add("gone")
+                AU.zap(0)
+              }, k * 320)
+            })
+          if (G.removed.has(G.sel)) {
+            G.sel = -1
+            ans.forEach((a) => a.classList.remove("sel"))
+          }
+          G.used.fifty = true
+          AU.zap(0)
+          say(
+            "Hai đáp án sai đã được loại bỏ. Còn lại hai đáp án để bạn lựa chọn.",
+          )
+          updateLifelines()
+          updateActions()
+        }
+
+        const FRIENDS = [
+          "Anh Tuấn",
+          "Chị Lan",
+          "Thầy Minh",
+          "Bạn Hà",
+          "Cô Hương",
+        ]
+        function usePhone() {
+          const gid = G.gid,
+            q = G.qs[G.qi],
+            ci = q.opts.findIndex((o) => o.ok),
+            alive = aliveIdx(),
+            name = FRIENDS[ri(FRIENDS.length)]
+          G.used.phone = true
+          updateLifelines()
+          const acc = [0.92, 0.72, 0.5][q.tier],
+            knows = Math.random() < acc
+          const pick = knows ? ci : shuffle(alive.filter((i) => i !== ci))[0]
+          const pct = knows ? Math.round(rnd(72, 96)) : Math.round(rnd(30, 55))
+          const L = LET[pick]
+          const text =
+            knows && pct >= 80
+              ? "Alo, mình nghe rõ câu hỏi rồi. Mình khá chắc đáp án là " +
+                L +
+                ", khoảng " +
+                pct +
+                "% đấy."
+              : knows
+                ? "Ừm… để mình nghĩ chút. Mình nghiêng về đáp án " +
+                  L +
+                  ", chắc khoảng " +
+                  pct +
+                  "%."
+                : "Câu này khó thật. Nếu phải đoán thì mình chọn " +
+                  L +
+                  ", nhưng chỉ chắc khoảng " +
+                  pct +
+                  "% thôi."
+          openModal(
+            '<h3>Gọi điện thoại cho người thân</h3><div class="chat" id="chat">Đang gọi cho ' +
+              name +
+              '…</div><button class="btn gold" data-close id="closeBtn" disabled>Đóng</button>',
+          )
+          AU.ring()
+          ;(async () => {
+            if (!(await wait(2100, gid))) return
+            AU.pickup()
+            $("#chat").textContent = name + ": "
+            for (let i = 0; i < text.length; i += 2) {
+              if (!(await wait(34, gid)) || modal.hidden) return
+              $("#chat").textContent = name + ": " + text.slice(0, i + 2)
+            }
+            $("#closeBtn").disabled = false
+          })()
+        }
+
+        function useAud() {
+          const q = G.qs[G.qi],
+            ci = q.opts.findIndex((o) => o.ok),
+            alive = aliveIdx()
+          G.used.aud = true
+          updateLifelines()
+          AU.life()
+          const lead = [0.76, 0.58, 0.42][q.tier] + rnd(-0.08, 0.08),
+            miss = [0.03, 0.12, 0.26][q.tier]
+          let top = ci
+          if (Math.random() < miss) {
+            const w = alive.filter((i) => i !== ci)
+            top = w[ri(w.length)]
+          }
+          let ptop = Math.round(100 * lead * (top === ci ? 1 : 0.78))
+          const others = alive.filter((i) => i !== top)
+          const w = others.map((i) => rnd(0.4, 1) * (i === ci ? 1.6 : 1)),
+            ws = w.reduce((a, b) => a + b, 0)
+          const pct = [0, 0, 0, 0]
+          pct[top] = ptop
+          let rest = 100 - ptop
+          others.forEach((i, k) => {
+            pct[i] =
+              k === others.length - 1
+                ? rest
+                : Math.round(((100 - ptop) * w[k]) / ws)
+            rest -= pct[i]
+          })
+          let bars = "",
+            labels = ""
+          for (let i = 0; i < 4; i++) {
+            const gone = G.removed.has(i)
+            bars +=
+              '<div class="bar' +
+              (gone ? " dim" : "") +
+              '"><span>' +
+              (gone ? "" : pct[i] + "%") +
+              '</span><i data-h="' +
+              (gone ? 0 : pct[i]) +
+              '"></i></div>'
+            labels += "<b>" + LET[i] + "</b>"
+          }
+          openModal(
+            '<h3>Ý kiến khán giả trong trường quay</h3><div class="bars">' +
+              bars +
+              '</div><div class="barlabels">' +
+              labels +
+              '</div><button class="btn gold" data-close>Đóng</button>',
+          )
+          setTimeout(() => {
+            card.querySelectorAll(".bar i").forEach((el) => {
+              el.style.height = el.dataset.h * 1.55 + "px"
+            })
+          }, 60)
+          say("Khán giả đã bỏ phiếu. Hãy xem kết quả.")
+        }
+
+        /* ================= Sự kiện ================= */
+        ans.forEach((a) =>
+          a.addEventListener("click", () => select(+a.dataset.i)),
+        )
+        actions.addEventListener("click", (e) => {
+          const b = e.target.closest("button")
+          if (!b) return
+          ;({ lock, redo, walk, next })[b.dataset.act] &&
+            { lock, redo, walk, next }[b.dataset.act]()
+        })
+        $("#lifelines").addEventListener("click", (e) => {
+          const b = e.target.closest(".life")
+          if (!b || b.disabled || G.state !== "pick") return
+          const k = b.dataset.life
+          if (G.used[k]) return
+          if (k === "fifty") useFifty()
+          else if (k === "phone") usePhone()
+          else useAud()
+        })
+        modal.addEventListener("click", (e) => {
+          if (
+            e.target.closest("[data-close]") &&
+            !e.target.closest("[disabled]")
+          )
+            closeModal()
+        })
+        $("#ladderBtn").addEventListener("click", () =>
+          $("#ladder").classList.toggle("open"),
+        )
+        document.addEventListener("click", (e) => {
+          const l = $("#ladder")
+          if (
+            l.classList.contains("open") &&
+            !e.target.closest("#ladder") &&
+            !e.target.closest("#ladderBtn")
+          )
+            l.classList.remove("open")
+        })
+        $("#mute").addEventListener("click", (e) => {
+          const m = !($("#mute").getAttribute("aria-pressed") === "true")
+          const b = $("#mute")
+          b.setAttribute("aria-pressed", String(m))
+          b.setAttribute("aria-label", m ? "Bật âm thanh" : "Tắt âm thanh")
+          $("#waves").style.display = m ? "none" : ""
+          AU.setMuted(m)
+          if (!m && G.state === "pick") AU.startBed(G.qs[G.qi].tier)
+          b.blur()
+        })
+        addEventListener("keydown", (e) => {
+          if (!$("#intro").hidden || !$("#end").hidden || !modal.hidden) return
+          const k = e.key.toUpperCase(),
+            i = "ABCD".indexOf(k)
+          if (k.length === 1 && i >= 0) {
+            select(i)
+          } else if (e.key === "Enter" && G.state === "pick" && G.sel >= 0) {
+            e.preventDefault()
+            lock()
+          } else if (e.key === "Enter" && G.state === "next") {
+            e.preventDefault()
+            next()
+          }
+        })
+
+        function startGame() {
+          AU.init()
+          $("#intro").hidden = true
+          $("#end").hidden = true
+          closeModal()
+          newGame()
+          renderLadder()
+          renderStatus()
+          updateLifelines()
+          updateActions()
+          ans.forEach((a) => {
+            a.className = "hex ans hide"
+          })
+          $("#qtext").textContent = ""
+          say("")
+          AU.intro()
+          const gid = G.gid
+          setTimeout(() => {
+            if (gid === G.gid) showQ()
+          }, 1500)
+        }
+        $("#startBtn").addEventListener("click", startGame)
+        $("#againBtn").addEventListener("click", startGame)
+
+        $("#introInfo").textContent =
+          "Ngân hàng " +
+          TOTAL +
+          " câu hỏi · Bạn đã gặp " +
+          seenCount() +
+          " câu" +
+          (best.prize ? " · Kỷ lục " + money(best.prize) : "")
+        renderLadder()
+        renderStatus()
+        updateLifelines()
+      })()
+    </script>
+  </body>
+</html>

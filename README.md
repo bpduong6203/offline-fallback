@@ -44,6 +44,7 @@ Trang chờ kiểm tra lại kết nối bằng request `HEAD` mỗi 10 giây kh
 | Bang Bang Web | Tab trên trang chờ hoặc `/__game/bang-bang` | Đấu trường xe tăng online 3v3; chọn xe, bấm sẵn sàng và ghép trận khi đủ 6 người |
 | Bomb Arena | Liên kết trên trang chờ hoặc `/__game/bomb-arena` | Đấu bot, hai người cùng bàn phím hoặc phòng online 2–4 người |
 | Tower City | Liên kết trên trang chờ hoặc `/tower-city` | Xây tháp bằng cần cẩu, thả tầng chính xác và quy hoạch thành phố 5×5 |
+| Ai Là Triệu Phú | Liên kết trên trang chờ hoặc `/ai-la-trieu-phu` | Đấu trí 15 câu hỏi với 3 quyền trợ giúp, thang tiền thưởng và âm thanh trường quay |
 | Bi-a, Caro, Đấu kiếm | Có source trong `src/page/client/` | Nút chọn game hiện được comment trong `src/page/body.js` |
 
 ## Yêu cầu và cài đặt
@@ -103,6 +104,7 @@ npm.cmd run dev
 | `/__game/bang-bang-ws` | Hàng chờ sẵn sàng và mô phỏng trận Bang Bang Web |
 | `/__game/bomb-arena` | Phục vụ Bomb Arena; hỗ trợ GET và HEAD |
 | `/tower-city` | Phục vụ HTML Tower City; hỗ trợ GET và HEAD |
+| `/ai-la-trieu-phu` | Phục vụ HTML Ai Là Triệu Phú; hỗ trợ GET và HEAD |
 | `/__game/ws?g=<game>&room=<code>` | Kết nối phòng WebSocket |
 | Các đường dẫn còn lại | Chuyển đến origin, trả fallback khi origin gặp lỗi phù hợp |
 
