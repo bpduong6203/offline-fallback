@@ -24,6 +24,7 @@ Hai chủ tiệm dùng PNG trong suốt cắt trực tiếp từ ảnh người 
 
 - Chọn menu trong **Sổ công thức & menu**, mở cửa, chạm phiếu đơn hoặc khách trong cảnh quán.
 - Pha theo 8 bước: ly → trà → sữa → đường → đá → topping/thành phần → lắc/khuấy → nắp. Đối chiếu công thức ghim và phiếu khách, rồi giao món. Trên desktop có thể kéo lựa chọn vào ly; trên điện thoại chỉ cần chạm nút.
+- Khi **Tạm dừng**, không thể nhận đơn, pha nhanh, thực hiện bước pha, hủy ly hay giao món; minigame ủ trà, lắc và trang trí ly cũng bị khóa. Các thao tác phục vụ được kiểm tra cả trên server, kể cả khi chạm khách trong cảnh hoặc gọi API. Nhấn **Tiếp tục** để phục vụ lại; ly đang pha và nguyên liệu vẫn được giữ.
 - Lắc theo nhịp: bấm luân phiên Trái/Phải (hoặc A/D, phím mũi tên) khi kim vào vùng xanh. Nút đến lượt được tô sáng; ly chuyển động, số lượt và điểm cập nhật ngay khi bấm. Hoàn thành minigame ở bước lắc sẽ chuyển thẳng sang đóng nắp, không cần lắc tiêu chuẩn thêm lần nữa. Hủy minigame giữ nguyên bước pha.
 - Mỗi ngày dài 7 phút ở tốc độ 1×. Có thể kết ngày từ phút thứ 6, sau đó chuẩn bị menu ngày mới. Tạm dừng, tốc độ 0.5×/1×/2×, chế độ thư giãn nằm trong cài đặt. Modal và minigame dừng thời gian phục vụ.
 - Trồng 5 loại cây, tưới một lần, thu 4 phần sau 90 giây thời gian game. Cây không chết khi rời trang.

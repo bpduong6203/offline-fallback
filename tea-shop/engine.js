@@ -26,7 +26,15 @@ export const costOf=r=>Object.values(r.ingredients).reduce((a,b)=>a+b,0);
 export function makeOrder(s,rng=Math.random){const person=s.day===7?0:Math.floor(rng()*PEOPLE.length),available=RECIPES.filter(r=>s.menu.includes(r.id)&&r.day<=s.day);if(!available.length)return;const favorite=available.find(r=>r.id===(s.day===9?'matcha':PEOPLE[person].favorite));const r=favorite||available[Math.floor(rng()*available.length)];return {id:crypto.randomUUID(),person,recipe:r.id,sugar:[0,30,50,70,100][Math.floor(rng()*5)],ice:s.day===5?1:Math.floor(rng()*3),wait:0,patience:(s.relaxed?150:95)+(person===1?-15:20)};}
 export function advance(s,seconds,rng=Math.random){if(!s.open||s.paused||s.mini)return;const dt=Math.min(5,Math.max(0,seconds))*s.speed;s.time=Math.min(420,s.time+dt);s.spawn+=dt;for(const p of s.garden)if(p?.watered)p.growth=Math.min(90,p.growth+dt);for(const o of s.orders)o.wait+=dt;const gone=s.orders.filter(o=>o.wait>=o.patience);s.report.lost+=gone.length;s.orders=s.orders.filter(o=>o.wait<o.patience);if(gone.length)s.message='Khách đã về, lần sau mình phục vụ sớm hơn nhé.';if(s.spawn>=18&&s.orders.length<2+(s.upgrades.seats||0)){const o=makeOrder(s,rng);if(o){s.orders.push(o);if(s.day===8&&s.orders.length<2+(s.upgrades.seats||0))s.orders.push({...o,id:crypto.randomUUID(),person:(o.person+1)%PEOPLE.length});}s.spawn=0;}if(s.time>=420){s.report.lost+=s.orders.length;s.orders=[];s.open=false;s.drink=null;s.message='Hết giờ đón khách. Xem báo cáo và kết ngày nhé.';}}
 function spend(s,amount,balance){if(balance<amount)fail('Không đủ công đức.');s.report.purchases+=amount;return -amount;}
+export function isServiceActionBlocked(s,b){
+ const serving=['start','step','quick','discard','serve'].includes(b.action);
+ const brewingMini=['brew','shake','syrup'];
+ return !!((serving&&(s.paused||s.mini))||
+  (s.paused&&b.action==='miniStart'&&brewingMini.includes(b.kind))||
+  (s.paused&&b.action==='miniEnd'&&!b.cancel&&brewingMini.includes(s.mini?.kind)));
+}
 export function act(s,b,balance,now=Date.now()){
+ if(isServiceActionBlocked(s,b))fail(s.paused?'Quán đang tạm dừng. Nhấn Tiếp tục để nhận đơn, pha và giao món.':'Hãy hoàn thành hoặc đóng minigame trước khi tiếp tục phục vụ.');
  let delta=0;s.message='';
  switch(b.action){
  case 'owner':if(!['male','female'].includes(b.gender))fail('Chọn chủ tiệm nam hoặc nữ.');s.ownerGender=b.gender;break;

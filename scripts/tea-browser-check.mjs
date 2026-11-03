@@ -53,7 +53,13 @@ try{work:{
  await click('#open');await until('document.querySelectorAll(".order").length>0','first customer');
  await click('#help');await until("!!document.querySelector('#guideHeading')&&document.querySelector('#modal').open",'manual help');
  assert((await read()).state.paused,'help pauses active service');await click('#closeModal');assert(!(await read()).state.paused,'closing help resumes active service');
- await click('#pause');assert((await read()).state.paused);await click('#help');await until("document.querySelector('#modal').open",'help while paused');await click('#closeModal');assert((await read()).state.paused,'manual pause is preserved');await click('#pause');
+ await click('#pause');assert((await read()).state.paused);await click('#help');await until("document.querySelector('#modal').open",'help while paused');await click('#closeModal');assert((await read()).state.paused,'manual pause is preserved');
+ assert(await evaluate("[...document.querySelectorAll('.order [data-action=start]')].every(b=>b.disabled)"),'pause disables accepting orders');
+ await click('.order [data-action="start"]');assert.equal((await read()).state.drink,null,'disabled order cannot start');
+ const pausedCustomer=await evaluate("(()=>{const r=document.querySelector('#scene').getBoundingClientRect();return {x:r.x+r.width*.19,y:r.y+r.height*366/580}})()");
+ await cdp('Input.dispatchMouseEvent',{type:'mousePressed',...pausedCustomer,button:'left',buttons:1,clickCount:1});await cdp('Input.dispatchMouseEvent',{type:'mouseReleased',...pausedCustomer,button:'left',buttons:0,clickCount:1});assert.equal((await read()).state.drink,null,'canvas cannot bypass pause');
+ assert.equal(await evaluate("(async()=>{const {state}=await fetch('/api/tea-shop').then(r=>r.json());return (await fetch('/api/tea-shop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'start',id:state.orders[0].id,revision:state.revision,requestId:crypto.randomUUID()})})).status})()"),400,'server rejects paused start');
+ await click('#pause');
  const data=await read(),o=data.state.orders[0];await click(`.order [data-action="start"]`);
  await until("Number(document.querySelector('#scene').dataset.ownerPose.split(',')[1])<-.005",'serving tilts whole sprite');
  await evaluate(`(()=>{window.stableChoice=document.querySelector('.choices button');window.stableCard=document.querySelector('.order');window.stableChoice.focus();window.tickChanges=[];window.tickObserver=new MutationObserver(records=>window.tickChanges.push(...records.map(r=>r.type+':'+r.attributeName)));window.tickObserver.observe(document.querySelector('#workspace'),{childList:true,subtree:true,attributes:true,attributeFilter:['disabled']});})()`);
@@ -69,6 +75,14 @@ try{work:{
    assert(!bounds.overflow&&bounds.top>=0&&bounds.bottom<=Math.min(bounds.height,bounds.workBottom),`visible brewing choices ${width}x${height}: ${JSON.stringify(bounds)}`);
    if(step===0&&(width===1366||width===390))await writeFile(new URL(`../dist/tea-${width===1366?'desktop':'mobile'}.png`,import.meta.url),Buffer.from((await cdp('Page.captureScreenshot',{format:'png'})).data,'base64'));
   }await cdp('Emulation.setDeviceMetricsOverride',{width:1366,height:768,deviceScaleFactor:1,mobile:false});
+  if(step===0||step===6){
+   await click('#pause');const pausedDrink=await read();assert(pausedDrink.state.paused);
+   assert(await evaluate("[...document.querySelectorAll('.choices button')].every(b=>b.disabled)"),'pause disables preparation');
+   assert(await evaluate("[...document.querySelectorAll('#workspace [data-mini]')].every(b=>b.disabled)"),'pause disables brewing minigames');
+   await click('.choices button');assert.equal((await read()).state.drink.step,step);
+   assert.equal(await evaluate(`(async()=>{const {state}=await fetch('/api/tea-shop').then(r=>r.json());return (await fetch('/api/tea-shop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'step',kind:${JSON.stringify(step===0?'cup':'mix')},value:true,revision:state.revision,requestId:crypto.randomUUID()})})).status})()`),400,'server rejects paused preparation');
+   await click('#pause');assert(await evaluate("[...document.querySelectorAll('.choices button')].every(b=>!b.disabled)"),'resume restores preparation');
+  }
   if(step===6){
    await evaluate(`(()=>{window.originalFetch=window.fetch;window.tickWaiting=false;window.fetch=async(...args)=>{const isTick=String(args[0])==='/api/tea-shop'&&args[1]?.body&&JSON.parse(args[1].body).action==='tick';if(isTick){window.tickWaiting=true;const result=await originalFetch(...args);await new Promise(r=>setTimeout(r,700));window.tickWaiting=false;return result;}return originalFetch(...args);};})()`);
    await until('tickWaiting','slow background tick');
@@ -87,7 +101,9 @@ try{work:{
   }
   const selectors=await evaluate(`[...document.querySelectorAll('#workspace [data-action="step"]')].map(b=>({props:JSON.parse(b.dataset.props),text:b.textContent}))`);const choice=selectors.find(b=>b.props.value===values[step]);assert(choice,`step ${step}`);await evaluate(`[...document.querySelectorAll('#workspace [data-action="step"]')].find(b=>b.textContent===${JSON.stringify(choice.text)}).click()`);await wait(160);
  }
- await wait(8200);await click('#workspace [data-action="serve"]');await until("document.querySelector('#workspace h2')?.textContent==='Bàn pha chế'",'sale');
+ await click('#pause');const pausedSale=await read();assert(await evaluate("document.querySelector('[data-action=serve]').disabled"),'pause disables delivery');await click('[data-action="serve"]');assert.equal((await read()).balance,pausedSale.balance);assert.equal((await read()).state.report.served,0);
+ assert.equal(await evaluate("(async()=>{const {state}=await fetch('/api/tea-shop').then(r=>r.json());return (await fetch('/api/tea-shop',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'serve',revision:state.revision,requestId:crypto.randomUUID()})})).status})()"),400,'server rejects paused delivery');
+ await click('#pause');await wait(8200);await click('#workspace [data-action="serve"]');await until("document.querySelector('#workspace h2')?.textContent==='Bàn pha chế'",'sale');
  const sold=await read();assert.equal(sold.state.report.served,1);assert(sold.balance>=8);await cdp('Page.reload');await until("document.getElementById('saveStatus')?.textContent.includes('Đã lưu')",'reload');assert.equal((await read()).balance,sold.balance);assert.equal((await read()).state.report.served,1);
  if(process.argv.includes('--layout-only')||process.argv.includes('--stability-only')){assert.equal(errors.length,0,JSON.stringify(errors));console.log('Tea regression passed: stable controls across background ticks, real mouse/key shake feedback and progress, automatic lid step, sale/reload, 6 viewport sizes.');break work;}
  await click('[data-tab="stock"]');await evaluate("[...document.querySelectorAll('#workspace [data-action=" + '"buy"' + "]')].find(b=>JSON.parse(b.dataset.props).item==='cup'&&JSON.parse(b.dataset.props).amount===1).click()");await wait(200);assert.equal((await read()).balance,sold.balance-1);
