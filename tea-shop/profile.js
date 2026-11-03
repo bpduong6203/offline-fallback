@@ -1,4 +1,4 @@
-import {initialState,validateState,advance,act,capacity,STARTER_STOCK,STARTER_STOCK_VERSION} from './engine.js';
+import {initialState,validateState,advance,act,capacity,STARTER_STOCK,STARTER_STOCK_VERSION,BASE_GARDEN_POTS} from './engine.js';
 // Runs inside the existing merit Durable Object: inventory, receipt and wallet
 // changes commit in the same SQLite transaction, without a cross-object payment.
 export function teaProfile(profile,request){
@@ -9,10 +9,15 @@ export function teaProfile(profile,request){
  else state=initialState();
  // Existing shops receive only the increase from the old 12-part starter pack.
  // Persist the marker and both save copies atomically so reload/reset cannot refill it.
- if(row&&(state.starterStockVersion||1)<STARTER_STOCK_VERSION){
+ const needsStarterUpgrade=(state.starterStockVersion||1)<STARTER_STOCK_VERSION;
+ if(row&&(needsStarterUpgrade||state.garden.length<BASE_GARDEN_POTS)){
   profile.ctx.storage.transactionSync(()=>{
-   for(const key of Object.keys(initialState().stock))state.stock[key]=Math.max(state.stock[key],Math.min(capacity(state),state.stock[key]+STARTER_STOCK-12));
-   state.starterStockVersion=STARTER_STOCK_VERSION;state.revision++;state.economy++;
+   if(needsStarterUpgrade){
+    for(const key of Object.keys(initialState().stock))state.stock[key]=Math.max(state.stock[key],Math.min(capacity(state),state.stock[key]+STARTER_STOCK-12));
+    state.starterStockVersion=STARTER_STOCK_VERSION;
+   }
+   while(state.garden.length<BASE_GARDEN_POTS)state.garden.push(null);
+   state.revision++;state.economy++;
    const data=JSON.stringify(state);sql.exec('UPDATE tea_save SET data = ?,backup = ? WHERE id = ?',data,data,1);
   });
  }
