@@ -1,4 +1,4 @@
-import {initialState,validateState,advance,act} from './engine.js';
+import {initialState,validateState,advance,act,capacity,STARTER_STOCK,STARTER_STOCK_VERSION} from './engine.js';
 // Runs inside the existing merit Durable Object: inventory, receipt and wallet
 // changes commit in the same SQLite transaction, without a cross-object payment.
 export function teaProfile(profile,request){
@@ -7,6 +7,15 @@ export function teaProfile(profile,request){
  let state;const row=sql.exec('SELECT data, backup FROM tea_save WHERE id = ?',1).toArray()[0];
  if(row){for(const raw of [row.data,row.backup]){try{const parsed=JSON.parse(raw);if(validateState(parsed)){state=parsed;break;}}catch{}}if(!state)return Response.json({error:'Bản lưu bị lỗi. Cần khôi phục dữ liệu trên server; ví công đức vẫn được giữ.'},{status:409});}
  else state=initialState();
+ // Existing shops receive only the increase from the old 12-part starter pack.
+ // Persist the marker and both save copies atomically so reload/reset cannot refill it.
+ if(row&&(state.starterStockVersion||1)<STARTER_STOCK_VERSION){
+  profile.ctx.storage.transactionSync(()=>{
+   for(const key of Object.keys(initialState().stock))state.stock[key]=Math.max(state.stock[key],Math.min(capacity(state),state.stock[key]+STARTER_STOCK-12));
+   state.starterStockVersion=STARTER_STOCK_VERSION;state.revision++;state.economy++;
+   const data=JSON.stringify(state);sql.exec('UPDATE tea_save SET data = ?,backup = ? WHERE id = ?',data,data,1);
+  });
+ }
  sql.exec('CREATE TABLE IF NOT EXISTS tea_archives (id TEXT PRIMARY KEY, economy INTEGER NOT NULL, data TEXT NOT NULL)');
  const result=(extra={})=>Response.json({state:{...state,ownerGender:state.ownerGender||'male'},...profile.balanceData(),...extra},{headers:{'Cache-Control':'no-store'}});
  if(request.method==='GET')return result();

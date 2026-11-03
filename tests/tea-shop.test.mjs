@@ -8,6 +8,19 @@ import {handleTeaRequest} from '../src/tea-api.js';
 import {handleMeritRequest} from '../src/mebi-merit-api.js';
 const ingredients=['cup','tea','milk','sugar','ice','topping','mix','lid'];
 function prepare(s,o,now=10000,wrong=false){s.orders=[o];act(s,{action:'start',id:o.id},0,now);const r=RECIPES.find(r=>r.id===o.recipe);const values=[true,r.tea,r.milk,wrong?(o.sugar===0?30:0):o.sugar,o.ice,r.topping,true,true];for(let i=0;i<8;i++)act(s,{action:'step',kind:ingredients[i],value:values[i]},0,now);}
+test('new shops start with 40 of every ingredient; legacy starter increase is granted once without resetting consumption',async()=>{
+ const fresh=initialState();assert(Object.values(fresh.stock).every(n=>n===40));assert.equal(fresh.starterStockVersion,2);
+ const env=localMerit();try{
+  const profile=env.MERIT.get('starter-upgrade'),sql=profile.ctx.storage.sql,s=initialState();delete s.starterStockVersion;
+  for(const k of Object.keys(s.stock))s.stock[k]=12;s.stock.milk=5;s.stock.cup=0;s.stock.black=39;
+  sql.exec('CREATE TABLE IF NOT EXISTS tea_save (id INTEGER PRIMARY KEY,data TEXT NOT NULL,backup TEXT NOT NULL)');const raw=JSON.stringify(s);sql.exec('INSERT INTO tea_save VALUES (?,?,?)',1,raw,raw);sql.exec('UPDATE merit_balance SET balance = ? WHERE id = ?',17,1);
+  const get=async()=>await(await profile.fetch(new Request('https://internal/tea'))).json();
+  const first=await get();assert.equal(first.state.stock.milk,33);assert.equal(first.state.stock.cup,28);assert.equal(first.state.stock.black,40);assert.equal(first.state.stock.jasmine,40);assert.equal(first.balance,17);assert.equal(first.state.revision,1);assert.equal(first.state.economy,1);assert.equal(first.state.starterStockVersion,2);
+  assert.deepEqual(await get(),first);
+  const reset=await profile.fetch(new Request('https://internal/tea',{method:'POST',body:JSON.stringify({action:'reset',revision:1,requestId:crypto.randomUUID()})}));assert.equal(reset.status,200);assert.deepEqual((await reset.json()).state.stock,first.state.stock);
+  assert.deepEqual((await get()).state.stock,first.state.stock);sql.exec('UPDATE tea_save SET data = ? WHERE id = ?','broken',1);assert.deepEqual((await get()).state.stock,first.state.stock);
+ }finally{env.close();}
+});
 test('recipes deduct inventory once, reject out-of-order steps and discarded drinks do not refund',()=>{
  const s=initialState(),o=makeOrder(s,()=>0),before={...s.stock};act(s,{action:'start',id:(s.orders=[o])[0].id},0,10000);
  assert.equal(s.stock.cup,before.cup-1);assert.throws(()=>act(s,{action:'start',id:o.id},0),/Đang có/);
@@ -18,7 +31,7 @@ test('correct recipe earns server price and tips; wrong sugar reduces payment, n
  for(const wrong of [false,true]){const s=initialState(),o=makeOrder(s,()=>0);prepare(s,o,10000,wrong);assert.throws(()=>act(s,{action:'serve'},0,11000),/ít nhất/);const delta=act(s,{action:'serve',delta:99999,amount:99999},0,19000);assert.equal(s.report.sales,wrong?3:8);assert.equal(s.report.tips,wrong?0:3);assert.equal(delta,wrong?3:11);assert.equal(s.drink,null);assert.throws(()=>act(s,{action:'serve'},0,20000),/đóng nắp/);}
 });
 test('no negative stock, insufficient money does not mutate inventory, capacity and upgrades apply',()=>{
- const s=initialState(),o=makeOrder(s,()=>0);s.stock.milk=0;s.orders=[o];assert.throws(()=>act(s,{action:'start',id:o.id},0),/Thiếu/);assert.equal(s.stock.black,12);
+ const s=initialState(),o=makeOrder(s,()=>0);s.stock.milk=0;s.orders=[o];assert.throws(()=>act(s,{action:'start',id:o.id},0),/Thiếu/);assert.equal(s.stock.black,40);
  assert.throws(()=>act(s,{action:'buy',item:'milk',amount:5},4),/Không đủ/);assert.equal(s.stock.milk,0);
  assert.equal(act(s,{action:'buy',item:'milk',amount:5},10),-5);assert.equal(s.stock.milk,5);s.stock.cup=40;assert.throws(()=>act(s,{action:'buy',item:'cup',amount:1},10),/đầy/);
  act(s,{action:'upgrade',id:'fridge'},100);assert.equal(capacity(s),60);assert.throws(()=>act(s,{action:'buy',item:'__proto__',amount:1},100),/không hợp lệ/);
@@ -54,8 +67,8 @@ test('SQLite commits order, balance and save together; replay, stale tab, restar
   const body={action:'serve',revision:0,requestId:id,amount:999999};let r=await post(body);assert.equal(r.status,200);let data=await r.json();const earned=data.balance;assert(earned>=8&&earned<=15);assert.equal(data.state.report.served,1);
   r=await post(body);assert.equal((await r.json()).balance,earned);r=await post({...body,requestId:crypto.randomUUID()});assert.equal(r.status,409);
   const refreshed=await (await profile.fetch(new Request('https://internal/tea'))).json();assert.equal(refreshed.state.drink,null);assert.equal(refreshed.balance,earned);
-  r=await post({action:'buy',item:'cup',amount:2,revision:1,requestId:crypto.randomUUID()});data=await r.json();assert.equal(data.balance,earned-2);const wallet=await(await profile.fetch(new Request('https://internal/balance'))).json();assert.equal(wallet.balance,data.balance);
-  sql.exec('UPDATE tea_save SET data = ? WHERE id = ?','broken JSON',1);data=await(await profile.fetch(new Request('https://internal/tea'))).json();assert.equal(data.state.revision,2);assert.equal(data.balance,earned-2);
+  r=await post({action:'buy',item:'cup',amount:1,revision:1,requestId:crypto.randomUUID()});data=await r.json();assert.equal(data.balance,earned-1);const wallet=await(await profile.fetch(new Request('https://internal/balance'))).json();assert.equal(wallet.balance,data.balance);
+  sql.exec('UPDATE tea_save SET data = ? WHERE id = ?','broken JSON',1);data=await(await profile.fetch(new Request('https://internal/tea'))).json();assert.equal(data.state.revision,2);assert.equal(data.balance,earned-1);
  }finally{env.close();}
 });
 test('failed save rolls back the wallet and concurrent retries only credit one completed order',async()=>{
