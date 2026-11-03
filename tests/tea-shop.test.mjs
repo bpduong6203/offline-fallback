@@ -72,6 +72,19 @@ test('failed save rolls back the wallet and concurrent retries only credit one c
   sql.exec('UPDATE tea_save SET data = ?,backup = ? WHERE id = ?','{}','broken',1);const corrupt=await p.fetch(new Request('https://internal/tea'));assert.equal(corrupt.status,409);assert.equal(p.balanceData().balance,balance);
  }finally{env.close();}
 });
+test('owner selection persists with legacy saves, preserves the wallet and survives story reset',async()=>{
+ const env=localMerit();try{
+  const p=env.MERIT.get('owner'),sql=p.ctx.storage.sql,s=initialState();delete s.ownerGender;assert(validateState(s));
+  sql.exec('CREATE TABLE IF NOT EXISTS tea_save (id INTEGER PRIMARY KEY,data TEXT NOT NULL,backup TEXT NOT NULL)');const raw=JSON.stringify(s);sql.exec('INSERT INTO tea_save VALUES (?,?,?)',1,raw,raw);
+  const get=async()=>await(await p.fetch(new Request('https://internal/tea'))).json();
+  assert.equal((await get()).state.ownerGender,'male');
+  const post=(action,props,revision)=>p.fetch(new Request('https://internal/tea',{method:'POST',body:JSON.stringify({action,...props,revision,requestId:crypto.randomUUID()})}));
+  assert.equal((await post('owner',{gender:'invalid'},0)).status,400);assert.equal((await get()).state.revision,0);
+  let response=await post('owner',{gender:'female'},0);assert.equal(response.status,200);let data=await response.json();assert.equal(data.state.ownerGender,'female');assert.equal(data.balance,0);assert.equal(data.state.economy,0);assert.deepEqual(data.state.stock,s.stock);
+  assert.equal((await get()).state.ownerGender,'female');
+  response=await post('reset',{},1);data=await response.json();assert.equal(data.state.ownerGender,'female');assert.equal(data.balance,0);assert.deepEqual(data.state.stock,s.stock);
+ }finally{env.close();}
+});
 test('JSON archives are profile-bound, reject economic rollback, and recover safe nonfinancial progress',async()=>{
  const env=localMerit();try{const p=env.MERIT.get('one');let revision=0;async function post(action,props={}){const r=await p.fetch(new Request('https://internal/tea',{method:'POST',body:JSON.stringify({action,...props,revision,requestId:crypto.randomUUID()})}));const d=await r.json();if(r.ok)revision=d.state.revision;return {r,d};}
   const {d:exported}=await post('export');assert(exported.archive.token);await post('settings',{speed:2,relaxed:false});let out=await post('import',{token:exported.archive.token});assert.equal(out.r.status,200);assert.equal(out.d.state.speed,1);

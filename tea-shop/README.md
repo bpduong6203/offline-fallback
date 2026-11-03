@@ -16,6 +16,8 @@ Build riêng: `node scripts/build-tea.mjs`. HTML tự chứa ở `dist/tea-shop/
 
 ## Điều khiển và vòng chơi
 
+Bảng thao tác nằm cạnh cảnh quán trên máy tính và ngay dưới cảnh trên điện thoại; kho, vườn và nâng cấp cuộn bên trong bảng. Chọn **Chủ tiệm → Nam / Nữ** ngay trên cảnh để đổi nhân vật. Lựa chọn lưu cùng tiến trình, giữ khi chơi lại; bản lưu cũ mặc định Nam.
+
 - Chọn menu trong **Sổ công thức & menu**, mở cửa, chạm phiếu đơn hoặc khách trong cảnh quán.
 - Pha theo 8 bước: ly → trà → sữa → đường → đá → topping/thành phần → lắc/khuấy → nắp. Đối chiếu công thức ghim và phiếu khách, rồi giao món. Trên desktop có thể kéo lựa chọn vào ly; trên điện thoại chỉ cần chạm nút.
 - Mỗi ngày dài 7 phút ở tốc độ 1×. Có thể kết ngày từ phút thứ 6, sau đó chuẩn bị menu ngày mới. Tạm dừng, tốc độ 0.5×/1×/2×, chế độ thư giãn nằm trong cài đặt. Modal và minigame dừng thời gian phục vụ.

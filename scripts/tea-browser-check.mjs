@@ -8,7 +8,7 @@ const app=localServer(()=>'<p>Local games</p>');await new Promise(r=>app.server.
 const profile=await mkdtemp(path.join(tmpdir(),'tea-shop-check-'));
 const chrome=spawn(process.env.CHROME_PATH||'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',['--headless','--no-sandbox','--disable-gpu','--no-first-run','--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{windowsHide:true,stdio:['ignore','ignore','pipe']});
 let socket;const errors=[];
-try{
+try{work:{
  const endpoint=await new Promise((resolve,reject)=>{let text='';const t=setTimeout(()=>reject(Error('Chrome startup timeout')),15000);chrome.on('error',reject);chrome.stderr.on('data',d=>{text+=d;const m=text.match(/DevTools listening on (ws:\/\/[^\s]+)/);if(m){clearTimeout(t);resolve(m[1]);}});});
  const pages=await fetch(`http://127.0.0.1:${new URL(endpoint).port}/json`).then(r=>r.json());socket=new WebSocket(pages.find(p=>p.type==='page').webSocketDebuggerUrl);await new Promise(r=>socket.addEventListener('open',r,{once:true}));
  let seq=0;const pending=new Map();socket.addEventListener('message',event=>{const m=JSON.parse(event.data);if(m.id){const p=pending.get(m.id);if(!p)return;pending.delete(m.id);if(m.error)p.reject(m.error);else p.resolve(m.result);}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails);});
@@ -18,16 +18,29 @@ try{
  async function until(expression,label){for(let i=0;i<120;i++){if(await evaluate(expression))return;await wait(100);}throw Error('Not ready: '+label);}
  const click=async selector=>{assert(await evaluate(`!!document.querySelector(${JSON.stringify(selector)})`),selector);await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);await wait(130);};
  const read=()=>evaluate("fetch('/api/tea-shop').then(r=>r.json())");
- await cdp('Runtime.enable');await cdp('Page.enable');await cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1100,deviceScaleFactor:1,mobile:false});
+ await cdp('Runtime.enable');await cdp('Page.enable');await cdp('Emulation.setDeviceMetricsOverride',{width:1366,height:768,deviceScaleFactor:1,mobile:false});
  await cdp('Page.navigate',{url:`http://127.0.0.1:${app.server.address().port}/goc-tra-nho`});
  await until("document.getElementById('saveStatus')?.textContent.includes('Đã lưu')",'shop ready');
- assert.equal((await read()).balance,0);await click('#open');await until('document.querySelectorAll(".order").length>0','first customer');
+ assert.equal((await read()).balance,0);
+ await click('[data-owner="female"]');assert.equal((await read()).state.ownerGender,'female');
+ await cdp('Page.reload');await until("document.querySelector('[data-owner=female]')?.getAttribute('aria-pressed')==='true'",'saved female owner');
+ const layout=await evaluate("(()=>{const shop=document.querySelector('.shop').getBoundingClientRect(),work=document.querySelector('#workspace').getBoundingClientRect();return {beside:work.left>=shop.right,visible:work.top>=0&&work.bottom<innerHeight}})()");assert(layout.beside&&layout.visible,JSON.stringify(layout));
+ await click('#open');await until('document.querySelectorAll(".order").length>0','first customer');
  const data=await read(),o=data.state.orders[0];await click(`.order [data-action="start"]`);
  const r={classic:{tea:'black',milk:true,topping:'none'},pearl:{tea:'black',milk:true,topping:'pearl'}}[o.recipe];
  const values=[true,r.tea,r.milk,o.sugar,o.ice,r.topping,true,true];
- for(let step=0;step<8;step++){const selectors=await evaluate(`[...document.querySelectorAll('#workspace [data-action="step"]')].map(b=>({props:JSON.parse(b.dataset.props),text:b.textContent}))`);const choice=selectors.find(b=>b.props.value===values[step]);assert(choice,`step ${step}`);await evaluate(`[...document.querySelectorAll('#workspace [data-action="step"]')].find(b=>b.textContent===${JSON.stringify(choice.text)}).click()`);await wait(160);}
+ for(let step=0;step<8;step++){
+  for(const [width,height] of [[1440,900],[1366,768],[1024,768],[768,1024],[390,844],[360,740]]){
+   await cdp('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:width<500});await wait(100);
+   const bounds=await evaluate("(()=>{const w=document.querySelector('#workspace').getBoundingClientRect(),rects=[...document.querySelectorAll('.choices button')].map(b=>b.getBoundingClientRect());return {top:Math.min(...rects.map(r=>r.top)),bottom:Math.max(...rects.map(r=>r.bottom)),height:innerHeight,workBottom:w.bottom,overflow:document.documentElement.scrollWidth>innerWidth,scroll:scrollY}})()");
+   assert(!bounds.overflow&&bounds.top>=0&&bounds.bottom<=Math.min(bounds.height,bounds.workBottom),`visible brewing choices ${width}x${height}: ${JSON.stringify(bounds)}`);
+   if(step===0&&(width===1366||width===390))await writeFile(new URL(`../dist/tea-${width===1366?'desktop':'mobile'}.png`,import.meta.url),Buffer.from((await cdp('Page.captureScreenshot',{format:'png'})).data,'base64'));
+  }await cdp('Emulation.setDeviceMetricsOverride',{width:1366,height:768,deviceScaleFactor:1,mobile:false});
+  const selectors=await evaluate(`[...document.querySelectorAll('#workspace [data-action="step"]')].map(b=>({props:JSON.parse(b.dataset.props),text:b.textContent}))`);const choice=selectors.find(b=>b.props.value===values[step]);assert(choice,`step ${step}`);await evaluate(`[...document.querySelectorAll('#workspace [data-action="step"]')].find(b=>b.textContent===${JSON.stringify(choice.text)}).click()`);await wait(160);
+ }
  await wait(8200);await click('#workspace [data-action="serve"]');await until("document.querySelector('#workspace h2')?.textContent==='Bàn pha chế'",'sale');
  const sold=await read();assert.equal(sold.state.report.served,1);assert(sold.balance>=8);await cdp('Page.reload');await until("document.getElementById('saveStatus')?.textContent.includes('Đã lưu')",'reload');assert.equal((await read()).balance,sold.balance);assert.equal((await read()).state.report.served,1);
+ if(process.argv.includes('--layout-only')){assert.equal(errors.length,0,JSON.stringify(errors));console.log('Tea layout passed: visible controls at 6 desktop/mobile sizes, female owner saved across reload, completed sale.');break work;}
  await click('[data-tab="stock"]');await evaluate("[...document.querySelectorAll('#workspace [data-action=" + '"buy"' + "]')].find(b=>JSON.parse(b.dataset.props).item==='cup'&&JSON.parse(b.dataset.props).amount===1).click()");await wait(200);assert.equal((await read()).balance,sold.balance-1);
  await click('[data-tab="garden"]');await click('[data-plant="0"]');await click('[data-action="water"]');assert((await read()).state.garden[0].watered);
  await click('[data-tab="counter"]');
@@ -57,4 +70,4 @@ try{
  await click('[data-tab="counter"]');await cdp('Emulation.setDeviceMetricsOverride',{width:1440,height:1100,deviceScaleFactor:1,mobile:false});await wait(100);await writeFile(new URL('../dist/tea-desktop.png',import.meta.url),Buffer.from((await cdp('Page.captureScreenshot',{format:'png'})).data,'base64'));
  await cdp('Emulation.setDeviceMetricsOverride',{width:390,height:1000,deviceScaleFactor:1,mobile:true});await wait(100);await writeFile(new URL('../dist/tea-mobile.png',import.meta.url),Buffer.from((await cdp('Page.captureScreenshot',{format:'png'})).data,'base64'));
  assert.equal(errors.length,0,JSON.stringify(errors));console.log('Tea browser passed: sale, shared wallet purchase, reload, garden, 6 minigames, desktop/mobile layouts, no runtime exceptions.');
-}finally{socket?.close();chrome.kill();await app.close();await new Promise(r=>setTimeout(r,300));const absolute=path.resolve(profile);if(absolute.startsWith(path.resolve(tmpdir())+path.sep)&&path.basename(absolute).startsWith('tea-shop-check-'))await rm(absolute,{recursive:true,force:true,maxRetries:5,retryDelay:200});}
+}}finally{socket?.close();chrome.kill();await app.close();await new Promise(r=>setTimeout(r,300));const absolute=path.resolve(profile);if(absolute.startsWith(path.resolve(tmpdir())+path.sep)&&path.basename(absolute).startsWith('tea-shop-check-'))await rm(absolute,{recursive:true,force:true,maxRetries:5,retryDelay:200});}

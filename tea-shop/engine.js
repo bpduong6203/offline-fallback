@@ -1,11 +1,11 @@
 import {RECIPES,INGREDIENTS,UPGRADES,DECOR,PEOPLE,MINI} from './data.js';
 const fail = message => {throw new Error(message);};
-export function initialState(){return {version:1,revision:0,economy:0,day:1,time:0,open:false,paused:false,speed:1,relaxed:true,reputation:0,clean:100,stock:Object.fromEntries(Object.keys(INGREDIENTS).map(k=>[k,12])),menu:['classic','pearl'],orders:[],drink:null,garden:Array.from({length:2},()=>null),upgrades:{},decor:[],friends:{},report:{sales:0,tips:0,cost:0,purchases:0,served:0,lost:0},history:[],spawn:0,mini:null,quality:{},practice:{},tasks:{},tutorial:0,lastReal:0,receipts:[],message:'Chào bạn! Nhận bộ nguyên liệu đầu tiên, chọn Mở cửa rồi chạm vào khách để pha ly đầu tiên.'};}
+export function initialState(){return {version:1,revision:0,economy:0,ownerGender:'male',day:1,time:0,open:false,paused:false,speed:1,relaxed:true,reputation:0,clean:100,stock:Object.fromEntries(Object.keys(INGREDIENTS).map(k=>[k,12])),menu:['classic','pearl'],orders:[],drink:null,garden:Array.from({length:2},()=>null),upgrades:{},decor:[],friends:{},report:{sales:0,tips:0,cost:0,purchases:0,served:0,lost:0},history:[],spawn:0,mini:null,quality:{},practice:{},tasks:{},tutorial:0,lastReal:0,receipts:[],message:'Chào bạn! Nhận bộ nguyên liệu đầu tiên, chọn Mở cửa rồi chạm vào khách để pha ly đầu tiên.'};}
 export function validateState(s){
  const integer=n=>Number.isSafeInteger(n)&&n>=0;
  const record=v=>v&&typeof v==='object'&&!Array.isArray(v);
  const recipe=id=>RECIPES.some(r=>r.id===id);
- return !!(s?.version===1&&integer(s.revision)&&integer(s.economy)&&integer(s.day)&&s.day>0&&s.day<=100000&&
+ return !!(s?.version===1&&(s.ownerGender===undefined||['male','female'].includes(s.ownerGender))&&integer(s.revision)&&integer(s.economy)&&integer(s.day)&&s.day>0&&s.day<=100000&&
   Number.isFinite(s.time)&&s.time>=0&&s.time<=420&&typeof s.open==='boolean'&&typeof s.paused==='boolean'&&[.5,1,2].includes(s.speed)&&typeof s.relaxed==='boolean'&&integer(s.reputation)&&Number.isFinite(s.clean)&&s.clean>=0&&s.clean<=100&&
   record(s.stock)&&Object.keys(INGREDIENTS).every(k=>integer(s.stock[k]))&&
   Array.isArray(s.menu)&&s.menu.length>0&&s.menu.every(recipe)&&
@@ -29,6 +29,7 @@ function spend(s,amount,balance){if(balance<amount)fail('Không đủ công đ�
 export function act(s,b,balance,now=Date.now()){
  let delta=0;s.message='';
  switch(b.action){
+ case 'owner':if(!['male','female'].includes(b.gender))fail('Chọn chủ tiệm nam hoặc nữ.');s.ownerGender=b.gender;break;
  case 'tick':break;
  case 'open':if(s.open||s.time>=420)fail('Hãy kết ngày trước.');if(!s.menu.length)fail('Chọn ít nhất một món trong sổ công thức.');s.open=true;s.paused=false;s.spawn=18;s.tutorial=Math.max(1,s.tutorial);s.message='Quán đã mở. Chọn khách, làm theo phiếu và giao món.';break;
  case 'pause':s.paused=!s.paused;break;
@@ -49,7 +50,7 @@ export function act(s,b,balance,now=Date.now()){
  case 'miniStart':if(!Object.hasOwn(MINI,b.kind)||s.mini)fail('Hoạt động không hợp lệ.');if(b.kind==='match'&&s.open)fail('Ghép nguyên liệu khi quán đóng cửa.');s.mini={kind:b.kind,started:now};break;
  case 'miniEnd':{if(!s.mini)fail('Chưa bắt đầu hoạt động.');const {kind,started}=s.mini;if(!b.cancel&&now-started<10000)fail('Hãy chơi ít nhất 10 giây.');s.mini=null;if(b.cancel)break;const score=Math.max(0,Math.min(100,Number(b.score)||0));s.practice[kind]=(s.practice[kind]||0)+1;const key=s.day+':'+kind;if(!s.tasks[key]){s.tasks[key]=true;if(kind==='clean')s.clean=Math.min(100,s.clean+30+score*.2);else if(kind==='match'||kind==='pearls'){const k=kind==='match'?'milk':'pearl';s.stock[k]=Math.min(capacity(s),s.stock[k]+(score>=60?3:1));if(kind==='pearls')s.quality.pearls=Math.floor(score/10);}else s.quality[kind]=Math.floor(score/10);s.message=`Hoàn thành ${MINI[kind]}: ${score}/100. Đã nhận phần thưởng hôm nay.`;}else s.message=`${score}/100. Đang luyện tập; mỗi hoạt động chỉ thưởng một lần/ngày.`;break;}
  case 'end':if(s.time<360)fail('Ngày chơi kéo dài 6–8 phút. Có thể đóng cửa từ phút thứ 6.');if(s.mini)fail('Kết thúc hoạt động trước.');s.history.push({day:s.day,...s.report,profit:s.report.sales+s.report.tips-s.report.cost});s.history=s.history.slice(-30);s.day++;s.time=0;s.open=false;s.orders=[];s.drink=null;s.quality={};s.tasks={};s.report={sales:0,tips:0,cost:0,purchases:0,served:0,lost:0};s.message='Ngày mới! Kiểm tra vườn, kho và menu trước khi mở cửa.';break;
- case 'reset':{const stock=s.stock,receipts=s.receipts,revision=s.revision,economy=s.economy,tasks=s.tasks;Object.assign(s,initialState(),{stock,receipts,revision,economy,tasks});s.message='Đã bắt đầu lại câu chuyện. Ví và nguyên liệu được giữ để tránh nhận lại quà khởi đầu.';break;}
+ case 'reset':{const stock=s.stock,receipts=s.receipts,revision=s.revision,economy=s.economy,tasks=s.tasks,ownerGender=s.ownerGender||'male';Object.assign(s,initialState(),{stock,receipts,revision,economy,tasks,ownerGender});s.message='Đã bắt đầu lại câu chuyện. Ví và nguyên liệu được giữ để tránh nhận lại quà khởi đầu.';break;}
  default:fail('Thao tác không hợp lệ.');
  }return delta;
 }

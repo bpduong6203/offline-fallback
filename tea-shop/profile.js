@@ -8,7 +8,7 @@ export function teaProfile(profile,request){
  if(row){for(const raw of [row.data,row.backup]){try{const parsed=JSON.parse(raw);if(validateState(parsed)){state=parsed;break;}}catch{}}if(!state)return Response.json({error:'Bản lưu bị lỗi. Cần khôi phục dữ liệu trên server; ví công đức vẫn được giữ.'},{status:409});}
  else state=initialState();
  sql.exec('CREATE TABLE IF NOT EXISTS tea_archives (id TEXT PRIMARY KEY, economy INTEGER NOT NULL, data TEXT NOT NULL)');
- const result=(extra={})=>Response.json({state,...profile.balanceData(),...extra},{headers:{'Cache-Control':'no-store'}});
+ const result=(extra={})=>Response.json({state:{...state,ownerGender:state.ownerGender||'male'},...profile.balanceData(),...extra},{headers:{'Cache-Control':'no-store'}});
  if(request.method==='GET')return result();
  return request.json().then(body=>profile.ctx.storage.transactionSync(()=>{
    // Re-read after the asynchronous JSON parse; another request may have committed.
@@ -34,7 +34,7 @@ export function teaProfile(profile,request){
      state={...restored,revision:state.revision,receipts:state.receipts,lastReal:now,mini:null};
    }else{
      try{delta=act(state,body,profile.balanceData().balance,now);}catch(error){return Response.json({error:error.message},{status:400});}
-     if(!['tick','pause','settings'].includes(body.action))state.economy=(state.economy||0)+1;
+     if(!['tick','pause','settings','owner'].includes(body.action))state.economy=(state.economy||0)+1;
    }
    if(delta)sql.exec('UPDATE merit_balance SET balance = balance + ?, legacy_imported = 1 WHERE id = 1',delta);
    state.revision++;state.receipts.push(body.requestId);state.receipts=state.receipts.slice(-100);
