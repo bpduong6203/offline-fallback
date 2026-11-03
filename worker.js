@@ -26,6 +26,7 @@ import partyCats from './src/page/games/party-cats.html';
 import towerCity from './src/page/games/tower-city.html';
 import coCaNgua from './src/page/games/co-ca-ngua.html';
 import chuaMebi from './src/page/games/chua-mebi.html';
+import aiLaTrieuPhu from './src/page/games/ai-la-trieu-phu.html';
 export { MonopolyRoom } from './src/monopoly-room.generated.js';
 export { ChibiRushRoom } from './src/chibi-rush-room.js';
 export { PartyCatsRoom } from './src/party-cats-room.js';
@@ -53,7 +54,7 @@ const app = {
     if(url.pathname==='/api/chat')return handleChat(request,env);
     const snakeResponse=await routeSnake(request,env,snakeHtml);if(snakeResponse)return snakeResponse;
     if (url.pathname.startsWith('/api/auth/')) return handleAuthRequest(request, env);
-    if (url.pathname === '/api/merit' || url.pathname === '/api/merit/reward' || url.pathname === '/api/merit/fortune') return handleMeritRequest(request, env);
+    if (['/api/merit', '/api/merit/reward', '/api/merit/fortune', '/api/merit/claim'].includes(url.pathname)) return handleMeritRequest(request, env);
     if (requiresGameLogin(url) && !(await requireGameLogin(request, env))) {
       if ((request.headers.get('Upgrade') || '').toLowerCase() !== 'websocket' && ['GET', 'HEAD'].includes(request.method)) {
         return Response.redirect(new URL('/', url), 302);
@@ -156,6 +157,10 @@ const app = {
       return env.TEMPLE.get(env.TEMPLE.idFromName('temple' + shard)).fetch(request);
     }
     const decodedPath = decodeURIComponent(url.pathname).toLowerCase();
+    if (['/ai-la-trieu-phu', '/ai-la-trieu-phu/', '/__game/ai-la-trieu-phu', '/ai la trieu phu', '/ai-la-trieu-phu.html', '/trieu-phu', '/trieu-phu/'].includes(decodedPath)) {
+      if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+      return new Response(request.method === 'HEAD' ? null : aiLaTrieuPhu, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
+    }
     if (['/tower-city', '/tower-city/', '/__game/tower-city', '/tower city', '/tower city.html', '/tower-city.html'].includes(decodedPath)) {
       if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
       return new Response(request.method === 'HEAD' ? null : towerCity, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
@@ -245,7 +250,7 @@ export default {
   async fetch(request,env,ctx){
     const response=await app.fetch(request,env,ctx);
     const path=new URL(request.url).pathname.replace(/\/$/,'');
-    const repoPage=path.startsWith('/__game/')||['/goc-tra-nho','/snake','/xi-dach','/ty-phu','/chibi-rush','/party-cats','/co-ca-ngua','/chua-mebi','/tower-city','/tower city','/tower city.html','/tower-city.html','/tien-len','/uno','/stickman-fight'].includes(decodeURIComponent(path).toLowerCase());
+    const repoPage=path.startsWith('/__game/')||['/goc-tra-nho','/snake','/xi-dach','/ty-phu','/chibi-rush','/party-cats','/co-ca-ngua','/chua-mebi','/tower-city','/tower city','/tower city.html','/tower-city.html','/tien-len','/uno','/stickman-fight','/ai-la-trieu-phu','/ai la trieu phu','/ai-la-trieu-phu.html','/trieu-phu'].includes(decodeURIComponent(path).toLowerCase());
     return request.method==='GET'&&repoPage&&response.ok?withSharedChat(response):response;
   }
 };

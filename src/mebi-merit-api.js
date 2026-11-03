@@ -100,7 +100,24 @@ export const MERIT_CLIENT_SCRIPT = `(() => {
     if (!response.ok) throw new Error('Không tải được bảng quẻ');
     return response.json();
   });
-  window.MebiMerit = Object.freeze({ get: () => balance, getDebt: () => debt, getNet: () => balance-debt, ready, change, reward, borrow, repay, fortune, fortuneTable });
+    const claim = (requestId, prize) => {
+    const operation = queue.then(async () => {
+      await ready;
+      const response = await fetch('/api/merit/claim', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, prize })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Không nhận được công đức');
+      update(data);
+      notify();
+      return balance;
+    });
+    queue = operation.catch(() => {});
+    return operation;
+  };
+  window.MebiMerit = Object.freeze({ get: () => balance, getDebt: () => debt, getNet: () => balance-debt, ready, change, reward, borrow, repay, fortune, fortuneTable, claim });
 })();`;
 
 const MERIT_COOKIE = 'mebi_merit_id';
@@ -154,9 +171,11 @@ export async function handleMeritRequest(request, env) {
   const url = new URL(request.url);
   const isReward = url.pathname === '/api/merit/reward';
   const isFortune = url.pathname === '/api/merit/fortune';
-  if (url.pathname !== '/api/merit' && !isReward && !isFortune) return new Response('Not Found', { status: 404 });
+  const isClaim = url.pathname === '/api/merit/claim';
+  if (url.pathname !== '/api/merit' && !isReward && !isFortune && !isClaim) return new Response('Not Found', { status: 404 });
   if (!['GET', 'POST'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, POST' } });
-  if (isReward && request.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
+  if ((isReward || isClaim) && request.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'POST' } });
+  
   const origin = request.headers.get('Origin');
   if (origin) {
     try { if (new URL(origin).origin !== url.origin) return new Response('Forbidden', { status: 403 }); }
@@ -172,6 +191,32 @@ export async function handleMeritRequest(request, env) {
   }
 
   const identity = await getMeritIdentity(request, env);
+  if (isClaim) {
+    const requestId = typeof body?.requestId === 'string' ? body.requestId : '';
+    const prize = Number(body?.prize);
+    const VALID_PRIZES = new Set([0, 1, 2, 3, 5, 10, 15, 25, 40, 60, 100, 150, 250, 400, 600, 1000]);
+    if (!/^[a-zA-Z0-9-]{16,80}$/.test(requestId) || !VALID_PRIZES.has(prize)) {
+      return Response.json({ error: 'Yêu cầu nhận thưởng không hợp lệ' }, { status: 400 });
+    }
+    const stub = env.MERIT.get(env.MERIT.idFromName(identity.id));
+    if (prize === 0) {
+      const result = await stub.fetch(new Request('https://merit.internal/balance'));
+      const headers = new Headers(result.headers);
+      headers.set('Cache-Control', 'no-store');
+      if (identity.cookie) headers.append('Set-Cookie', identity.cookie);
+      return new Response(result.body, { status: result.status, headers });
+    }
+    const internalRequest = new Request('https://merit.internal/balance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ delta: prize, transactionId: 'altp:' + requestId })
+    });
+    const result = await stub.fetch(internalRequest);
+    const headers = new Headers(result.headers);
+    headers.set('Cache-Control', 'no-store');
+    if (identity.cookie) headers.append('Set-Cookie', identity.cookie);
+    return new Response(result.body, { status: result.status, headers });
+  }
   const stub = env.MERIT.get(env.MERIT.idFromName(identity.id));
   const internalPath = isReward ? 'reward' : isFortune ? 'fortune' : 'balance';
   const internalPayload = isReward ? {action:body?.action}

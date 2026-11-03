@@ -57,6 +57,9 @@ export function localServer(getHtml,monopolyOptions={}){
     if(['/tower-city','/tower-city/','/__game/tower-city','/tower city','/tower city.html','/tower-city.html'].includes(decodedPath)){
       try{const html=await readFile(new URL('../src/page/games/tower-city.html',import.meta.url),'utf8');res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Tower City render failed');}return;
     }
+    if(['/ai-la-trieu-phu','/ai-la-trieu-phu/','/__game/ai-la-trieu-phu','/ai la trieu phu','/ai-la-trieu-phu.html','/trieu-phu','/trieu-phu/'].includes(decodedPath)){
+      try{const html=await readFile(new URL('../src/page/games/ai-la-trieu-phu.html',import.meta.url),'utf8');res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Ai La Trieu Phu render failed');}return;
+    }
     if(['/stickman-fight','/stickman-fight/','/__game/stickman-fight'].includes(path)){try{const html=await buildStickman();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(req.method==='HEAD'?null:html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}return;}
     if(!['/','/__game/bomb-arena'].includes(path)){res.writeHead(404);res.end('Not found');return;}
     try{const html=await getHtml();res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(html);}catch(e){console.error(e);res.writeHead(500);res.end('Build failed');}

@@ -1,0 +1,3104 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Ai Là Triệu Phú</title>
+  <meta name="claude:viewport-fit-sides" content="cover" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Playfair+Display:wght@700;900&display=swap" />
+  <style>
+    :root {
+      /* Layout: a TV-studio stage. A header strip holds the lifelines; the centre column stacks the question hexagon over four answer hexagons; the prize ladder sits on the right on wide screens and slides in as a panel on phones. */
+      --bg0: #020418;
+      --bg1: #07123f;
+      --bg2: #10298f;
+      --gold: #f4c95d;
+      --gold-deep: #9b6f14;
+      --ink: #f1f5ff;
+      --muted: #a3b3ea;
+      --orange: #ff9d1c;
+      --orange-deep: #c95f00;
+      --green: #2ed26f;
+      --green-deep: #0c7a37;
+      --red: #f0505c;
+      --red-deep: #8f1420;
+      --face: #0a1a66;
+      --face-2: #06104a;
+      --panel: rgba(4, 10, 50, 0.94);
+      --display: "Playfair Display", Georgia, "Times New Roman", serif;
+      --body:
+        "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    html {
+      background: var(--bg0);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg0);
+      color: var(--ink);
+      font: 500 15px/1.45 var(--body);
+      padding-block: 12px 28px;
+      padding-left: max(16px, env(safe-area-inset-left, 0px));
+      padding-right: max(16px, env(safe-area-inset-right, 0px));
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    input, textarea {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 2px;
+    }
+
+    .bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 50% 28%,
+          var(--bg2) 0,
+          var(--bg1) 38%,
+          var(--bg0) 82%);
+    }
+
+    .beam {
+      position: absolute;
+      top: -8%;
+      left: 50%;
+      width: 46vmax;
+      height: 130vmax;
+      margin-left: -23vmax;
+      transform-origin: 50% 0;
+      background: linear-gradient(to bottom,
+          rgba(130, 170, 255, 0.2),
+          rgba(130, 170, 255, 0) 72%);
+      clip-path: polygon(46% 0, 54% 0, 100% 100%, 0 100%);
+      animation: sway 11s ease-in-out infinite alternate;
+    }
+
+    .beam.b2 {
+      animation-duration: 14s;
+      animation-direction: alternate-reverse;
+      opacity: 0.7;
+    }
+
+    @keyframes sway {
+      from {
+        transform: rotate(-24deg);
+      }
+
+      to {
+        transform: rotate(24deg);
+      }
+    }
+
+    .dots {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.35) 1px,
+          transparent 1.5px);
+      background-size: 46px 46px;
+      opacity: 0.12;
+      mask-image: linear-gradient(to bottom, #000, transparent 70%);
+      -webkit-mask-image: linear-gradient(to bottom, #000, transparent 70%);
+    }
+
+    #app {
+      position: relative;
+      z-index: 1;
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      min-height: 56px;
+    }
+
+    
+      .merit-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(10, 26, 102, 0.75);
+        border: 1px solid rgba(244, 201, 93, 0.5);
+        border-radius: 20px;
+        padding: 6px 14px;
+        font: 700 13px/1 var(--body);
+        color: var(--gold);
+        margin-right: auto;
+      }
+      .merit-chip .merit-icon {
+        font-size: 15px;
+      }
+      .merit-chip .merit-val {
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+        color: #fff;
+      }
+      .merit-chip .merit-lbl {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .logo {
+      font: 900 22px/1 var(--display);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-right: auto;
+      min-width: 0;
+    }
+
+    .logo span {
+      color: var(--ink);
+    }
+
+    .lifelines {
+      display: flex;
+      gap: 10px;
+    }
+
+    .life {
+      position: relative;
+      width: 64px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      background: linear-gradient(180deg, #14308f, var(--face-2));
+      border: 2px solid var(--gold);
+      border-radius: 50%/50%;
+      font: 800 14px/1 var(--body);
+      letter-spacing: 0.02em;
+    }
+
+    .life svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .life:hover:not(:disabled) {
+      background: linear-gradient(180deg, #2146c9, #0b1f7e);
+    }
+
+    .life:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .life.used {
+      opacity: 0.4;
+      border-color: #7a7f99;
+    }
+
+    .life.used::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -4px;
+      width: 3px;
+      height: calc(100% + 8px);
+      background: var(--red);
+      transform: translateX(-50%) rotate(45deg);
+      border-radius: 2px;
+    }
+
+    .ico {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      background: rgba(10, 26, 102, 0.7);
+      border: 1px solid rgba(244, 201, 93, 0.5);
+      border-radius: 10px;
+    }
+
+    .ico svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    #ladderBtn {
+      display: none;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 232px;
+      gap: 22px;
+      align-items: start;
+      margin-top: 10px;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .status b {
+      font: 900 26px/1 var(--display);
+      letter-spacing: 0.01em;
+      color: var(--gold);
+      font-variant-numeric: lining-nums tabular-nums;
+      text-transform: none;
+    }
+
+    .status .tag {
+      color: var(--green);
+      font-size: 12px;
+    }
+
+    .line {
+      background: linear-gradient(var(--gold-deep), var(--gold-deep)) center/100% 2px no-repeat;
+    }
+
+    .hex {
+      --c: 24px;
+      position: relative;
+      display: block;
+      width: 100%;
+      padding: 3px;
+      border: 0;
+      text-align: left;
+      background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+      clip-path: polygon(var(--c) 0,
+          calc(100% - var(--c)) 0,
+          100% 50%,
+          calc(100% - var(--c)) 100%,
+          var(--c) 100%,
+          0 50%);
+    }
+
+    .hex .in {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      background: linear-gradient(180deg, var(--face), var(--face-2));
+      clip-path: polygon(calc(var(--c) - 1px) 0,
+          calc(100% - var(--c) + 1px) 0,
+          100% 50%,
+          calc(100% - var(--c) + 1px) 100%,
+          calc(var(--c) - 1px) 100%,
+          0 50%);
+    }
+
+    #qwrap {
+      padding: 0 6px;
+      margin-bottom: 16px;
+    }
+
+    #qbox .in {
+      min-height: 104px;
+      padding: 16px 46px;
+      justify-content: center;
+      text-align: center;
+      font: 600 clamp(17px, 2.5vw, 24px)/1.35 var(--body);
+      text-wrap: balance;
+    }
+
+    #qbox.in-anim {
+      animation: rise 0.5s ease-out;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: scale(0.96);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      row-gap: 12px;
+    }
+
+    .cell {
+      padding: 0 6px;
+      background: linear-gradient(var(--gold-deep), var(--gold-deep)) center/100% 2px no-repeat;
+    }
+
+    .ans {
+      cursor: pointer;
+      transition:
+        opacity 0.25s,
+        transform 0.25s;
+    }
+
+    .ans .in {
+      min-height: 60px;
+      padding: 12px 34px;
+      font: 600 clamp(15px, 2vw, 18px)/1.3 var(--body);
+    }
+
+    .ans b {
+      color: var(--orange);
+      font-weight: 800;
+      flex: none;
+    }
+
+    .ans:not(.sel):hover:not(:disabled) .in {
+      background: linear-gradient(180deg, #1a3bb0, #0c2082);
+    }
+
+    .ans:focus-visible {
+      outline: none;
+    }
+
+    .ans:focus-visible .in {
+      box-shadow: inset 0 0 0 3px #fff;
+    }
+
+    .ans:disabled {
+      cursor: default;
+    }
+
+    .ans.hide {
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+    }
+
+    .ans.sel .in {
+      background: linear-gradient(180deg, var(--orange), var(--orange-deep));
+      color: #1b0f00;
+    }
+
+    .ans.sel b,
+    .ans.win b {
+      color: #1b0f00;
+    }
+
+    .ans.locked .in {
+      animation: pulse 0.6s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse {
+      from {
+        filter: brightness(1);
+      }
+
+      to {
+        filter: brightness(1.35);
+      }
+    }
+
+    .ans.win .in {
+      background: linear-gradient(180deg, var(--green), var(--green-deep));
+      color: #03200f;
+    }
+
+    .ans.lose .in {
+      background: linear-gradient(180deg, var(--red), var(--red-deep));
+      color: #fff;
+    }
+
+    .ans.lose b {
+      color: #fff;
+    }
+
+    .ans.flash .in {
+      animation: flash 0.26s steps(1) 8;
+    }
+
+    @keyframes flash {
+      50% {
+        background: linear-gradient(180deg, var(--face), var(--face-2));
+        color: var(--ink);
+      }
+    }
+
+    .ans.gone {
+      visibility: hidden;
+    }
+
+    .host {
+      margin: 18px 0 12px;
+      min-height: 3.2em;
+      padding: 12px 16px;
+      border-left: 3px solid var(--gold);
+      background: rgba(8, 18, 80, 0.55);
+      border-radius: 0 10px 10px 0;
+      font-size: 15.5px;
+    }
+
+    .host small {
+      display: block;
+      color: var(--gold);
+      font: 700 11px/1 var(--body);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    #actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      cursor: pointer;
+      padding: 12px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(244, 201, 93, 0.6);
+      background: rgba(10, 26, 102, 0.8);
+      font: 700 15px/1 var(--body);
+      letter-spacing: 0.02em;
+    }
+
+    .btn:hover {
+      background: rgba(26, 59, 176, 0.9);
+    }
+
+    .btn.gold {
+      background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+      color: #2a1a00;
+      border-color: transparent;
+      box-shadow: 0 3px 0 #5e4309;
+    }
+
+    .btn.gold:hover {
+      filter: brightness(1.08);
+    }
+
+    .btn.gold:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #5e4309;
+    }
+
+    .btn.ghost {
+      background: transparent;
+    }
+
+    .ladder {
+      background: var(--panel);
+      border: 1px solid rgba(244, 201, 93, 0.35);
+      border-radius: 12px;
+      padding: 12px 12px 10px;
+    }
+
+    .ladder h2 {
+      margin: 0 0 8px;
+      font: 700 12px/1 var(--body);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    #ladderList {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    #ladderList li {
+      display: grid;
+      grid-template-columns: 24px 12px 1fr;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font: 700 14px/1.2 var(--body);
+      color: var(--orange);
+      font-variant-numeric: tabular-nums;
+    }
+
+    #ladderList li.safe {
+      color: #fff;
+    }
+
+    #ladderList li .n {
+      text-align: right;
+      font-size: 13px;
+    }
+
+    #ladderList li .d {
+      width: 7px;
+      height: 7px;
+      background: currentColor;
+      transform: rotate(45deg);
+      justify-self: center;
+    }
+
+    #ladderList li .p {
+      text-align: right;
+    }
+
+    #ladderList li.done {
+      opacity: 0.45;
+    }
+
+    #ladderList li.cur {
+      background: linear-gradient(180deg, var(--orange), var(--orange-deep));
+      color: #1b0f00;
+      opacity: 1;
+      box-shadow: 0 0 14px rgba(255, 157, 28, 0.55);
+    }
+
+    .screen {
+      position: fixed;
+      inset: 0;
+      z-index: 22;
+      display: grid;
+      place-items: center;
+      padding: 20px max(16px, env(safe-area-inset-left, 0px));
+      background: radial-gradient(ellipse at 50% 35%,
+          rgba(16, 41, 143, 0.96),
+          rgba(2, 4, 24, 0.98) 75%);
+      overflow: auto;
+    }
+
+    .screen .box {
+      max-width: 560px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      text-align: center;
+    }
+
+    .screen h1 {
+      margin: 0;
+      font: 900 clamp(40px, 11vw, 76px)/0.95 var(--display);
+      color: var(--gold);
+      text-transform: uppercase;
+      text-wrap: balance;
+      text-shadow: 0 0 30px rgba(244, 201, 93, 0.35);
+    }
+
+    .screen h1 span {
+      display: block;
+      color: var(--ink);
+      font-size: 0.58em;
+      letter-spacing: 0.2em;
+      margin-bottom: 6px;
+    }
+
+    .screen p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 44ch;
+    }
+
+    .rules {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 6px;
+      text-align: left;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .rules li {
+      display: flex;
+      gap: 10px;
+    }
+
+    .rules b {
+      color: var(--gold);
+      min-width: 92px;
+      font-weight: 700;
+    }
+
+    .big {
+      font: 900 clamp(36px, 9vw, 60px)/1 var(--display);
+      color: var(--gold);
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+
+    .sub {
+      font: 700 12px/1 var(--body);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .end-stats {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(2, 4, 24, 0.72);
+      backdrop-filter: blur(3px);
+    }
+
+    .card {
+      width: min(460px, 100%);
+      background: linear-gradient(180deg, #0e237f, #06104a);
+      border: 2px solid var(--gold);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card h3 {
+      margin: 0;
+      font: 700 12px/1 var(--body);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .chat {
+      min-height: 4.6em;
+      font-size: 16px;
+    }
+
+    .bars {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      gap: 10px;
+      height: 190px;
+      padding-top: 6px;
+      border-bottom: 2px solid rgba(244, 201, 93, 0.5);
+    }
+
+    .bar {
+      flex: 1;
+      max-width: 70px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+      height: 100%;
+    }
+
+    .bar i {
+      display: block;
+      width: 100%;
+      height: 0;
+      background: linear-gradient(180deg, var(--orange), var(--orange-deep));
+      border-radius: 6px 6px 0 0;
+      transition: height 1.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .bar span {
+      font: 800 14px/1 var(--body);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .barlabels {
+      display: flex;
+      justify-content: space-around;
+      gap: 10px;
+      font: 800 16px/1 var(--body);
+      color: var(--orange);
+    }
+
+    .barlabels b {
+      flex: 1;
+      max-width: 70px;
+      text-align: center;
+    }
+
+    .dim {
+      opacity: 0.3;
+    }
+
+    #fx {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 30;
+      pointer-events: none;
+    }
+
+    .shake {
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      20% {
+        transform: translateX(-9px);
+      }
+
+      40% {
+        transform: translateX(8px);
+      }
+
+      60% {
+        transform: translateX(-6px);
+      }
+
+      80% {
+        transform: translateX(4px);
+      }
+    }
+
+    @media (max-width: 899px) {
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      #ladderBtn {
+        display: grid;
+      }
+
+      .ladder {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        z-index: 18;
+        width: min(290px, 86vw);
+        border-radius: 12px 0 0 12px;
+        padding-top: max(14px, env(safe-area-inset-top, 0px));
+        padding-right: max(12px, env(safe-area-inset-right, 0px));
+        transform: translateX(105%);
+        transition: transform 0.3s;
+        overflow: auto;
+      }
+
+      .ladder.open {
+        transform: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .answers {
+        grid-template-columns: 1fr;
+      }
+
+      .hex {
+        --c: 18px;
+      }
+
+      #qbox .in {
+        padding: 14px 30px;
+        min-height: 92px;
+      }
+
+      .ans .in {
+        padding: 10px 26px;
+      }
+
+      .logo {
+        font-size: 18px;
+      }
+
+      .life {
+        width: 56px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .beam,
+      .ans.locked .in {
+        animation: none;
+      }
+
+      .ans.flash .in {
+        animation-duration: 0.5s;
+        animation-iteration-count: 3;
+      }
+
+      .shake {
+        animation: none;
+      }
+    }
+  
+      .anti-cheat-toast {
+        position: fixed;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-50px);
+        background: rgba(220, 38, 38, 0.95);
+        color: #fff;
+        padding: 10px 22px;
+        border-radius: 30px;
+        font: 700 13.5px/1.3 var(--body);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-align: center;
+      }
+      .anti-cheat-toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+    </style>
+    <script defer src="/merit.js"></script>
+  </head>
+
+<body>
+  <div class="bg" aria-hidden="true">
+    <div class="dots"></div>
+    <i class="beam"></i><i class="beam b2"></i>
+  </div>
+  <canvas id="fx" aria-hidden="true"></canvas>
+
+  <div id="app">
+    <header class="top">
+      <div class="logo">Ai là <span>triệu phú</span></div>
+        <div class="merit-chip" id="meritChip" title="Số dư công đức tích lũy">
+          <span class="merit-icon">🙏</span>
+          <b class="merit-val" id="meritVal">—</b>
+          <span class="merit-lbl">công đức</span>
+        </div>
+      <div class="lifelines" id="lifelines" role="group" aria-label="Quyền trợ giúp">
+        <button class="life" id="lf-fifty" data-life="fifty" title="50:50, loại bỏ hai đáp án sai"
+          aria-label="Quyền trợ giúp 50:50">
+          50:50
+        </button>
+        <button class="life" id="lf-phone" data-life="phone" title="Gọi điện thoại cho người thân"
+          aria-label="Gọi điện thoại cho người thân">
+          <svg viewBox="0 0 24 24">
+            <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" />
+          </svg>
+        </button>
+        <button class="life" id="lf-aud" data-life="aud" title="Hỏi ý kiến khán giả trong trường quay"
+          aria-label="Hỏi ý kiến khán giả">
+          <svg viewBox="0 0 24 24">
+            <path d="M5 20V11M12 20V4M19 20v-7" />
+          </svg>
+        </button>
+      </div>
+      <button class="ico" id="ladderBtn" aria-label="Xem thang công đức">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
+      <button class="ico" id="mute" aria-label="Tắt âm thanh" aria-pressed="false">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 9v6h4l5 4V5L8 9H4z" />
+          <path id="waves" d="M16.5 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11" />
+        </svg>
+      </button>
+    </header>
+
+    <div class="layout">
+      <main id="stage">
+        <div class="status">
+          <span id="stNum">Câu 1 / 15</span><span class="tag" id="stTag" hidden>Mốc an toàn</span><b
+            id="stPrize">1 công đức</b>
+        </div>
+        <div id="qwrap" class="line">
+          <div class="hex" id="qbox">
+            <div class="in"><span id="qtext"></span></div>
+          </div>
+        </div>
+        <div class="answers" id="answers">
+          <div class="cell">
+            <button class="hex ans hide" data-i="0">
+              <span class="in"><b>A:</b><span class="t"></span></span>
+            </button>
+          </div>
+          <div class="cell">
+            <button class="hex ans hide" data-i="1">
+              <span class="in"><b>B:</b><span class="t"></span></span>
+            </button>
+          </div>
+          <div class="cell">
+            <button class="hex ans hide" data-i="2">
+              <span class="in"><b>C:</b><span class="t"></span></span>
+            </button>
+          </div>
+          <div class="cell">
+            <button class="hex ans hide" data-i="3">
+              <span class="in"><b>D:</b><span class="t"></span></span>
+            </button>
+          </div>
+        </div>
+        <div class="host" aria-live="polite">
+          <small>Người dẫn chương trình</small><span id="hostText"></span>
+        </div>
+        <div id="actions"></div>
+      </main>
+      <aside class="ladder" id="ladder" aria-label="Thang công đức">
+        <h2>Thang công đức</h2>
+        <ol id="ladderList"></ol>
+      </aside>
+    </div>
+  </div>
+
+  <section class="modal" id="modal" hidden>
+    <div class="card" id="modalCard" role="dialog" aria-modal="true"></div>
+  </section>
+
+  <section class="screen" id="intro">
+    <div class="box">
+      <h1><span>Chương trình đố vui</span>Ai là triệu phú</h1>
+      <p>
+        15 câu hỏi, 3 quyền trợ giúp. Trả lời đúng để leo lên thang công
+        đức, sai thì chỉ giữ lại công đức ở mốc an toàn gần nhất.
+      </p>
+              <ul class="rules">
+          <li>
+            <b>Mốc an toàn</b><span>Câu 5 (10 công đức) và câu 10 (100 công đức). Đỉnh cao 1.000 công đức.</span>
+          </li>
+          <li>
+            <b>Trợ giúp</b><span>50:50, gọi điện thoại cho người thân, hỏi ý kiến khán giả. Mỗi
+              quyền dùng một lần.</span>
+          </li>
+          <li>
+            <b>Chống gian lận</b><span>Khóa sao chép & chuột phải. Chuyển tab hoặc rời màn hình khi đang thi đấu sẽ bị truất quyền ngay lập tức.</span>
+          </li>
+          <li>
+            <b>Phím tắt</b><span>A B C D để chọn, Enter để khóa đáp án.</span>
+          </li>
+        </ul>
+      <button class="btn gold" id="startBtn">Bắt đầu chơi</button>
+      <div class="sub" id="introInfo"></div>
+    </div>
+  </section>
+
+  <section class="screen" id="end" hidden>
+    <div class="box">
+      <div class="sub" id="endKicker"></div>
+      <h1 id="endTitle" style="font-size: clamp(34px, 9vw, 60px)"></h1>
+      <div class="big" id="endPrize"></div>
+      <div class="end-stats" id="endStats"></div>
+      <div id="endBtns" style="
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+          ">
+        <button class="btn gold" id="againBtn">Chơi lại</button>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    ; (function () {
+      "use strict"
+      const $ = (s) => document.querySelector(s),
+        $$ = (s) => [...document.querySelectorAll(s)]
+
+      /* ================= Ngân hàng câu hỏi: [câu hỏi, đáp án đúng, sai, sai, sai] ================= */
+      /* Mỗi nhóm xếp gần đúng theo độ khó tăng dần. */
+      /* ================= Ngân hàng câu hỏi nâng cao & đa dạng chủ đề ================= */
+      /* Cấu trúc: [câu hỏi, đáp án đúng, sai 1, sai 2, sai 3] */
+      const QS = {
+        // CẤP ĐỘ 1 (Câu 1 - 5): Kiến thức phổ thông chọn lọc, đa lĩnh vực (không quá trẻ con)
+        e: [
+          // Khoa học & Tự nhiên
+          [
+            "Kim loại nào dẫn điện tốt nhất trong điều kiện nhiệt độ phòng?",
+            "Bạc (Ag)",
+            "Đồng (Cu)",
+            "Vàng (Au)",
+            "Nhôm (Al)",
+          ],
+          [
+            "Bộ phận nào của tế bào thực vật thực hiện quá trình quang hợp?",
+            "Lục lạp",
+            "Ti thể",
+            "Nhân tế bào",
+            "Không bào",
+          ],
+          [
+            "Loại vitamin nào cơ thể người có thể tự tổng hợp khi tiếp xúc với ánh nắng mặt trời?",
+            "Vitamin D",
+            "Vitamin C",
+            "Vitamin A",
+            "Vitamin B12",
+          ],
+          [
+            "Âm thanh KHÔNG thể truyền được trong môi trường nào sau đây?",
+            "Chân không",
+            "Chất rắn",
+            "Chất lỏng",
+            "Chất khí",
+          ],
+          [
+            "Đơn vị nào dùng để đo cường độ âm thanh?",
+            "Decibel (dB)",
+            "Hertz (Hz)",
+            "Watt (W)",
+            "Lumen (lm)",
+          ],
+          [
+            "Khí nào được bơm vào bóng bay để bóng có thể bay lên và không gây cháy nổ?",
+            "Heli",
+            "Hiđro",
+            "Nitơ",
+            "Oxi",
+          ],
+          [
+            "Hành tinh nào trong Hệ Mặt Trời nổi tiếng với hệ thống vành đai băng và đá khổng lồ?",
+            "Sao Thổ",
+            "Sao Mộc",
+            "Sao Hỏa",
+            "Sao Kim",
+          ],
+          [
+            "Loài động vật có vú nào duy nhất có khả năng bay thực sự?",
+            "Dơi",
+            "Sóc bay",
+            "Đà điểu",
+            "Chim cánh cụt",
+          ],
+
+          // Công nghệ & Máy tính
+          [
+            "Ngày thành lập Mebisoft?",
+            "21/11/2025",
+            "20/11/2025",
+            "19/11/2025",
+            "22/11/2025",
+          ],
+          [
+            "Người nào không thuộc dự án Mebifarm?",
+            "Trúc",
+            "Quân",
+            "Quan",
+            "Hải",
+          ],
+          [
+            "Trong công nghệ thông tin, từ viết tắt 'CPU' dùng để chỉ bộ phận nào?",
+            "Bộ xử lý trung tâm",
+            "Bộ nhớ truy cập ngẫu nhiên",
+            "Bộ xử lý đồ họa",
+            "Ổ cứng thể rắn",
+          ],
+          [
+            "Hệ điều hành mã nguồn mở nào có biểu tượng linh vật là chú chim cánh cụt Tux?",
+            "Linux",
+            "Android",
+            "macOS",
+            "Windows",
+          ],
+          [
+            "Một Byte (B) trong máy tính tương đương với bao nhiêu bit (b)?",
+            "8 bit",
+            "4 bit",
+            "16 bit",
+            "1024 bit",
+          ],
+          [
+            "Giao thức nào sau đây được sử dụng để truyền tải siêu văn bản bảo mật trên trình duyệt web?",
+            "HTTPS",
+            "FTP",
+            "SMTP",
+            "DHCP",
+          ],
+
+          // Lịch sử & Địa lý Việt Nam
+          [
+            "Kinh thành Huế được xây dựng dưới thời vị vua đầu tiên nào của triều Nguyễn?",
+            "Vua Gia Long",
+            "Vua Minh Mạng",
+            "Vua Thiệu Trị",
+            "Vua Tự Đức",
+          ],
+          [
+            "Đèo nào nằm ở ranh giới tự nhiên giữa tỉnh Thừa Thiên Huế và thành phố Đà Nẵng?",
+            "Đèo Hải Vân",
+            "Đèo Ngang",
+            "Đèo Cả",
+            "Đèo Pha Đin",
+          ],
+          [
+            "Mũi Điện (Mũi Đại Lãnh) – một trong những nơi đón bình minh sớm nhất trên đất liền Việt Nam – thuộc tỉnh nào?",
+            "Phú Yên",
+            "Khánh Hòa",
+            "Bình Định",
+            "Ninh Thuận",
+          ],
+          [
+            "Thắng cảnh Gành Đá Đĩa nổi tiếng với các cột đá bazan hình lăng trụ xếp chồng lên nhau thuộc tỉnh nào?",
+            "Phú Yên",
+            "Quảng Ngãi",
+            "Bình Thuận",
+            "Bà Rịa – Vũng Tàu",
+          ],
+          [
+            "Ai là vị tướng chỉ huy chiến dịch Điện Biên Phủ năm 1954?",
+            "Võ Nguyên Giáp",
+            "Nguyễn Chí Thanh",
+            "Văn Tiến Dũng",
+            "Hoàng Văn Thái",
+          ],
+          [
+            "Cầu vượt biển dài nhất Việt Nam hiện nay (Cầu Tân Vũ – Lạch Huyện) thuộc địa phận thành phố nào?",
+            "Hải Phòng",
+            "Đà Nẵng",
+            "Hạ Long",
+            "Vũng Tàu",
+          ],
+          [
+            "Dòng sông nào chảy qua lòng thành phố Huế và gắn liền với cầu Trường Tiền?",
+            "Sông Hương",
+            "Sông Hàn",
+            "Sông Thu Bồn",
+            "Sông Trà Khúc",
+          ],
+          [
+            "Chiến thắng Bạch Đằng năm 938 chấm dứt hơn 1000 năm Bắc thuộc do ai lãnh đạo?",
+            "Ngô Quyền",
+            "Đinh Bộ Lĩnh",
+            "Lê Hoàn",
+            "Lý Thường Kiệt",
+          ],
+
+          // Lịch sử & Địa lý Thế giới
+          [
+            "Kênh đào Suez nối liền Địa Trung Hải với biển nào?",
+            "Biển Đỏ",
+            "Biển Đen",
+            "Biển Caspi",
+            "Biển Ả Rập",
+          ],
+          [
+            "Dãy núi nào dài nhất trên đất liền thế giới, chạy dọc phía tây Nam Mỹ?",
+            "Dãy Andes",
+            "Dãy Himalaya",
+            "Dãy Alps",
+            "Dãy Rocky",
+          ],
+          [
+            "Quốc gia nào được mệnh danh là 'Xứ sở mặt trời mọc'?",
+            "Nhật Bản",
+            "Hàn Quốc",
+            "Thái Lan",
+            "Philippines",
+          ],
+          [
+            "Thành phố nào của nước Ý nổi tiếng với hệ thống kênh đào chằng chịt thay cho đường phố?",
+            "Venice",
+            "Milan",
+            "Florence",
+            "Naples",
+          ],
+          [
+            "Kim tự tháp Giza nổi tiếng nằm ở quốc gia nào?",
+            "Ai Cập",
+            "Mexico",
+            "Peru",
+            "Sudan",
+          ],
+          [
+            "Châu lục nào trên Trái Đất hoàn toàn không có cư dân sinh sống thường xuyên?",
+            "Châu Nam Cực",
+            "Châu Đại Dương",
+            "Châu Phi",
+            "Châu Nam Mỹ",
+          ],
+
+          // Văn học, Nghệ thuật & Đời sống
+          [
+            "Trong tác phẩm 'Lão Hạc' của Nam Cao, chú chó mà lão Hạc hết mực yêu thương có tên là gì?",
+            "Cậu Vàng",
+            "Cậu Đen",
+            "Cậu Mực",
+            "Cậu Đốm",
+          ],
+          [
+            "Nhạc cụ truyền thống 'Đàn bầu' của Việt Nam có bao nhiêu dây?",
+            "1 dây",
+            "2 dây",
+            "4 dây",
+            "16 dây",
+          ],
+          [
+            "Trong thần thoại Hy Lạp, vị thần tối cao cai quản bầu trời và sấm sét trên đỉnh Olympus là ai?",
+            "Zeus",
+            "Poseidon",
+            "Hades",
+            "Apollo",
+          ],
+          [
+            "Tác giả của vở kịch kinh điển 'Romeo và Juliet' là ai?",
+            "William Shakespeare",
+            "Victor Hugo",
+            "Molière",
+            "Johann Wolfgang von Goethe",
+          ],
+          [
+            "Môn thể thao quần vợt (Tennis) có bao nhiêu giải đấu thuộc hệ thống Grand Slam trong một năm?",
+            "4 giải",
+            "3 giải",
+            "5 giải",
+            "6 giải",
+          ],
+          [
+            "Trên bàn cờ vua tiêu chuẩn có tổng cộng bao nhiêu ô vuông?",
+            "64 ô",
+            "49 ô",
+            "81 ô",
+            "100 ô",
+          ],
+          [
+            "Loại hạt nào là nguyên liệu chính để sản xuất ra sô-cô-la?",
+            "Hạt ca cao",
+            "Hạt cà phê",
+            "Hạt hạnh nhân",
+            "Hạt mắc ca",
+          ],
+          [
+            "Loại đá quý nào có độ cứng cao nhất trong thang đo độ cứng Mohs tự nhiên?",
+            "Kim cương",
+            "Hồng ngọc (Ruby)",
+            "Lam ngọc (Sapphire)",
+            "Ngọc lục bảo (Emerald)",
+          ],
+          [
+            "Biểu tượng 5 vòng tròn đan vào nhau của Thế vận hội Olympic tượng trưng cho điều gì?",
+            "5 châu lục có người ở",
+            "5 môn thể thao cổ đại",
+            "5 giá trị đạo đức",
+            "5 quốc gia sáng lập",
+          ],
+          [
+            "Trong hội họa, khi pha trộn hai màu cơ bản là Đỏ và Vàng với tỉ lệ bằng nhau, ta thu được màu gì?",
+            "Màu da cam",
+            "Màu tím",
+            "Màu xanh lá cây",
+            "Màu nâu",
+          ],
+          [
+            "Nhân vật thám tử lừng danh Sherlock Holmes là sáng tạo của nhà văn nào?",
+            "Arthur Conan Doyle",
+            "Agatha Christie",
+            "Edgar Allan Poe",
+            "Dan Brown",
+          ],
+          [
+            "Loại hình nghệ thuật 'Nhã nhạc cung đình Huế' được UNESCO công nhận là Di sản văn hóa gì?",
+            "Di sản văn hóa phi vật thể",
+            "Di sản thiên nhiên thế giới",
+            "Di sản tư liệu thế giới",
+            "Kỳ quan thế giới mới",
+          ],
+          [
+            "Trong các nhóm máu hệ ABO, nhóm máu nào được coi là 'chuyên cho' (hồng cầu có thể truyền cho các nhóm khác)?",
+            "Nhóm máu O",
+            "Nhóm máu AB",
+            "Nhóm máu A",
+            "Nhóm máu B",
+          ],
+          [
+            "Đơn vị đo lường 'Hải lý' (Nautical mile) trong hàng hải và hàng không bằng xấp xỉ bao nhiêu kilômét?",
+            "1,852 km",
+            "1,609 km",
+            "1,500 km",
+            "2,000 km",
+          ],
+        ],
+
+        // CẤP ĐỘ 2 (Câu 6 - 10): Câu hỏi phân loại trung bình - khá, đòi hỏi kiến thức tổng hợp sâu
+        m: [
+          // Khoa học, Y sinh & Vũ trụ
+          [
+            "Nhiệt độ mà tại đó thang đo độ C (Celsius) và độ F (Fahrenheit) có cùng một giá trị số là bao nhiêu?",
+            "-40 độ",
+            "0 độ",
+            "-273 độ",
+            "32 độ",
+          ],
+          [
+            "Hành tinh nào trong Hệ Mặt Trời có chiều tự quay quanh trục ngược với hầu hết các hành tinh còn lại (Mặt Trời mọc ở đằng Tây)?",
+            "Sao Kim",
+            "Sao Hỏa",
+            "Sao Thủy",
+            "Sao Hải Vương",
+          ],
+          [
+            "Ở áp suất khí quyển tiêu chuẩn, đá khô là trạng thái rắn của hợp chất hóa học nào?",
+            "Cacbon đioxit (CO2)",
+            "Nitơ lỏng (N2)",
+            "Amoniac (NH3)",
+            "Mêtan (CH4)",
+          ],
+          [
+            "Vật liệu 'Graphene' – nổi tiếng với độ bền gấp hàng trăm lần thép và dẫn điện cực tốt – được cấu tạo từ nguyên tố nào?",
+            "Cacbon",
+            "Silic",
+            "Titan",
+            "Bạch kim",
+          ],
+          [
+            "Trong di truyền học, bộ nhiễm sắc thể lưỡng bội bình thường của loài người có bao nhiêu chiếc?",
+            "46 chiếc (23 cặp)",
+            "44 chiếc (22 cặp)",
+            "48 chiếc (24 cặp)",
+            "23 chiếc",
+          ],
+          [
+            "Hiện tượng cầu vồng xuất hiện sau cơn mưa chủ yếu do hiện tượng vật lý nào của ánh sáng mặt trời khi đi qua các giọt nước?",
+            "Tán sắc và phản xạ ánh sáng",
+            "Nhiễu xạ ánh sáng",
+            "Giao thoa ánh sáng",
+            "Phân cực ánh sáng",
+          ],
+          [
+            "Ánh sáng truyền từ Mặt Trời đến Trái Đất mất khoảng bao lâu?",
+            "Khoảng 8 phút 20 giây",
+            "Khoảng 1 giây",
+            "Khoảng 3 phút 15 giây",
+            "Khoảng 24 phút",
+          ],
+          [
+            "Chất nào tạo nên sắc tố màu đỏ của hồng cầu và có nhiệm vụ vận chuyển oxy trong máu?",
+            "Hemoglobin",
+            "Melanin",
+            "Chlorophyll",
+            "Collagen",
+          ],
+
+          // Công nghệ, Toán Tin & Kinh tế
+          [
+            "Ai được coi là 'Cha đẻ của khoa học máy tính' và trí tuệ nhân tạo với mô hình máy tính trừu tượng mang tên ông?",
+            "Alan Turing",
+            "Tim Berners-Lee",
+            "John von Neumann",
+            "Dennis Ritchie",
+          ],
+          [
+            "Trong cấu trúc dữ liệu và giải thuật, nguyên lý hoạt động LIFO (Last In, First Out - Vào sau, Ra trước) mô tả cấu trúc nào?",
+            "Ngăn xếp (Stack)",
+            "Hàng đợi (Queue)",
+            "Danh sách liên kết (Linked List)",
+            "Cây nhị phân (Binary Tree)",
+          ],
+          [
+            "Trong hệ thống mạng máy tính, cổng (port) mặc định chuẩn của giao thức HTTPS là bao nhiêu?",
+            "443",
+            "80",
+            "8080",
+            "22",
+          ],
+          [
+            "Bút danh của nhân vật hoặc nhóm nhân vật ẩn danh đã sáng lập ra đồng tiền mã hóa Bitcoin là gì?",
+            "Satoshi Nakamoto",
+            "Vitalik Buterin",
+            "Hal Finney",
+            "Nick Szabo",
+          ],
+          [
+            "Trong kinh tế học vĩ mô, thuật ngữ nào chỉ tình trạng mức giá chung của hàng hóa và dịch vụ giảm liên tục theo thời gian?",
+            "Giảm phát",
+            "Lạm phát phi mã",
+            "Đình lạm",
+            "Suy thoái",
+          ],
+          [
+            "Định luật Moore trong ngành bán dẫn ban đầu dự đoán số lượng bóng bán dẫn (transistor) trên một vi mạch sẽ tăng gấp đôi sau khoảng bao lâu?",
+            "Khoảng 18 đến 24 tháng",
+            "Khoảng 6 tháng",
+            "Khoảng 5 năm",
+            "Khoảng 10 năm",
+          ],
+
+          // Lịch sử Việt Nam
+          [
+            "Quốc hiệu 'Việt Nam' chính thức xuất hiện lần đầu tiên vào năm 1804 dưới triều đại của vị vua nào?",
+            "Vua Gia Long",
+            "Vua Quang Trung",
+            "Vua Minh Mạng",
+            "Vua Lê Thánh Tông",
+          ],
+          [
+            "Bộ luật thành văn cổ nhất còn lưu giữ đầy đủ của Việt Nam là 'Quốc triều hình luật' (Luật Hồng Đức) ra đời dưới triều đại nào?",
+            "Nhà Lê sơ",
+            "Nhà Lý",
+            "Nhà Trần",
+            "Nhà Nguyễn",
+          ],
+          [
+            "Trận Rạch Gầm – Xoài Mút năm 1785 do Nguyễn Huệ chỉ huy đã đánh tan hàng vạn quân xâm lược của nước nào?",
+            "Quân Xiêm",
+            "Quân Thanh",
+            "Quân Minh",
+            "Quân Pháp",
+          ],
+          [
+            "Hội nghị thành lập Đảng Cộng sản Việt Nam vào đầu năm 1930 do Nguyễn Ái Quốc chủ trì diễn ra tại đâu?",
+            "Hương Cảng (Hồng Kông, Trung Quốc)",
+            "Quảng Châu (Trung Quốc)",
+            "Tân Trào (Tuyên Quang)",
+            "Pác Bó (Cao Bằng)",
+          ],
+          [
+            "Vị trạng nguyên trẻ tuổi nhất trong lịch sử khoa cử phong kiến Việt Nam (đỗ năm 13 tuổi) là ai?",
+            "Nguyễn Hiền",
+            "Mạc Đĩnh Chi",
+            "Lương Thế Vinh",
+            "Nguyễn Bỉnh Khiêm",
+          ],
+          [
+            "Nhà bác học Trương Vĩnh Ký (Pétrus Ký) vào thế kỷ 19 là người sáng lập tờ báo tiếng Việt đầu tiên bằng chữ Quốc ngữ mang tên là gì?",
+            "Gia Định báo",
+            "Nông Cổ Mín Đàm",
+            "Lục Tỉnh Tân Văn",
+            "Đông Dương tạp chí",
+          ],
+
+          // Lịch sử & Địa lý Thế giới
+          [
+            "Eo biển nào ngăn cách phần đất liền châu Á (Nga) và châu Bắc Mỹ (bang Alaska của Hoa Kỳ)?",
+            "Eo biển Bering",
+            "Eo biển Gibraltar",
+            "Eo biển Malacca",
+            "Eo biển Magellan",
+          ],
+          [
+            "Quốc gia nào ở Nam Mỹ KHÔNG có đường biên giới giáp với Brazil?",
+            "Chile",
+            "Argentina",
+            "Colombia",
+            "Peru",
+          ],
+          [
+            "Sự kiện 'Bức tường Berlin sụp đổ' đánh dấu bước ngoặt kết thúc Chiến tranh Lạnh diễn ra vào năm nào?",
+            "1989",
+            "1985",
+            "1991",
+            "1979",
+          ],
+          [
+            "Đế chế Inca cổ đại với thành cổ Machu Picchu nằm chủ yếu trên lãnh thổ của quốc gia nào ngày nay?",
+            "Peru",
+            "Mexico",
+            "Guatemala",
+            "Bolivia",
+          ],
+          [
+            "Rãnh đại dương sâu nhất thế giới được biết đến hiện nay là rãnh nào?",
+            "Rãnh Mariana",
+            "Rãnh Puerto Rico",
+            "Rãnh Java",
+            "Rãnh Tonga",
+          ],
+          [
+            "Hồ nước ngọt có độ sâu lớn nhất và trữ lượng nước ngọt lớn nhất thế giới là hồ nào?",
+            "Hồ Baikal (Nga)",
+            "Hồ Superior (Bắc Mỹ)",
+            "Hồ Victoria (Châu Phi)",
+            "Hồ Tanganyika (Châu Phi)",
+          ],
+
+          // Văn học, Nghệ thuật & Thể thao
+          [
+            "Trong văn học Việt Nam, ai là tác giả của truyện ngắn 'Chữ người tử tù' trích trong tập 'Vang bóng một thời'?",
+            "Nguyễn Tuân",
+            "Thạch Lam",
+            "Vũ Trọng Phụng",
+            "Nam Cao",
+          ],
+          [
+            "Nhân vật chính Từ Hải trong 'Truyện Kiều' của Nguyễn Du được miêu tả qua câu thơ 'Vai năm tấc rộng, thân mười thước cao' lấy nguyên mẫu lịch sử từ triều đại nào của Trung Quốc?",
+            "Nhà Minh",
+            "Nhà Đường",
+            "Nhà Tống",
+            "Nhà Thanh",
+          ],
+          [
+            "Bức tranh nổi tiếng 'Sự dai dẳng của ký ức' (với hình ảnh những chiếc đồng hồ chảy mềm) là kiệt tác của danh họa trường phái Siêu thực nào?",
+            "Salvador Dalí",
+            "Pablo Picasso",
+            "Henri Matisse",
+            "René Magritte",
+          ],
+          [
+            "Vở vũ kịch (ballet) kinh điển 'Hồ Thiên Nga' (Swan Lake) là sáng tác của nhà soạn nhạc người Nga nào?",
+            "Pyotr Ilyich Tchaikovsky",
+            "Sergei Rachmaninoff",
+            "Igor Stravinsky",
+            "Dmitri Shostakovich",
+          ],
+          [
+            "Bộ phim điện ảnh châu Á đầu tiên trong lịch sử giành giải Oscar cho 'Phim hay nhất' (Best Picture) vào năm 2020 là bộ phim nào?",
+            "Parasite (Ký sinh trùng)",
+            "Spirited Away (Vùng đất linh hồn)",
+            "Crouching Tiger, Hidden Dragon (Ngọa hổ tàng long)",
+            "Drive My Car",
+          ],
+          [
+            "Kiến trúc sư người Tây Ban Nha nào là tác giả của Vương cung thánh đường Sagrada Família nổi tiếng tại Barcelona?",
+            "Antoni Gaudí",
+            "Frank Lloyd Wright",
+            "Le Corbusier",
+            "Santiago Calatrava",
+          ],
+          [
+            "Trong lịch sử bóng đá thế giới, cầu thủ duy nhất tính đến nay từng giành được 3 chức vô địch World Cup là ai?",
+            "Pelé",
+            "Diego Maradona",
+            "Ronaldo Nazário",
+            "Cafu",
+          ],
+          [
+            "Triết gia cổ đại Hy Lạp nào là thầy dạy của Alexander Đại đế và là học trò của Plato?",
+            "Aristotle",
+            "Socrates",
+            "Pythagoras",
+            "Epicurus",
+          ],
+          [
+            "Tác phẩm điêu khắc 'Người suy tư' (The Thinker) bằng đồng nổi tiếng là của nhà điêu khắc người Pháp nào?",
+            "Auguste Rodin",
+            "Michelangelo",
+            "Donatello",
+            "Gian Lorenzo Bernini",
+          ],
+          [
+            "Kỳ quan thiên nhiên 'Đá vôi dạng tháp' ở Vịnh Hạ Long được hình thành chủ yếu qua quá trình địa chất nào?",
+            "Phong hóa Karst",
+            "Hoạt động phun trào núi lửa",
+            "Băng hà bào mòn",
+            "Bồi tụ phù sa sông",
+          ],
+          [
+            "Giải thưởng Pritzker hàng năm thường được ví như 'Giải Nobel' của lĩnh vực nào?",
+            "Kiến trúc",
+            "Toán học",
+            "Khoa học máy tính",
+            "Báo chí",
+          ],
+          [
+            "Trong âm nhạc cổ điển, thuật ngữ tiếng Ý 'Forte' (ký hiệu là chữ f) chỉ dẫn người biểu diễn điều gì?",
+            "Chơi mạnh, to lên",
+            "Chơi nhẹ, nhỏ lại",
+            "Chơi nhanh dần",
+            "Chơi chậm lại",
+          ],
+          [
+            "Tác giả của tiểu thuyết châm biếm kinh điển 'Số đỏ' với nhân vật Xuân Tóc Đỏ là ai?",
+            "Vũ Trọng Phụng",
+            "Ngô Tất Tố",
+            "Nguyễn Công Hoan",
+            "Nguyên Hồng",
+          ],
+          [
+            "Đơn vị tiền tệ chính thức của Thụy Sĩ hiện nay là gì?",
+            "Franc Thụy Sĩ (CHF)",
+            "Euro (EUR)",
+            "Krone (CHF)",
+            "Bảng Thụy Sĩ",
+          ],
+        ],
+
+        // CẤP ĐỘ 3 (Câu 11 - 15): Mốc triệu phú - Câu hỏi chuyên sâu, hàn lâm và hóc búa
+        h: [
+          // Khoa học, Vật lý lượng tử, Hóa sinh & Toán học
+          [
+            "Năm 1921, Albert Einstein được trao giải Nobel Vật lý nhờ công trình giải thích hiện tượng nào sau đây (chứ không phải Thuyết tương đối)?",
+            "Hiệu ứng quang điện",
+            "Chuyển động Brown",
+            "Sóng hấp dẫn",
+            "Bức xạ nền vi sóng vũ trụ",
+          ],
+          [
+            "Trong Vật lý hạt cơ bản, hạt nào được mệnh danh là 'Hạt của Chúa' (God Particle) giúp giải thích cơ chế tạo ra khối lượng cho vật chất?",
+            "Boson Higgs",
+            "Quark đỉnh (Top quark)",
+            "Neutrino",
+            "Graviton",
+          ],
+          [
+            "Nguyên tố hóa học duy nhất nào được phát hiện lần đầu tiên thông qua quang phổ Mặt Trời trước khi tìm thấy trên Trái Đất?",
+            "Heli (He)",
+            "Neon (Ne)",
+            "Argon (Ar)",
+            "Krypton (Kr)",
+          ],
+          [
+            "Nhà bác học nào là người đầu tiên trên thế giới giành được hai giải Nobel ở hai lĩnh vực khoa học tự nhiên khác nhau (Vật lý và Hóa học)?",
+            "Marie Curie",
+            "Linus Pauling",
+            "John Bardeen",
+            "Frederick Sanger",
+          ],
+          [
+            "Giới hạn Chandrasekhar (xấp xỉ 1,44 lần khối lượng Mặt Trời) trong vật lý thiên văn là khối lượng tối đa của thiên thể nào trước khi nó sụp đổ?",
+            "Sao lùn trắng",
+            "Sao neutron",
+            "Sao lùn nâu",
+            "Sao khổng lồ đỏ",
+          ],
+          [
+            "Bổ đề cơ bản trong chương trình Langlands mà Giáo sư Ngô Bảo Châu chứng minh thành công để nhận Huy chương Fields năm 2010 thuộc nhánh toán học nào?",
+            "Hình học đại số và Lý thuyết số",
+            "Giải tích hàm và Phương trình vi phân",
+            "Tôpô đại số ba chiều",
+            "Lý thuyết xác suất thống kê",
+          ],
+          [
+            "Trong sinh học phân tử, công nghệ chỉnh sửa gen tiên tiến 'CRISPR-Cas9' có nguồn gốc tự nhiên từ cơ chế miễn dịch của sinh vật nào?",
+            "Vi khuẩn và cổ khuẩn",
+            "Nấm men",
+            "Thực vật hạt kín",
+            "Động vật lưỡng cư",
+          ],
+          [
+            "Nguyên lý bất định trong cơ học lượng tử khẳng định không thể xác định đồng thời chính xác vị trí và động lượng của một hạt do nhà vật lý nào đề xuất?",
+            "Werner Heisenberg",
+            "Erwin Schrödinger",
+            "Max Planck",
+            "Paul Dirac",
+          ],
+
+          // Khoa học máy tính & Công nghệ cao
+          [
+            "Giải thưởng danh giá nhất trong ngành Khoa học Máy tính (thường được gọi là 'Giải Nobel của ngành Tin học') mang tên nhà khoa học nào?",
+            "Alan Turing (Giải Turing)",
+            "Grace Hopper (Giải Hopper)",
+            "Donald Knuth (Giải Knuth)",
+            "Ada Lovelace (Giải Lovelace)",
+          ],
+          [
+            "Trong lý thuyết độ phức tạp tính toán, bài toán thiên niên kỷ nổi tiếng nhất chưa có lời giải của Viện Toán học Clay được ký hiệu là gì?",
+            "P so với NP (P vs NP)",
+            "Giả thuyết Riemann",
+            "Bài toán dừng (Halting Problem)",
+            "Định lý bất toàn Gödel",
+          ],
+          [
+            "Kiến trúc mạng nơ-ron 'Transformer' – nền tảng của các mô hình ngôn ngữ lớn (LLM) hiện đại – được giới thiệu lần đầu năm 2017 trong bài báo khoa học mang tên gì?",
+            "Attention Is All You Need",
+            "Deep Residual Learning",
+            "ImageNet Classification",
+            "Generative Adversarial Nets",
+          ],
+          [
+            "Ngôn ngữ lập trình C được phát triển vào đầu những năm 1970 bởi Dennis Ritchie tại phòng thí nghiệm nào?",
+            "Bell Labs",
+            "Xerox PARC",
+            "IBM Research",
+            "MIT Media Lab",
+          ],
+
+          // Lịch sử & Văn hóa Việt Nam chuyên sâu
+          [
+            "Ấn vàng 'Hoàng đế chi bảo' – bảo vật biểu trưng cho quyền lực tối cao của triều Nguyễn – được đúc vào năm 1823 dưới thời vị vua nào?",
+            "Vua Minh Mạng",
+            "Vua Gia Long",
+            "Vua Tự Đức",
+            "Vua Bảo Đại",
+          ],
+          [
+            "Trong lịch sử ngoại giao Việt Nam thế kỷ 19, ai là Chánh sứ dẫn đầu phái bộ sang Pháp và Tây Ban Nha năm 1863 để thương lượng chuộc lại 3 tỉnh miền Đông Nam Kỳ?",
+            "Phan Thanh Giản",
+            "Nguyễn Trường Tộ",
+            "Nguyễn Tri Phương",
+            "Hoàng Diệu",
+          ],
+          [
+            "Bộ đại bách khoa toàn thư 'Vân Đài loại ngữ' – tác phẩm khảo cứu đồ sộ về triết học, khoa học, văn học thời trung đại Việt Nam – là của học giả nào?",
+            "Lê Quý Đôn",
+            "Phan Huy Chú",
+            "Ngô Sĩ Liên",
+            "Lương Thế Vinh",
+          ],
+          [
+            "Kỹ thuật mổ gan khô ('Phương pháp Tôn Thất Tùng') nổi tiếng trong y văn thế giới được Giáo sư Tôn Thất Tùng công bố lần đầu vào thập niên nào?",
+            "Thập niên 1960 (hoàn thiện từ nghiên cứu cuối thập niên 1930)",
+            "Thập niên 1920",
+            "Thập niên 1980",
+            "Thập niên 1990",
+          ],
+          [
+            "Chữ Quốc ngữ của Việt Nam được hình thành và hệ thống hóa vào thế kỷ 17 với sự đóng góp quan trọng của giáo sĩ người Pháp Alexandre de Rhodes qua cuốn từ điển in tại đâu năm 1651?",
+            "Rome (Ý)",
+            "Paris (Pháp)",
+            "Lisbon (Bồ Đào Nha)",
+            "Macao (Trung Quốc)",
+          ],
+          [
+            "Danh nhân nào dưới thời nhà Hồ đã chế tạo thành công 'Súng thần cơ' và đóng thuyền chiến 'Cổ lâu' hai tầng?",
+            "Hồ Nguyên Trừng",
+            "Hồ Quý Ly",
+            "Trần Khát Chân",
+            "Đặng Dung",
+          ],
+          [
+            "Trong lịch sử tiền tệ Việt Nam, ai là người đầu tiên cho phát hành tiền giấy ('Thông bảo hội sao') vào năm 1396?",
+            "Hồ Quý Ly",
+            "Lê Thánh Tông",
+            "Quang Trung",
+            "Đinh Tiên Hoàng",
+          ],
+          [
+            "Tác phẩm 'Lịch triều hiến chương loại chí' – bộ bách khoa thư đầu tiên của Việt Nam được biên soạn theo thể loại chí – là của sử gia nào?",
+            "Phan Huy Chú",
+            "Ngô Thì Sĩ",
+            "Lê Văn Hưu",
+            "Đặng Xuân Bảng",
+          ],
+
+          // Lịch sử, Địa lý & Chính trị Thế giới chuyên sâu
+          [
+            "Hiệp ước Tordesillas năm 1494 được ký kết nhằm phân chia các vùng đất mới phát hiện bên ngoài châu Âu giữa hai đế quốc hàng hải nào?",
+            "Bồ Đào Nha và Tây Ban Nha",
+            "Anh và Pháp",
+            "Hà Lan và Tây Ban Nha",
+            "Anh và Bồ Đào Nha",
+          ],
+          [
+            "Thành phố Istanbul của Thổ Nhĩ Kỳ trước năm 1453 là kinh đô của Đế quốc Đông La Mã (Byzantine) dưới tên gọi là gì?",
+            "Constantinople",
+            "Alexandria",
+            "Antioch",
+            "Babylon",
+          ],
+          [
+            "Quốc gia nào là đất nước duy nhất trên thế giới hiện nay có quốc kỳ KHÔNG phải là hình chữ nhật hay hình vuông?",
+            "Nepal",
+            "Bhutan",
+            "Thụy Sĩ",
+            "Vatican",
+          ],
+          [
+            "Bộ luật cổ đại nổi tiếng khắc trên bia đá bazan đen của vùng Lưỡng Hà vào khoảng năm 1750 TCN mang tên vị vua nào của Babylon?",
+            "Hammurabi",
+            "Nebuchadnezzar",
+            "Gilgamesh",
+            "Cyrus Đại đế",
+          ],
+          [
+            "Sự kiện 'Khủng hoảng tên lửa Cuba' năm 1962 đưa thế giới đến bờ vực chiến tranh hạt nhân diễn ra dưới thời Tổng thống Mỹ John F. Kennedy và nhà lãnh đạo Liên Xô nào?",
+            "Nikita Khrushchev",
+            "Leonid Brezhnev",
+            "Joseph Stalin",
+            "Mikhail Gorbachev",
+          ],
+          [
+            "Vùng lãnh thổ Kaliningrad của Liên bang Nga nằm tách biệt khỏi phần đất liền chính của Nga và giáp với hai quốc gia EU nào?",
+            "Ba Lan và Litva",
+            "Phần Lan và Estonia",
+            "Latvia và Litva",
+            "Ba Lan và Đức",
+          ],
+
+          // Văn học, Triết học, Nghệ thuật & Kinh tế thế giới
+          [
+            "Bức bích họa khổng lồ 'Trường học Athens' (The School of Athens) trong Điện Tông tòa Vatican là kiệt tác thời Phục Hưng của danh họa nào?",
+            "Raphael",
+            "Michelangelo",
+            "Leonardo da Vinci",
+            "Sandro Botticelli",
+          ],
+          [
+            "Nhà văn người Pháp nào đã từ chối nhận giải Nobel Văn học vào năm 1964 vì nguyên tắc không nhận bất kỳ danh hiệu chính thức nào của các tổ chức?",
+            "Jean-Paul Sartre",
+            "Albert Camus",
+            "André Gide",
+            "Marcel Proust",
+          ],
+          [
+            "Trong tiểu thuyết 'Tội ác và Hình phạt' của Fyodor Dostoevsky, nhân vật chính cựu sinh viên nghèo đã sát hại bà lão cầm đồ tên là gì?",
+            "Rodion Raskolnikov",
+            "Ivan Karamazov",
+            "Lev Myshkin",
+            "Pierre Bezukhov",
+          ],
+          [
+            "Khái niệm 'Bàn tay vô hình' (Invisible Hand) điều tiết thị trường tự do được nhà kinh tế học cổ điển Adam Smith đưa ra trong tác phẩm nổi tiếng nào xuất bản năm 1776?",
+            "Sự giàu có của các quốc gia (The Wealth of Nations)",
+            "Tư bản luận (Das Kapital)",
+            "Lý thuyết chung về việc làm, lãi suất và tiền tệ",
+            "Đường về nô lệ (The Road to Serfdom)",
+          ],
+          [
+            "Bản nhạc giao hưởng 'Bốn mùa' (The Four Seasons) gồm 4 bản concerto dành cho đàn violin là kiệt tác thời kỳ Baroque của nhà soạn nhạc nào?",
+            "Antonio Vivaldi",
+            "Johann Sebastian Bach",
+            "George Frideric Handel",
+            "Claudio Monteverdi",
+          ],
+          [
+            "Trong thần thoại Bắc Âu, cây tần bì khổng lồ kết nối Cửu Giới (9 thế giới) trong vũ trụ có tên là gì?",
+            "Yggdrasil",
+            "Valhalla",
+            "Ragnarok",
+            "Bifrost",
+          ],
+          [
+            "Hiệu ứng tâm lý học nào mô tả hiện tượng những người có năng lực hạn chế ở một lĩnh vực thường đánh giá quá cao khả năng của bản thân?",
+            "Hiệu ứng Dunning-Kruger",
+            "Hiệu ứng Mandela",
+            "Hiệu ứng Cánh bướm",
+            "Hội chứng Kẻ mạo danh (Impostor Syndrome)",
+          ],
+          [
+            "Tác phẩm triết học - chính trị 'Quân vương' (Il Principe) viết vào thế kỷ 16 bàn về nghệ thuật giành và giữ quyền lực là của tác giả người Ý nào?",
+            "Niccolò Machiavelli",
+            "Dante Alighieri",
+            "Thomas More",
+            "Thomas Hobbes",
+          ],
+          [
+            "Cấu trúc phân tử xoắn kép của ADN được công bố vào năm 1953 bởi James Watson và Francis Crick có sự đóng góp dữ liệu nhiễu xạ tia X quyết định ('Bức ảnh 51') của nhà nữ khoa học nào?",
+            "Rosalind Franklin",
+            "Dorothy Hodgkin",
+            "Barbara McClintock",
+            "Lise Meitner",
+          ],
+          [
+            "Trong lịch sử hội họa phương Tây, danh họa nào được coi là người đồng sáng lập trường phái Lập thể (Cubism) cùng với Pablo Picasso?",
+            "Georges Braque",
+            "Paul Cézanne",
+            "Henri Rousseau",
+            "Wassily Kandinsky",
+          ],
+          [
+            "Thang đo độ lớn mô men (Moment magnitude scale) hiện đại dùng để đo năng lượng giải phóng của động đất đã thay thế thang đo nổi tiếng nào trước đây?",
+            "Thang độ Richter",
+            "Thang sức gió Beaufort",
+            "Thang bão Saffir-Simpson",
+            "Thang Fujita",
+          ],
+          [
+            "Tổ hợp tác phẩm âm nhạc 'Nhẫn của Nibelung' (Der Ring des Nibelungen) gồm 4 vở nhạc kịch sử thi đồ sộ kéo dài khoảng 15 giờ biểu diễn là của nhà soạn nhạc người Đức nào?",
+            "Richard Wagner",
+            "Johannes Brahms",
+            "Robert Schumann",
+            "Richard Strauss",
+          ],
+          [
+            "Hiện tượng 'El Niño' làm nóng bất thường lớp nước mặt biển có nguồn gốc từ khu vực đại dương nào?",
+            "Vùng xích đạo phía Đông và Trung Thái Bình Dương",
+            "Bắc Đại Tây Dương",
+            "Ấn Độ Dương",
+            "Vùng biển Caribe",
+          ],
+          [
+            "Văn bản chữ hình nêm khắc trên 'Phiến đá Rosetta' (Rosetta Stone) giúp giải mã chữ tượng hình Ai Cập cổ đại được viết bằng 3 loại chữ nào?",
+            "Tượng hình Ai Cập, bình dân Ai Cập (Demotic) và Hy Lạp cổ đại",
+            "Tượng hình Ai Cập, La-tinh và Do Thái cổ",
+            "Tượng hình Ai Cập, Ả Rập cổ và Ba Tư cổ",
+            "Tượng hình Ai Cập, Sumer và Hy Lạp cổ đại",
+          ],
+        ],
+      }
+      const TIERS = ["e", "m", "h"]
+      const TOTAL = TIERS.reduce((s, t) => s + QS[t].length, 0)
+
+      const PRIZES = [
+          1, 2, 3, 5, 10,
+          15, 25, 40, 60, 100,
+          150, 250, 400, 600, 1000,
+        ]
+      const SAFE = [4, 9]
+      const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+      const money = (n) => fmt(n) + " công đức"
+      const LET = "ABCD"
+      const rnd = (a, b) => a + Math.random() * (b - a)
+      const ri = (n) => Math.floor(Math.random() * n)
+      function shuffle(a) {
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = ri(i + 1)
+            ;[a[i], a[j]] = [a[j], a[i]]
+        }
+        return a
+      }
+      const tierOf = (qi) => (qi < 5 ? 0 : qi < 10 ? 1 : 2)
+
+      /* ================= Lưu trữ ================= */
+      const store = {
+        get(k, d) {
+          try {
+            const v = localStorage.getItem(k)
+            return v ? JSON.parse(v) : d
+          } catch (e) {
+            return d
+          }
+        },
+        set(k, v) {
+          try {
+            localStorage.setItem(k, JSON.stringify(v))
+          } catch (e) { }
+        },
+      }
+      let seen = store.get("altp.seen", null)
+      if (!seen || typeof seen !== "object") seen = {}
+      TIERS.forEach((t) => {
+        if (!Array.isArray(seen[t])) seen[t] = []
+        seen[t] = seen[t].filter(
+          (i) => Number.isInteger(i) && i < QS[t].length,
+        )
+      })
+      let best = store.get("altp.best", null)
+      if (!best || typeof best.prize !== "number")
+        best = { prize: 0, games: 0 }
+      const seenCount = () => TIERS.reduce((s, t) => s + seen[t].length, 0)
+
+      /* ================= Âm thanh (tổng hợp bằng WebAudio) ================= */
+      const AU = (() => {
+        let ctx = null,
+          master = null,
+          noiseBuf = null,
+          muted = false,
+          drone = null,
+          arp = null,
+          step = 0
+        const mf = (n) => 440 * Math.pow(2, (n - 69) / 12)
+        function init() {
+          if (ctx) {
+            if (ctx.state === "suspended") ctx.resume()
+            return
+          }
+          try {
+            const AC = window.AudioContext || window.webkitAudioContext
+            ctx = new AC()
+            master = ctx.createGain()
+            master.gain.value = muted ? 0 : 0.8
+            const comp = ctx.createDynamicsCompressor()
+            master.connect(comp)
+            comp.connect(ctx.destination)
+            noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate)
+            const d = noiseBuf.getChannelData(0)
+            for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1
+          } catch (e) {
+            ctx = null
+          }
+        }
+        function tone(f, t, d, o) {
+          if (!ctx || muted) return
+          o = o || {}
+          const os = ctx.createOscillator(),
+            g = ctx.createGain()
+          os.type = o.type || "sine"
+          os.frequency.setValueAtTime(f, t)
+          if (o.to) os.frequency.exponentialRampToValueAtTime(o.to, t + d)
+          const v = o.vol == null ? 0.1 : o.vol,
+            a = Math.min(o.a || 0.006, d * 0.9)
+          g.gain.setValueAtTime(0.0001, t)
+          g.gain.exponentialRampToValueAtTime(v, t + a)
+          g.gain.exponentialRampToValueAtTime(0.0001, t + d)
+          if (o.lp) {
+            const fl = ctx.createBiquadFilter()
+            fl.type = "lowpass"
+            fl.frequency.value = o.lp
+            os.connect(fl)
+            fl.connect(g)
+          } else os.connect(g)
+          g.connect(master)
+          os.start(t)
+          os.stop(t + d + 0.05)
+        }
+        function noise(t, d, vol, f0, f1, type) {
+          if (!ctx || muted) return
+          const s = ctx.createBufferSource()
+          s.buffer = noiseBuf
+          s.loop = true
+          const fl = ctx.createBiquadFilter()
+          fl.type = type || "bandpass"
+          fl.frequency.setValueAtTime(f0, t)
+          if (f1) fl.frequency.exponentialRampToValueAtTime(f1, t + d)
+          fl.Q.value = 0.8
+          const g = ctx.createGain()
+          g.gain.setValueAtTime(0.0001, t)
+          g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.02, d / 3))
+          g.gain.exponentialRampToValueAtTime(0.0001, t + d)
+          s.connect(fl)
+          fl.connect(g)
+          g.connect(master)
+          s.start(t, Math.random())
+          s.stop(t + d + 0.05)
+        }
+        const brass = (n, t, d, v) => {
+          const f = mf(n)
+          tone(f, t, d, { type: "sawtooth", vol: v, lp: 2000, a: 0.04 })
+          tone(f * 1.005, t, d, {
+            type: "sawtooth",
+            vol: v * 0.7,
+            lp: 1600,
+            a: 0.05,
+          })
+        }
+        function applause(dur) {
+          if (!ctx || muted) return
+          const t = ctx.currentTime
+          for (let i = 0; i < Math.round(dur * 28); i++) {
+            const at = t + Math.random() * dur,
+              fade = Math.min(1, (at - t) / 0.4, (t + dur - at) / 0.8)
+            noise(
+              at,
+              rnd(0.03, 0.08),
+              Math.max(0.002, rnd(0.02, 0.06) * fade),
+              rnd(1200, 3600),
+            )
+          }
+        }
+        function stopBed() {
+          if (arp) {
+            clearInterval(arp)
+            arp = null
+          }
+          if (drone && ctx) {
+            const d = drone,
+              t = ctx.currentTime
+            d.g.gain.cancelScheduledValues(t)
+            d.g.gain.setValueAtTime(d.g.gain.value, t)
+            d.g.gain.linearRampToValueAtTime(0.0001, t + 0.35)
+            d.o.forEach((o) => {
+              try {
+                o.stop(t + 0.4)
+              } catch (e) { }
+            })
+            drone = null
+          }
+        }
+        function startBed(tier) {
+          if (!ctx || muted) return
+          stopBed()
+          const root = 45 + [0, 2, 3][tier],
+            t = ctx.currentTime
+          const g = ctx.createGain()
+          g.gain.setValueAtTime(0.0001, t)
+          g.gain.linearRampToValueAtTime(0.04, t + 1.2)
+          const fl = ctx.createBiquadFilter()
+          fl.type = "lowpass"
+          fl.frequency.value = 240
+          const o1 = ctx.createOscillator(),
+            o2 = ctx.createOscillator()
+          o1.type = "sawtooth"
+          o2.type = "sawtooth"
+          o1.frequency.value = mf(root)
+          o2.frequency.value = mf(root) * 1.007
+          const lfo = ctx.createOscillator(),
+            lg = ctx.createGain()
+          lfo.frequency.value = 0.25
+          lg.gain.value = 90
+          lfo.connect(lg)
+          lg.connect(fl.frequency)
+          o1.connect(fl)
+          o2.connect(fl)
+          fl.connect(g)
+          g.connect(master)
+          o1.start()
+          o2.start()
+          lfo.start()
+          drone = { g, o: [o1, o2, lfo] }
+          const pat = [0, 7, 12, 15, 12, 7, 3, 7]
+          step = 0
+          arp = setInterval(() => {
+            if (!ctx || muted) return
+            const n =
+              root +
+              12 +
+              pat[step % pat.length] +
+              (Math.floor(step / 8) % 2 ? 2 : 0)
+            tone(mf(n), ctx.currentTime, 0.34, {
+              type: "triangle",
+              vol: 0.022 + tier * 0.006,
+              lp: 1800,
+            })
+            if (step % 4 === 0)
+              tone(mf(root - 12), ctx.currentTime, 0.3, {
+                type: "sine",
+                vol: 0.09,
+                to: mf(root - 12) * 0.8,
+              })
+            step++
+          }, 360)
+        }
+        function thump(t, v) {
+          tone(85, t, 0.2, { to: 42, vol: 0.24 * v })
+        }
+        return {
+          init,
+          setMuted(m) {
+            muted = m
+            if (master) master.gain.value = m ? 0 : 0.8
+            if (m) stopBed()
+          },
+          stopBed,
+          startBed,
+          applause,
+          intro() {
+            if (!ctx) return
+            const t = ctx.currentTime
+              ;[62, 66, 69, 74].forEach((n, i) =>
+                brass(n, t + i * 0.17, i === 3 ? 1.6 : 0.35, 0.05),
+              )
+            brass(50, t + 0.55, 1.4, 0.07)
+            brass(57, t + 0.55, 1.4, 0.05)
+              ;[86, 90, 93, 98].forEach((n, i) =>
+                tone(mf(n), t + 0.7 + i * 0.09, 0.7, {
+                  type: "sine",
+                  vol: 0.025,
+                }),
+              )
+            noise(t, 0.7, 0.05, 300, 5000, "bandpass")
+          },
+          question() {
+            if (!ctx) return
+            const t = ctx.currentTime
+            noise(t, 0.55, 0.07, 400, 3200, "bandpass")
+            tone(110, t, 0.5, { to: 46, vol: 0.18 })
+          },
+          blip(i) {
+            if (!ctx) return
+            tone(mf(72 + i * 2), ctx.currentTime, 0.12, {
+              type: "square",
+              vol: 0.035,
+              lp: 2400,
+            })
+          },
+          select() {
+            if (!ctx) return
+            tone(mf(79), ctx.currentTime, 0.1, {
+              type: "triangle",
+              vol: 0.06,
+            })
+          },
+          lock() {
+            if (!ctx) return
+            stopBed()
+            const t = ctx.currentTime
+            tone(75, t, 0.6, { to: 34, vol: 0.32 })
+            noise(t, 0.25, 0.08, 200, 900, "lowpass")
+          },
+          suspense(sec) {
+            if (!ctx) return
+            const t = ctx.currentTime
+            let tt = 0.15,
+              gap = 0.82
+            while (tt < sec - 0.2) {
+              thump(t + tt, 1)
+              thump(t + tt + 0.17, 0.65)
+              tt += gap
+              gap = Math.max(0.4, gap * 0.9)
+            }
+            tone(mf(33), t, sec, { type: "sine", vol: 0.09, a: 0.4 })
+            tone(mf(57), t, sec, {
+              type: "sawtooth",
+              to: mf(88),
+              vol: 0.03,
+              lp: 1400,
+              a: sec * 0.85,
+            })
+          },
+          correct() {
+            if (!ctx) return
+            const t = ctx.currentTime
+              ;[60, 64, 67, 72, 76].forEach((n, i) =>
+                brass(n, t + i * 0.085, i === 4 ? 1 : 0.3, 0.05),
+              )
+              ;[84, 88, 91, 96].forEach((n, i) =>
+                tone(mf(n), t + 0.4 + i * 0.06, 0.5, { vol: 0.03 }),
+              )
+          },
+          milestone() {
+            if (!ctx) return
+            const t = ctx.currentTime
+              ;[60, 64, 67, 72].forEach((n, i) =>
+                brass(n, t + i * 0.1, 0.3, 0.05),
+              )
+              ;[67, 72, 76, 79].forEach((n, i) =>
+                brass(n, t + 0.5 + i * 0.12, i === 3 ? 1.4 : 0.3, 0.05),
+              )
+            brass(48, t + 0.5, 1.6, 0.07)
+            applause(2.6)
+          },
+          wrong() {
+            if (!ctx) return
+            const t = ctx.currentTime
+            tone(196, t, 1, { type: "sawtooth", to: 52, vol: 0.13, lp: 900 })
+            tone(98, t, 1.2, { type: "square", to: 38, vol: 0.08, lp: 500 })
+            tone(70, t, 0.7, { to: 30, vol: 0.3 })
+          },
+          win() {
+            if (!ctx) return
+            const t = ctx.currentTime
+            const seq = [
+              [60, 64, 67],
+              [62, 66, 69],
+              [64, 68, 71],
+              [67, 71, 74],
+              [72, 76, 79],
+            ]
+            seq.forEach((c, i) =>
+              c.forEach((n) =>
+                brass(n, t + i * 0.28, i === 4 ? 2.4 : 0.4, 0.045),
+              ),
+            )
+            brass(48, t + 1.12, 2.4, 0.08)
+            for (let i = 0; i < 14; i++)
+              tone(mf(84 + [0, 4, 7, 12][i % 4]), t + 1.2 + i * 0.1, 0.5, {
+                vol: 0.025,
+              })
+            applause(5)
+          },
+          life() {
+            if (!ctx) return
+            const t = ctx.currentTime
+              ;[84, 88, 91, 96].forEach((n, i) =>
+                tone(mf(n), t + i * 0.07, 0.35, {
+                  type: "triangle",
+                  vol: 0.06,
+                }),
+              )
+          },
+          zap(i) {
+            if (!ctx) return
+            tone(1000, ctx.currentTime + i * 0.28, 0.22, {
+              type: "square",
+              to: 180,
+              vol: 0.05,
+              lp: 3000,
+            })
+          },
+          ring() {
+            if (!ctx) return
+            const t = ctx.currentTime
+            for (let k = 0; k < 2; k++) {
+              tone(440, t + k * 1, 0.5, { vol: 0.05, a: 0.02 })
+              tone(480, t + k * 1, 0.5, { vol: 0.05, a: 0.02 })
+            }
+          },
+          pickup() {
+            if (!ctx) return
+            noise(ctx.currentTime, 0.05, 0.12, 2000, 800)
+          },
+        }
+      })()
+
+      /* ================= Pháo giấy ================= */
+      const fx = $("#fx"),
+        fc = fx.getContext("2d")
+      let parts = [],
+        fxRaf = 0,
+        fxW = 0,
+        fxH = 0
+      function fxSize() {
+        fxW = fx.width = innerWidth
+        fxH = fx.height = innerHeight
+      }
+      function burst(n, x, y) {
+        const cols = [
+          "#f4c95d",
+          "#ff9d1c",
+          "#2ed26f",
+          "#6fa0ff",
+          "#ffffff",
+          "#f0505c",
+        ]
+        for (let i = 0; i < n; i++) {
+          const a = rnd(-Math.PI * 0.95, -Math.PI * 0.05),
+            s = rnd(5, 15)
+          parts.push({
+            x,
+            y,
+            vx: Math.cos(a) * s,
+            vy: Math.sin(a) * s,
+            w: rnd(5, 10),
+            h: rnd(3, 6),
+            r: rnd(0, 6),
+            vr: rnd(-0.3, 0.3),
+            c: cols[ri(cols.length)],
+            life: rnd(110, 190),
+          })
+        }
+        if (!fxRaf) fxRaf = requestAnimationFrame(fxLoop)
+      }
+      function fxLoop() {
+        fc.clearRect(0, 0, fxW, fxH)
+        for (const p of parts) {
+          p.vy += 0.22
+          p.vx *= 0.992
+          p.x += p.vx
+          p.y += p.vy
+          p.r += p.vr
+          p.life--
+          fc.save()
+          fc.translate(p.x, p.y)
+          fc.rotate(p.r)
+          fc.globalAlpha = Math.min(1, p.life / 30)
+          fc.fillStyle = p.c
+          fc.fillRect(-p.w / 2, -p.h / 2, p.w, p.h)
+          fc.restore()
+        }
+        parts = parts.filter((p) => p.life > 0 && p.y < fxH + 40)
+        fxRaf = parts.length ? requestAnimationFrame(fxLoop) : 0
+      }
+      fxSize()
+      addEventListener("resize", fxSize)
+
+      /* ================= Trạng thái trò chơi ================= */
+      let G = {
+        gid: 0,
+        qi: 0,
+        state: "idle",
+        used: {},
+        removed: new Set(),
+        sel: -1,
+        qs: [],
+      }
+      const ans = $$(".ans"),
+        host = $("#hostText"),
+        actions = $("#actions")
+      const wait = (ms, gid) =>
+        new Promise((r) => setTimeout(() => r(gid === G.gid), ms))
+      const say = (t) => {
+        host.textContent = t
+      }
+
+      function pickTier(t) {
+        const n = QS[t].length
+        let un = []
+        for (let i = 0; i < n; i++) if (!seen[t].includes(i)) un.push(i)
+        if (un.length < 5) {
+          seen[t] = []
+          un = [...Array(n).keys()]
+        }
+        shuffle(un)
+        const ch = un.slice(0, 5).sort((a, b) => a - b)
+        seen[t].push(...ch)
+        return ch.map((i) => {
+          const r = QS[t][i]
+          return {
+            text: r[0],
+            tier: TIERS.indexOf(t),
+            opts: shuffle([
+              { t: r[1], ok: true },
+              { t: r[2] },
+              { t: r[3] },
+              { t: r[4] },
+            ]),
+          }
+        })
+      }
+      function newGame() {
+        const qs = [].concat(pickTier("e"), pickTier("m"), pickTier("h"))
+        store.set("altp.seen", seen)
+        G = {
+          gid: G.gid + 1,
+          qi: 0,
+          state: "idle",
+          used: { fifty: false, phone: false, aud: false },
+          removed: new Set(),
+          sel: -1,
+          qs,
+          correct: 0,
+        }
+      }
+
+      function renderLadder() {
+        const ol = $("#ladderList")
+        ol.innerHTML = ""
+        for (let i = 14; i >= 0; i--) {
+          const li = document.createElement("li")
+          li.className =
+            (SAFE.includes(i) ? "safe " : "") +
+            (i === G.qi && G.state !== "over" ? "cur " : "") +
+            (i < G.qi ? "done" : "")
+          li.innerHTML =
+            '<span class="n">' +
+            (i + 1) +
+            '</span><span class="d"></span><span class="p">' +
+            fmt(PRIZES[i]) +
+            "</span>"
+          ol.appendChild(li)
+        }
+      }
+      function renderStatus() {
+        $("#stNum").textContent = "Câu " + (G.qi + 1) + " / 15"
+        $("#stPrize").textContent = money(PRIZES[G.qi])
+        $("#stTag").hidden = !SAFE.includes(G.qi)
+      }
+      function updateLifelines() {
+        const on = G.state === "pick"
+          ;[
+            ["fifty", "#lf-fifty"],
+            ["phone", "#lf-phone"],
+            ["aud", "#lf-aud"],
+          ].forEach(([k, s]) => {
+            const b = $(s)
+            b.classList.toggle("used", !!G.used[k])
+            b.disabled = !on || !!G.used[k]
+          })
+      }
+      function updateActions() {
+        actions.innerHTML = ""
+        const add = (act, label, cls) => {
+          const b = document.createElement("button")
+          b.className = "btn " + cls
+          b.dataset.act = act
+          b.textContent = label
+          actions.appendChild(b)
+          return b
+        }
+        if (G.state === "pick") {
+          if (G.sel >= 0) {
+            add("lock", "Đáp án cuối cùng", "gold")
+            add("redo", "Chọn lại", "ghost")
+          }
+          if (G.qi > 0)
+            add(
+              "walk",
+              "Dừng cuộc chơi, nhận " + money(PRIZES[G.qi - 1]),
+              "ghost",
+            )
+        } else if (G.state === "next") {
+          add(
+            "next",
+            G.qi === 14 ? "Nhận công đức" : "Câu tiếp theo",
+            "gold",
+          )
+        }
+      }
+      function safePrize(qi) {
+        return qi >= 10 ? PRIZES[9] : qi >= 5 ? PRIZES[4] : 0
+      }
+
+      async function showQ() {
+        const gid = G.gid,
+          q = G.qs[G.qi]
+        G.sel = -1
+        G.state = "reveal"
+        G.removed = new Set()
+        renderLadder()
+        renderStatus()
+        updateLifelines()
+        updateActions()
+        ans.forEach((a) => {
+          a.className = "hex ans hide"
+          a.disabled = true
+        })
+        const qb = $("#qbox")
+        qb.classList.remove("in-anim")
+        void qb.offsetWidth
+        qb.classList.add("in-anim")
+        $("#qtext").textContent = q.text
+        AU.question()
+        say(
+          G.qi === 0
+            ? "Xin chào và chào mừng bạn đến với Ai Là Triệu Phú! Câu hỏi đầu tiên trị giá " +
+            money(PRIZES[0]) +
+            "."
+            : "Câu hỏi số " +
+            (G.qi + 1) +
+            ", trị giá " +
+            money(PRIZES[G.qi]) +
+            "." +
+            (SAFE.includes(G.qi) ? " Đây là câu hỏi mốc an toàn." : ""),
+        )
+        q.opts.forEach((o, i) => {
+          ans[i].querySelector(".t").textContent = o.t
+        })
+        if (!(await wait(900, gid))) return
+        for (let i = 0; i < 4; i++) {
+          ans[i].classList.remove("hide")
+          AU.blip(i)
+          if (!(await wait(340, gid))) return
+        }
+        ans.forEach((a) => {
+          a.disabled = false
+        })
+        G.state = "pick"
+        AU.startBed(q.tier)
+        say("Hãy chọn một đáp án, hoặc dùng quyền trợ giúp nếu cần.")
+        updateLifelines()
+        updateActions()
+      }
+
+      function select(i) {
+        if (G.state !== "pick" || G.removed.has(i)) return
+        G.sel = i
+        ans.forEach((a, k) => a.classList.toggle("sel", k === i))
+        AU.select()
+        say(
+          "Bạn chọn đáp án " +
+          LET[i] +
+          ". Đây có phải là đáp án cuối cùng của bạn?",
+        )
+        updateActions()
+      }
+      function redo() {
+        if (G.state !== "pick") return
+        G.sel = -1
+        ans.forEach((a) => a.classList.remove("sel"))
+        say("Được thôi, bạn hãy chọn lại.")
+        updateActions()
+      }
+
+      async function lock() {
+        if (G.state !== "pick" || G.sel < 0) return
+        const gid = G.gid,
+          tier = G.qs[G.qi].tier
+        G.state = "locked"
+        updateActions()
+        updateLifelines()
+        closeModal()
+        ans.forEach((a) => {
+          a.disabled = true
+        })
+        ans[G.sel].classList.add("locked")
+        AU.lock()
+        say(
+          "Đáp án cuối cùng là " +
+          LET[G.sel] +
+          ". Chúng ta cùng xem kết quả…",
+        )
+        const dur = [2400, 3400, 4800][tier]
+        AU.suspense(dur / 1000)
+        if (!(await wait(dur, gid))) return
+        reveal()
+      }
+
+      async function reveal() {
+        const gid = G.gid,
+          q = G.qs[G.qi],
+          ci = q.opts.findIndex((o) => o.ok),
+          ok = G.sel === ci
+        ans[G.sel].classList.remove("locked", "sel")
+        if (ok) {
+          ans[ci].classList.add("win", "flash")
+          const ms = SAFE.includes(G.qi)
+          G.correct++
+          if (G.qi === 14) {
+            AU.win()
+            burst(160, innerWidth / 2, innerHeight * 0.7)
+          } else if (ms) {
+            AU.milestone()
+            burst(90, innerWidth / 2, innerHeight * 0.7)
+          } else AU.correct()
+          G.state = "shown"
+          say(
+            G.qi === 14
+              ? "Chính xác! Bạn đã vượt qua cả 15 câu hỏi!"
+              : ms
+                ? "Chính xác! Bạn đã vượt qua mốc an toàn, " +
+                money(PRIZES[G.qi]) +
+                " đã nằm chắc trong tay bạn."
+                : "Chính xác! Bạn đã có " + money(PRIZES[G.qi]) + ".",
+          )
+          if (!(await wait(G.qi === 14 ? 3600 : 2200, gid))) return
+          G.state = "next"
+          updateActions()
+        } else {
+          ans[G.sel].classList.add("lose")
+          ans[ci].classList.add("win", "flash")
+          AU.wrong()
+          $("#stage").classList.remove("shake")
+          void $("#stage").offsetWidth
+          $("#stage").classList.add("shake")
+          G.state = "shown"
+          const sp = safePrize(G.qi)
+          say(
+            "Rất tiếc, đáp án đúng là " +
+            LET[ci] +
+            ": " +
+            q.opts[ci].t +
+            "." +
+            (sp
+              ? " Bạn ra về với " + money(sp) + "."
+              : " Bạn ra về với hai bàn tay trắng."),
+          )
+          if (!(await wait(3600, gid))) return
+          finish("lose", sp)
+        }
+      }
+
+      function next() {
+        if (G.state !== "next") return
+        if (G.qi === 14) {
+          finish("win", PRIZES[14])
+          return
+        }
+        G.qi++
+        showQ()
+      }
+      function walk() {
+        if (G.state !== "pick" || G.qi < 1) return
+        AU.stopBed()
+        closeModal()
+        G.state = "locked"
+        updateActions()
+        updateLifelines()
+        const p = PRIZES[G.qi - 1]
+        say("Bạn quyết định dừng cuộc chơi và mang về " + money(p) + ".")
+        const gid = G.gid
+        setTimeout(() => {
+          if (gid === G.gid) finish("walk", p)
+        }, 1200)
+      }
+
+              function updateMeritUI(val) {
+          const v = typeof val === "number" ? val : (window.MebiMerit && typeof window.MebiMerit.get === "function" ? window.MebiMerit.get() : null)
+          const el = $("#meritVal")
+          if (el && v !== null && !isNaN(v)) el.textContent = fmt(v)
+        }
+        if (window.MebiMerit) {
+          Promise.resolve(window.MebiMerit.ready).then(updateMeritUI).catch(() => {})
+        }
+        window.addEventListener("mebi-merit-change", (e) => updateMeritUI(e.detail))
+
+        function finish(kind, prize) {
+          G.state = "over"
+          AU.stopBed()
+          renderLadder()
+          best.games++
+          if (prize > best.prize) best.prize = prize
+          store.set("altp.best", best)
+          const t = {
+            win: ["Chúc mừng!", "Triệu phú mới của chúng ta"],
+            lose: ["Rất tiếc", "Hành trình kết thúc"],
+            walk: ["Dừng cuộc chơi", "Một quyết định khôn ngoan"],
+          }[kind]
+          $("#endKicker").textContent = t[1]
+          $("#endTitle").textContent = t[0]
+          $("#endPrize").textContent = money(prize)
+          let statsBase =
+            "Trả lời đúng " +
+            G.correct +
+            " / 15 câu. Kỷ lục của bạn: " +
+            money(best.prize) +
+            ". Đã gặp " +
+            seenCount() +
+            " / " +
+            TOTAL +
+            " câu trong ngân hàng."
+          if (prize > 0) {
+            $("#endStats").textContent = statsBase + " 🙏 Đang cộng " + money(prize) + " vào ví công đức..."
+            const reqId = (crypto.randomUUID ? crypto.randomUUID() : 'altp-' + Date.now() + '-' + Math.random().toString(36).slice(2)).slice(0, 36)
+            const claimPromise = window.MebiMerit && typeof window.MebiMerit.claim === 'function'
+              ? window.MebiMerit.claim(reqId, prize)
+              : fetch('/api/merit/claim', {
+                  method: 'POST',
+                  credentials: 'same-origin',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ requestId: reqId, prize })
+                }).then(r => r.json()).then(d => {
+                  if (d && typeof d.balance === 'number') updateMeritUI(d.balance)
+                  return d.balance
+                })
+            Promise.resolve(claimPromise).then(() => {
+              $("#endStats").textContent = statsBase + " 🙏 Đã cộng +" + money(prize) + " vào ví công đức của bạn!"
+            }).catch(() => {
+              $("#endStats").textContent = statsBase
+            })
+          } else {
+            $("#endStats").textContent = statsBase
+          }
+          $("#end").hidden = false
+          if (kind === "win") burst(120, innerWidth / 2, innerHeight * 0.8)
+        }
+
+      /* ================= Quyền trợ giúp ================= */
+      const modal = $("#modal"),
+        card = $("#modalCard")
+      function openModal(html) {
+        card.innerHTML = html
+        modal.hidden = false
+        const b = card.querySelector("[data-close]")
+        if (b) b.focus()
+      }
+      function closeModal() {
+        modal.hidden = true
+        card.innerHTML = ""
+      }
+      function aliveIdx() {
+        return [0, 1, 2, 3].filter((i) => !G.removed.has(i))
+      }
+
+      function useFifty() {
+        const q = G.qs[G.qi],
+          wrong = aliveIdx().filter((i) => !q.opts[i].ok)
+        shuffle(wrong)
+          .slice(0, 2)
+          .forEach((i, k) => {
+            G.removed.add(i)
+            setTimeout(() => {
+              ans[i].classList.add("gone")
+              AU.zap(0)
+            }, k * 320)
+          })
+        if (G.removed.has(G.sel)) {
+          G.sel = -1
+          ans.forEach((a) => a.classList.remove("sel"))
+        }
+        G.used.fifty = true
+        AU.zap(0)
+        say(
+          "Hai đáp án sai đã được loại bỏ. Còn lại hai đáp án để bạn lựa chọn.",
+        )
+        updateLifelines()
+        updateActions()
+      }
+
+      const FRIENDS = [
+        "Anh Tuấn",
+        "Chị Lan",
+        "Thầy Minh",
+        "Bạn Hà",
+        "Cô Hương",
+      ]
+      function usePhone() {
+        const gid = G.gid,
+          q = G.qs[G.qi],
+          ci = q.opts.findIndex((o) => o.ok),
+          alive = aliveIdx(),
+          name = FRIENDS[ri(FRIENDS.length)]
+        G.used.phone = true
+        updateLifelines()
+        const acc = [0.92, 0.72, 0.5][q.tier],
+          knows = Math.random() < acc
+        const pick = knows ? ci : shuffle(alive.filter((i) => i !== ci))[0]
+        const pct = knows ? Math.round(rnd(72, 96)) : Math.round(rnd(30, 55))
+        const L = LET[pick]
+        const text =
+          knows && pct >= 80
+            ? "Alo, mình nghe rõ câu hỏi rồi. Mình khá chắc đáp án là " +
+            L +
+            ", khoảng " +
+            pct +
+            "% đấy."
+            : knows
+              ? "Ừm… để mình nghĩ chút. Mình nghiêng về đáp án " +
+              L +
+              ", chắc khoảng " +
+              pct +
+              "%."
+              : "Câu này khó thật. Nếu phải đoán thì mình chọn " +
+              L +
+              ", nhưng chỉ chắc khoảng " +
+              pct +
+              "% thôi."
+        openModal(
+          '<h3>Gọi điện thoại cho người thân</h3><div class="chat" id="chat">Đang gọi cho ' +
+          name +
+          '…</div><button class="btn gold" data-close id="closeBtn" disabled>Đóng</button>',
+        )
+        AU.ring()
+          ; (async () => {
+            if (!(await wait(2100, gid))) return
+            AU.pickup()
+            $("#chat").textContent = name + ": "
+            for (let i = 0; i < text.length; i += 2) {
+              if (!(await wait(34, gid)) || modal.hidden) return
+              $("#chat").textContent = name + ": " + text.slice(0, i + 2)
+            }
+            $("#closeBtn").disabled = false
+          })()
+      }
+
+      function useAud() {
+        const q = G.qs[G.qi],
+          ci = q.opts.findIndex((o) => o.ok),
+          alive = aliveIdx()
+        G.used.aud = true
+        updateLifelines()
+        AU.life()
+        const lead = [0.76, 0.58, 0.42][q.tier] + rnd(-0.08, 0.08),
+          miss = [0.03, 0.12, 0.26][q.tier]
+        let top = ci
+        if (Math.random() < miss) {
+          const w = alive.filter((i) => i !== ci)
+          top = w[ri(w.length)]
+        }
+        let ptop = Math.round(100 * lead * (top === ci ? 1 : 0.78))
+        const others = alive.filter((i) => i !== top)
+        const w = others.map((i) => rnd(0.4, 1) * (i === ci ? 1.6 : 1)),
+          ws = w.reduce((a, b) => a + b, 0)
+        const pct = [0, 0, 0, 0]
+        pct[top] = ptop
+        let rest = 100 - ptop
+        others.forEach((i, k) => {
+          pct[i] =
+            k === others.length - 1
+              ? rest
+              : Math.round(((100 - ptop) * w[k]) / ws)
+          rest -= pct[i]
+        })
+        let bars = "",
+          labels = ""
+        for (let i = 0; i < 4; i++) {
+          const gone = G.removed.has(i)
+          bars +=
+            '<div class="bar' +
+            (gone ? " dim" : "") +
+            '"><span>' +
+            (gone ? "" : pct[i] + "%") +
+            '</span><i data-h="' +
+            (gone ? 0 : pct[i]) +
+            '"></i></div>'
+          labels += "<b>" + LET[i] + "</b>"
+        }
+        openModal(
+          '<h3>Ý kiến khán giả trong trường quay</h3><div class="bars">' +
+          bars +
+          '</div><div class="barlabels">' +
+          labels +
+          '</div><button class="btn gold" data-close>Đóng</button>',
+        )
+        setTimeout(() => {
+          card.querySelectorAll(".bar i").forEach((el) => {
+            el.style.height = el.dataset.h * 1.55 + "px"
+          })
+        }, 60)
+        say("Khán giả đã bỏ phiếu. Hãy xem kết quả.")
+      }
+
+      
+      /* ================= Chống gian lận: Chặn copy, chuột phải, chuyển tab ================= */
+      let toastEl = null, toastHideTimer = null;
+      function showAntiCheatToast(msg) {
+        if (!toastEl) {
+          toastEl = document.createElement("div");
+          toastEl.className = "anti-cheat-toast";
+          document.body.appendChild(toastEl);
+        }
+        toastEl.innerHTML = "<span>🛡️</span> <span>" + msg + "</span>";
+        toastEl.classList.add("show");
+        clearTimeout(toastHideTimer);
+        toastHideTimer = setTimeout(() => {
+          if (toastEl) toastEl.classList.remove("show");
+        }, 2600);
+      }
+
+      function isGameActive() {
+        return $("#intro").hidden && $("#end").hidden && G && G.gid && G.state && G.state !== "over";
+      }
+
+      let blurTimeout = null;
+
+      function disqualify(reason) {
+        if (!isGameActive()) return;
+        clearTimeout(blurTimeout);
+        AU.stopBed();
+        AU.wrong();
+        closeModal();
+        G.state = "over";
+        renderLadder();
+        best.games++;
+        store.set("altp.best", best);
+
+        $("#endKicker").textContent = "Vi phạm quy chế thi đấu";
+        $("#endTitle").textContent = "Truất quyền thi đấu";
+        $("#endPrize").textContent = "0 công đức";
+        $("#endStats").textContent =
+          "Bạn bị truất quyền thi đấu do " +
+          (reason || "chuyển tab hoặc rời màn hình khi đang thi đấu") +
+          " nhằm chống tra cứu gian lận. Số công đức tích lũy ở lượt này bị hủy.";
+        $("#end").hidden = false;
+        say("Phát hiện hành vi gian lận! Bạn đã bị truất quyền thi đấu.");
+        showAntiCheatToast("Truất quyền thi đấu: Vi phạm quy định chống gian lận!");
+      }
+
+      document.addEventListener("copy", (e) => {
+        e.preventDefault();
+        showAntiCheatToast("Nội dung câu hỏi được bảo vệ chống sao chép gian lận!");
+      });
+      document.addEventListener("cut", (e) => {
+        e.preventDefault();
+      });
+      document.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        showAntiCheatToast("Nhấp chuột phải đã bị khóa để bảo đảm công bằng!");
+      });
+      document.addEventListener("selectstart", (e) => {
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+        e.preventDefault();
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden && isGameActive()) {
+          disqualify("chuyển tab sang ứng dụng khác");
+        }
+      });
+
+      window.addEventListener("blur", () => {
+        if (!isGameActive()) return;
+        showAntiCheatToast("Cảnh báo: Bạn đang rời khỏi màn hình! Hãy quay lại trong 3 giây.");
+        clearTimeout(blurTimeout);
+        blurTimeout = setTimeout(() => {
+          if (isGameActive()) {
+            disqualify("rời khỏi cửa sổ thi đấu quá 3 giây");
+          }
+        }, 3000);
+      });
+
+      window.addEventListener("focus", () => {
+        clearTimeout(blurTimeout);
+      });
+
+      /* ================= Sự kiện ================= */
+      ans.forEach((a) =>
+        a.addEventListener("click", () => select(+a.dataset.i)),
+      )
+      actions.addEventListener("click", (e) => {
+        const b = e.target.closest("button")
+        if (!b) return
+          ; ({ lock, redo, walk, next })[b.dataset.act] &&
+            { lock, redo, walk, next }[b.dataset.act]()
+      })
+      $("#lifelines").addEventListener("click", (e) => {
+        const b = e.target.closest(".life")
+        if (!b || b.disabled || G.state !== "pick") return
+        const k = b.dataset.life
+        if (G.used[k]) return
+        if (k === "fifty") useFifty()
+        else if (k === "phone") usePhone()
+        else useAud()
+      })
+      modal.addEventListener("click", (e) => {
+        if (
+          e.target.closest("[data-close]") &&
+          !e.target.closest("[disabled]")
+        )
+          closeModal()
+      })
+      $("#ladderBtn").addEventListener("click", () =>
+        $("#ladder").classList.toggle("open"),
+      )
+      document.addEventListener("click", (e) => {
+        const l = $("#ladder")
+        if (
+          l.classList.contains("open") &&
+          !e.target.closest("#ladder") &&
+          !e.target.closest("#ladderBtn")
+        )
+          l.classList.remove("open")
+      })
+      $("#mute").addEventListener("click", (e) => {
+        const m = !($("#mute").getAttribute("aria-pressed") === "true")
+        const b = $("#mute")
+        b.setAttribute("aria-pressed", String(m))
+        b.setAttribute("aria-label", m ? "Bật âm thanh" : "Tắt âm thanh")
+        $("#waves").style.display = m ? "none" : ""
+        AU.setMuted(m)
+        if (!m && G.state === "pick") AU.startBed(G.qs[G.qi].tier)
+        b.blur()
+      })
+      addEventListener("keydown", (e) => {
+        const k = e.key ? e.key.toUpperCase() : "";
+        const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+        if (isCtrlOrMeta && ["C", "X", "A", "U", "S", "P"].includes(k)) {
+          e.preventDefault();
+          showAntiCheatToast("Phím tắt sao chép / tra cứu đã bị vô hiệu hóa!");
+          return;
+        }
+        if (e.key === "F12" || (isCtrlOrMeta && e.shiftKey && ["I", "J", "C"].includes(k))) {
+          e.preventDefault();
+          showAntiCheatToast("Công cụ kiểm tra đã bị khóa!");
+          return;
+        }
+        if (!$("#intro").hidden || !$("#end").hidden || !modal.hidden) return;
+        const i = "ABCD".indexOf(k)
+        if (k.length === 1 && i >= 0) {
+          select(i)
+        } else if (e.key === "Enter" && G.state === "pick" && G.sel >= 0) {
+          e.preventDefault()
+          lock()
+        } else if (e.key === "Enter" && G.state === "next") {
+          e.preventDefault()
+          next()
+        }
+      })
+
+      function startGame() {
+        AU.init()
+        $("#intro").hidden = true
+        $("#end").hidden = true
+        closeModal()
+        newGame()
+        renderLadder()
+        renderStatus()
+        updateLifelines()
+        updateActions()
+        ans.forEach((a) => {
+          a.className = "hex ans hide"
+        })
+        $("#qtext").textContent = ""
+        say("")
+        AU.intro()
+        const gid = G.gid
+        setTimeout(() => {
+          if (gid === G.gid) showQ()
+        }, 1500)
+      }
+      $("#startBtn").addEventListener("click", startGame)
+      $("#againBtn").addEventListener("click", startGame)
+
+      $("#introInfo").textContent =
+        "Ngân hàng " +
+        TOTAL +
+        " câu hỏi · Bạn đã gặp " +
+        seenCount() +
+        " câu" +
+        (best.prize ? " · Kỷ lục " + money(best.prize) : "")
+      renderLadder()
+      renderStatus()
+      updateLifelines()
+    })()
+  </script>
+</body>
+
+</html>

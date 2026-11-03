@@ -49,6 +49,15 @@ export async function build(){
       await writeFile(path.join(root, 'Tower City.html'), tc);
     }
   } catch {}
+  try {
+    let altp = '';
+    try { altp = await readFile(path.join(root, 'ai-la-trieu-phu.html'), 'utf8'); } catch {}
+    if (!altp) { altp = await readFile(path.join(root, 'src/page/games/ai-la-trieu-phu.html'), 'utf8'); }
+    if (altp) {
+      await writeFile(path.join(root, 'src/page/games/ai-la-trieu-phu.html'), altp);
+      await writeFile(path.join(root, 'ai-la-trieu-phu.html'), altp);
+    }
+  } catch {}
   return html;
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))await build();

@@ -12,6 +12,7 @@ const partyCatsHtml=await readFile(new URL('../src/page/games/party-cats.html',i
 const towerCityHtml=await readFile(new URL('../src/page/games/tower-city.html',import.meta.url),'utf8');
 const coCaNguaHtml=await readFile(new URL('../src/page/games/co-ca-ngua.html',import.meta.url),'utf8');
 const chuaMebiHtml=await readFile(new URL('../src/page/games/chua-mebi.html',import.meta.url),'utf8');
+const aiLaTrieuPhuHtml=await readFile(new URL('../src/page/games/ai-la-trieu-phu.html',import.meta.url),'utf8');
 const source=(await readFile(entry,'utf8'))
   .replace("import chuaMebi from './src/page/games/chua-mebi.html';",`const chuaMebi=${JSON.stringify(chuaMebiHtml)};`)
   .replace("import coCaNgua from './src/page/games/co-ca-ngua.html';",`const coCaNgua=${JSON.stringify(coCaNguaHtml)};`)
@@ -20,6 +21,7 @@ const source=(await readFile(entry,'utf8'))
   .replace("import chibiRush from './src/page/games/chibi-rush.html';",`const chibiRush=${JSON.stringify(chibiRushHtml)};`)
   .replace("import partyCats from './src/page/games/party-cats.html';",`const partyCats=${JSON.stringify(partyCatsHtml)};`)
   .replace("import towerCity from './src/page/games/tower-city.html';",`const towerCity=${JSON.stringify(towerCityHtml)};`)
+  .replace("import aiLaTrieuPhu from './src/page/games/ai-la-trieu-phu.html';",`const aiLaTrieuPhu=${JSON.stringify(aiLaTrieuPhuHtml)};`)
   .replace(/from '(\.\/[^']+)'/g,(_,relative)=>`from '${new URL(relative,entry).href}'`);
 const worker=(await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).default;
 
@@ -34,7 +36,7 @@ test('tea shop routes serve playable page, HEAD, reject writes and protect its A
  assert.equal((await worker.fetch(new Request('https://example.test/api/tea-shop'),{HOME_SESSION_SECRET:'required'})).status,401);
 });
 test('shared chat is injected across repo game pages and served independently from game rooms',async()=>{
- for(const path of ['/snake','/xi-dach','/ty-phu','/chua-mebi','/uno','/tien-len','/stickman-fight','/party-cats','/chibi-rush','/co-ca-ngua','/tower-city','/__game/bomb-arena','/__game/mini-motorways']){
+ for(const path of ['/snake','/xi-dach','/ty-phu','/chua-mebi','/uno','/tien-len','/stickman-fight','/party-cats','/chibi-rush','/co-ca-ngua','/tower-city','/ai-la-trieu-phu','/__game/bomb-arena','/__game/mini-motorways']){
   const response=await worker.fetch(new Request('https://example.test'+path));assert.equal(response.status,200);assert.ok((await response.text()).includes('src="/shared-chat.js"'),path);
  }
  const script=await worker.fetch(new Request('https://example.test/shared-chat.js'));assert.equal(script.status,200);assert.match(script.headers.get('Content-Type'),/javascript/);
@@ -139,6 +141,20 @@ test('Worker serves UNO Arena routes and rejects writes',async()=>{
     const post=await worker.fetch(new Request('https://example.test'+route,{method:'POST'}));
     assert.equal(post.status,405);
   }
+});
+test('Worker serves Ai Là Triệu Phú routes and rejects writes',async()=>{
+  for(const route of ['/ai-la-trieu-phu','/ai-la-trieu-phu/','/__game/ai-la-trieu-phu','/trieu-phu']){
+    const response=await worker.fetch(new Request('https://example.test'+route));
+    assert.equal(response.status,200);
+    assert.match(await response.text(),/<title>Ai Là Triệu Phú<\/title>/);
+    const head=await worker.fetch(new Request('https://example.test'+route,{method:'HEAD'}));
+    assert.equal(head.status,200);
+    assert.equal(await head.text(),'');
+    const post=await worker.fetch(new Request('https://example.test'+route,{method:'POST'}));
+    assert.equal(post.status,405);
+  }
+  const {renderOffline}=await import('../src/page/render.js');
+  assert.match(await renderOffline(new Request('https://example.test/',{headers:{Accept:'text/html'}})).text(),/class="tab tab-link" href="\/ai-la-trieu-phu"/);
 });
 test('Worker serves Tower City routes and rejects writes',async()=>{
   for(const route of ['/tower-city','/tower-city/','/__game/tower-city']){
