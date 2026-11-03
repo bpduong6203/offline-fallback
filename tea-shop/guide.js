@@ -7,7 +7,7 @@ export const GUIDE_SECTIONS = [
   ['Giao món và nhận công đức','Sau khi đóng nắp, nhấn Giao món cho khách. Món đúng yêu cầu được trả giá đầy đủ và có thể có tip; làm nhanh, sạch và chất lượng tốt giúp khách hài lòng hơn.']
  ],note:'Ví dụ: trà sữa truyền thống dùng trà đen, có sữa và không topping. Đường và đá luôn chọn theo phiếu của khách, không dùng một mức cố định cho mọi ly.'},
  {label:'Quản lý quán',title:'Giữ quán đủ nguyên liệu và ngày càng ấm cúng',intro:'Tiền bán hàng và tip vào ví công đức dùng chung. Mua hàng và nâng cấp cũng trừ từ ví này.',steps:[
-  ['Kho nguyên liệu','Mở Kho nguyên liệu để xem tồn kho và mua thêm. Mỗi phần giá 1 công đức; chú ý ly, sữa, đường và lá trà khi sắp hết.'],
+  ['Kho nguyên liệu','Mở Kho nguyên liệu để xem tồn kho và mua thêm. 1 công đức mua được 5 phần, 2 công đức mua được 10 phần; chú ý ly, sữa, đường và lá trà khi sắp hết.'],
   ['Góc trồng cây','Chọn hạt → Gieo hạt → Tưới nước. Cây lớn trong 90 giây thời gian game khi quán mở, rồi cho 4 phần nguyên liệu. Cây không chết khi bạn rời trang.'],
   ['Sắm sửa quán','Mua thiết bị, thêm bàn ghế, chậu trồng hoặc đồ trang trí. Bình ủ cải thiện chất lượng; máy dập nắp rút ngắn thời gian pha; tủ lạnh và kệ tăng sức chứa.'],
   ['Kết một ngày','Ngày thường dài 7 phút ở tốc độ 1×; có thể Kết ngày từ phút thứ 6. Xem sổ thu chi để phân biệt doanh thu, giá vốn và tiền đã chi mua hàng.'],
