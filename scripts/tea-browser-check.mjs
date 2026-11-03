@@ -34,7 +34,20 @@ try{work:{
  assert(await evaluate("document.querySelector('#guideHeading').textContent.includes('chưa như ý')"));
  await click('#guideDone');assert(!(await evaluate("document.querySelector('#modal').open")));
  assert.equal((await read()).balance,0);
+ await until("document.querySelector('#scene').dataset.ownerSprite==='male'",'male PNG decoded');
+ assert.equal(await evaluate("document.querySelector('#scene').dataset.ownerSpriteSize"),'356x1108');
+ const ownerFront=await evaluate("(()=>{const c=document.querySelector('#scene').getContext('2d');return [...c.getImageData(710,405,115,100).data].reduce((h,n)=>(h*31+n)>>>0,0)})()");
+ await writeFile(new URL('../dist/tea-owner-male.png',import.meta.url),Buffer.from((await evaluate("document.querySelector('#scene').toDataURL('image/png').split(',')[1]")),'base64'));
+ const idlePose=await evaluate("document.querySelector('#scene').dataset.ownerPose");await wait(350);assert.notEqual(await evaluate("document.querySelector('#scene').dataset.ownerPose"),idlePose,'whole sprite has light idle motion');
  await click('[data-owner="female"]');assert.equal((await read()).state.ownerGender,'female');
+ await until("document.querySelector('#scene').dataset.ownerSprite==='female'",'female PNG decoded');
+ assert.equal(await evaluate("document.querySelector('#scene').dataset.ownerSpriteSize"),'356x1044');
+ assert.equal(await evaluate("(()=>{const c=document.querySelector('#scene').getContext('2d');return [...c.getImageData(710,405,115,100).data].reduce((h,n)=>(h*31+n)>>>0,0)})()"),ownerFront,'counter front fully occludes either sprite');
+ await writeFile(new URL('../dist/tea-owner-female.png',import.meta.url),Buffer.from((await evaluate("document.querySelector('#scene').toDataURL('image/png').split(',')[1]")),'base64'));
+ await click('#settings');await evaluate("document.querySelector('#reduce').checked=true");await click('#saveSettings');await click('#closeModal');
+ await until("document.querySelector('#scene').dataset.ownerPose==='0.28000,0.00000,0.000'",'reduced motion stops sprite');
+ const stillPose=await evaluate("document.querySelector('#scene').dataset.ownerPose");await wait(200);assert.equal(await evaluate("document.querySelector('#scene').dataset.ownerPose"),stillPose);
+ await click('#settings');await evaluate("document.querySelector('#reduce').checked=false");await click('#saveSettings');await click('#closeModal');
  await cdp('Page.reload');await until("document.querySelector('[data-owner=female]')?.getAttribute('aria-pressed')==='true'",'saved female owner');
  const layout=await evaluate("(()=>{const shop=document.querySelector('.shop').getBoundingClientRect(),work=document.querySelector('#workspace').getBoundingClientRect();return {beside:work.left>=shop.right,visible:work.top>=0&&work.bottom<innerHeight}})()");assert(layout.beside&&layout.visible,JSON.stringify(layout));
  await click('#open');await until('document.querySelectorAll(".order").length>0','first customer');
@@ -42,6 +55,7 @@ try{work:{
  assert((await read()).state.paused,'help pauses active service');await click('#closeModal');assert(!(await read()).state.paused,'closing help resumes active service');
  await click('#pause');assert((await read()).state.paused);await click('#help');await until("document.querySelector('#modal').open",'help while paused');await click('#closeModal');assert((await read()).state.paused,'manual pause is preserved');await click('#pause');
  const data=await read(),o=data.state.orders[0];await click(`.order [data-action="start"]`);
+ await until("Number(document.querySelector('#scene').dataset.ownerPose.split(',')[1])<-.005",'serving tilts whole sprite');
  await evaluate(`(()=>{window.stableChoice=document.querySelector('.choices button');window.stableCard=document.querySelector('.order');window.stableChoice.focus();window.tickChanges=[];window.tickObserver=new MutationObserver(records=>window.tickChanges.push(...records.map(r=>r.type+':'+r.attributeName)));window.tickObserver.observe(document.querySelector('#workspace'),{childList:true,subtree:true,attributes:true,attributeFilter:['disabled']});})()`);
  await wait(4500);
  assert(await evaluate('stableChoice===document.querySelector(".choices button")&&stableCard===document.querySelector(".order")&&document.activeElement===stableChoice&&!stableChoice.disabled'),'ticks preserve controls, focus and order cards');

@@ -3,7 +3,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 export async function buildTea(){
  const root=new URL('../',import.meta.url);
- const bundle=await build({entryPoints:[fileURLToPath(new URL('tea-shop/main.js',root))],bundle:true,write:false,format:'iife',target:'es2022'});
+ const bundle=await build({entryPoints:[fileURLToPath(new URL('tea-shop/main.js',root))],bundle:true,write:false,format:'iife',target:'es2022',loader:{'.png':'dataurl'}});
  const style=await readFile(new URL('tea-shop/style.css',root),'utf8');
  const html=(await readFile(new URL('tea-shop/index.html',root),'utf8')).replace('/* STYLE */',()=>style).replace('/* SCRIPT */',()=>bundle.outputFiles[0].text.replaceAll('</script','<\\/script'));
  await mkdir(new URL('dist/tea-shop/',root),{recursive:true});

@@ -20,6 +20,8 @@ Nút **Hướng dẫn** ở đầu màn hình mở sổ chơi gồm: ly đầu t
 
 Bảng thao tác nằm cạnh cảnh quán trên máy tính và ngay dưới cảnh trên điện thoại; kho, vườn và nâng cấp cuộn bên trong bảng. Chọn **Chủ tiệm → Nam / Nữ** ngay trên cảnh để đổi nhân vật. Lựa chọn lưu cùng tiến trình, giữ khi chơi lại; bản lưu cũ mặc định Nam.
 
+Hai chủ tiệm dùng PNG trong suốt cắt trực tiếp từ ảnh người dùng cung cấp, giữ nguyên pixel gốc. Nhân vật được vẽ trước quầy để quầy che thân dưới; giữ tỷ lệ bằng scale đồng nhất, nhún thở và nghiêng nhẹ toàn sprite lúc phục vụ. Giảm chuyển động trong Cài đặt sẽ dừng các hoạt ảnh này. File và cách tái tạo: [assets/tea-shop/README.md](../assets/tea-shop/README.md).
+
 - Chọn menu trong **Sổ công thức & menu**, mở cửa, chạm phiếu đơn hoặc khách trong cảnh quán.
 - Pha theo 8 bước: ly → trà → sữa → đường → đá → topping/thành phần → lắc/khuấy → nắp. Đối chiếu công thức ghim và phiếu khách, rồi giao món. Trên desktop có thể kéo lựa chọn vào ly; trên điện thoại chỉ cần chạm nút.
 - Lắc theo nhịp: bấm luân phiên Trái/Phải (hoặc A/D, phím mũi tên) khi kim vào vùng xanh. Nút đến lượt được tô sáng; ly chuyển động, số lượt và điểm cập nhật ngay khi bấm. Hoàn thành minigame ở bước lắc sẽ chuyển thẳng sang đóng nắp, không cần lắc tiêu chuẩn thêm lần nữa. Hủy minigame giữ nguyên bước pha.

@@ -1,3 +1,11 @@
+import ownerMaleSource from '../assets/tea-shop/owner-male.png';
+import ownerFemaleSource from '../assets/tea-shop/owner-female.png';
+
+const ownerSprites=Object.fromEntries(Object.entries({male:ownerMaleSource,female:ownerFemaleSource}).map(([gender,src])=>{
+ const image=new Image();image.src=src;return [gender,image];
+}));
+const ownerPoses=new WeakMap();
+
 export function cupSvg(id='classic',level=1){const color={classic:'#b9916e',pearl:'#a37750',jasmine:'#c1af83',matcha:'#9ead72',peach:'#dea66d',lemon:'#c0c98c'}[id]||'#b9916e';return `<svg viewBox="0 0 90 115" aria-hidden="true"><ellipse cx="46" cy="109" rx="28" ry="4" fill="#40342316"/><path d="M22 22H70L64 99Q46 108 28 99Z" fill="#fffaf0" stroke="#92795e" stroke-width="2"/><path d="M25 ${95-58*level}H67L62 96Q46 102 30 96Z" fill="${color}"/>${id==='pearl'?'<g fill="#513b2e"><circle cx="36" cy="90" r="4"/><circle cx="47" cy="93" r="4"/><circle cx="57" cy="87" r="4"/><circle cx="42" cy="82" r="4"/></g>':''}<path d="M51 39L55 4" stroke="#7e9066" stroke-width="5"/><rect x="19" y="18" width="54" height="8" rx="4" fill="#e9deca" stroke="#92795e"/><circle cx="46" cy="63" r="12" fill="#f6edd8" opacity=".9"/><path d="M40 67Q39 52 52 56Q52 69 40 67M41 66L49 58" fill="#83946a" stroke="#657b56"/></svg>`;}
 export function drawShop(canvas,s,selected,reduced=false){
  const c=canvas.getContext('2d'),t=reduced?0:performance.now()/1000; c.clearRect(0,0,1000,580);
@@ -27,6 +35,21 @@ export function drawShop(canvas,s,selected,reduced=false){
  if(s.decor.includes('lamp')){line(505,0,505,55,'#796d57');c.fillStyle='#cfb78b';c.beginPath();c.moveTo(505,48);c.lineTo(469,90);c.lineTo(541,90);c.fill();ellipse(505,91,35,5,'#eee0ae');}
  if(s.decor.includes('cat')){ellipse(397,284,36,13,'#b79577');ellipse(422,274,15,15,'#b79577');c.fillStyle='#b79577';c.beginPath();c.moveTo(411,266);c.lineTo(412,251);c.lineTo(423,263);c.lineTo(436,252);c.lineTo(436,272);c.fill();line(418,272,421,272,'#544734');line(428,272,431,272,'#544734');}
  if(s.decor.includes('plant'))plant(476,365,.8);
+ // Draw the unmodified PNG behind the complete counter, including its worktop.
+ // One uniform scale preserves the source aspect ratio even while breathing.
+ const ownerGender=s.ownerGender==='female'?'female':'male',owner=ownerSprites[ownerGender];
+ if(owner.complete&&owner.naturalWidth>0){
+  const now=performance.now(),previous=ownerPoses.get(canvas),dt=previous?Math.min(.1,(now-previous.time)/1000):0;
+  const serving=!!s.drink&&s.open&&!s.paused;
+  const targetLean=reduced?0:(serving?-.012+Math.sin(t*2.6)*.004:Math.sin(t*.75)*.003);
+  const lean=reduced?0:(previous?previous.lean+(targetLean-previous.lean)*(1-Math.exp(-dt*7)):targetLean);
+  ownerPoses.set(canvas,{time:now,lean});
+  const breathe=reduced?0:Math.sin(t*1.8),scale=.28*(1+breathe*.003);
+  c.save();c.translate(768,511+breathe*.7);c.rotate(lean);c.scale(scale,scale);
+  c.drawImage(owner,-owner.naturalWidth/2,-owner.naturalHeight);c.restore();
+  canvas.dataset.ownerSprite=ownerGender;canvas.dataset.ownerSpriteSize=owner.naturalWidth+'x'+owner.naturalHeight;
+  canvas.dataset.ownerPose=[scale.toFixed(5),lean.toFixed(5),breathe.toFixed(3)].join(',');
+ }
  // Wooden counter in a shallow isometric perspective.
  c.fillStyle='#c1a17e';c.beginPath();c.moveTo(505,355);c.lineTo(930,355);c.lineTo(980,399);c.lineTo(550,399);c.fill();rect(550,399,430,120,'#b48f69');rect(560,409,410,99,'#c9a982');for(let x=585;x<975;x+=36)line(x,413,x,502,'#b7946b');rect(547,393,435,13,'#e0c49c');
  // Tea brewer, register and a cup with steam.
@@ -35,7 +58,6 @@ export function drawShop(canvas,s,selected,reduced=false){
  rect(832,328,66,48,'#697263');rect(839,334,52,30,'#c6c9ad');rect(850,378,30,8,'#8d8b70');
  // Small barista.
  function person(x,y,color,name,active=false,gender=null){ellipse(x,y+53,32,10,'#4b493c22');line(x-10,y+25,x-13,y+51,'#756951',9);line(x+10,y+25,x+15,y+51,'#756951',9);ellipse(x,y+8,27,33,color);if(gender==='female'){ellipse(x+22,y-28,15,30,'#624b3c');ellipse(x,y-34,28,34,'#624b3c');}ellipse(x,y-33,24,27,'#ecd1b1');ellipse(x,y-49,25,15,'#705441');rect(x-24,y-49,9,gender==='female'?41:22,'#705441');if(gender==='female'){rect(x+17,y-45,8,37,'#624b3c');ellipse(x+29,y-43,6,5,'#c59586');}ellipse(x-8,y-33,2,2,'#544636');ellipse(x+8,y-33,2,2,'#544636');c.strokeStyle='#a6765f';c.beginPath();c.arc(x,y-28,5,0,Math.PI);c.stroke();if(active){ellipse(x,y+57,38,12,'#8fa57560');text('EN COURS',x,y+83,9,'#586e49');}if(name)text(name,x,y+75,13);}
- person(768,309,'#7c956e','',false,s.ownerGender||'male');
  const seats=[[190,366],[359,405],[100,454],[410,475],[240,485]];
  for(let i=0;i<2+(s.upgrades.seats||0);i++){const [x,y]=seats[i];ellipse(x,y+50,47,12,'#77684f20');line(x,y+13,x,y+65,'#987b58',9);ellipse(x,y+10,50,21,'#d9bd94');ellipse(x,y+5,50,20,'#e6cda7');}
  for(let i=0;i<s.orders.length;i++){const o=s.orders[i],p=seats[i];if(p)person(p[0],p[1]-14,['#d8ad93','#8fa99b','#b39fbe','#d6a7ac','#a5b4c7'][o.person],['An','Minh','Bà Linh','Bông','Hải'][o.person],selected===o.id);}
