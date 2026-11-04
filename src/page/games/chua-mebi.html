@@ -243,7 +243,8 @@
       ><button id="bBow">🙏 Lạy</button
       ><button id="bInc" class="alt">🪔 Thắp hương</button
       ><button id="bMo" class="alt">🪘 Gõ mõ</button
-      ><button id="bFortune" class="alt">🎋 Gieo quẻ</button>
+      ><button id="bFortune" class="alt">🎋 Gieo quẻ</button
+      ><button id="bFarm" class="alt" disabled>🐔 Đi MebiFarm</button>
     </div>
     <div id="tools">
       <button id="bMenu" class="ic" aria-label="Cài đặt" title="Cài đặt">⚙️</button
@@ -4279,6 +4280,37 @@
         });
       })();
 
+
+      // ===== Cổng sang MebiFarm (trang trại gà) ở tường phía đông sân ngoài =====
+      (function () {
+        const FARM_URL = "mebifarm.html";
+        const g = new THREE.Group();
+        g.position.set(24.4, 0, 34);
+        S.add(g);
+        const bxm = (w, h, d, c, x, y, z) => put(g, mk(new THREE.BoxGeometry(w, h, d), c, 1.02), x, y, z);
+        bxm(0.9, 2.2, 3.2, 0x5a3a24, 0.1, 1.1, 0); // cánh cửa gỗ
+        bxm(0.95, 2.2, 0.08, 0x3a2418, 0.1, 1.1, 0);
+        [-0.4, 0.4].forEach((z) => put(g, mk(SP(0.1), 0xc9a14a, 1.05, 0x3a2600), -0.4, 1.1, z));
+        bxm(0.6, 3.6, 0.6, 0x9a2016, 0, 1.8, -2.1);
+        bxm(0.6, 3.6, 0.6, 0x9a2016, 0, 1.8, 2.1);
+        bxm(0.8, 0.45, 5.4, 0x9a2016, 0, 3.7, 0);
+        bxm(0.7, 0.28, 4.4, 0x6b431f, 0, 3.15, 0);
+        const c = document.createElement("canvas");
+        c.width = 512; c.height = 128;
+        const x = c.getContext("2d");
+        x.fillStyle = "rgba(110,28,22,.95)"; x.fillRect(0, 0, 512, 128);
+        x.strokeStyle = "#e0b655"; x.lineWidth = 8; x.strokeRect(6, 6, 500, 116);
+        x.fillStyle = "#ffe9b0"; x.font = "bold 62px system-ui,sans-serif";
+        x.textAlign = "center"; x.textBaseline = "middle";
+        x.fillText("🐔 MebiFarm", 256, 68);
+        const sg = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, fog: false }));
+        sg.scale.set(3.4, 0.85, 1);
+        sg.position.set(-0.8, 4.7, 0);
+        g.add(sg);
+        window.__nearFarm = () => me.x > 20.5 && Math.abs(me.z - 34) < 3.5;
+        $("bFarm").onclick = () => { location.href = FARM_URL; };
+      })();
+
       // ===== giờ công phu: 5h sáng và 17h chiều, chuông lầu ngân + mõ nhỏ dần =====
       (function () {
         let last = "";
@@ -5223,6 +5255,7 @@
         $("cnt").textContent = others.size + 1;
         $("bInc").disabled = !near() || incCd > 0;
         $("bFortune").disabled = !nearFortune();
+        $("bFarm").disabled = !(window.__nearFarm && window.__nearFarm());
         if (fortuneBox.style.display === "block" && !nearFortune() && !fortuneBusy) toggleFortune(false);
         $("bSit").textContent = me.st === 1 ? "🚶 Đứng dậy" : "🧘 Ngồi";
         $("bBow").disabled = me.st === 2;
