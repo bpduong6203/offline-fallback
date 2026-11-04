@@ -10,22 +10,22 @@
     <title>Chùa MEBI 3D – ngồi cùng nhau</title>
     <style>
       :root {
-        --ink: #3b2f5c;
-        --card: rgba(255, 255, 255, 0.93);
+        --ink: #3a2a1e;
+        --card: rgba(250, 243, 230, 0.94);
         box-sizing: border-box;
         padding-top: env(safe-area-inset-top, 0px);
         padding-bottom: env(safe-area-inset-bottom, 0px);
       }
       @media (prefers-color-scheme: dark) {
         :root:not([data-theme="light"]) {
-          --ink: #f3eaff;
-          --card: rgba(34, 28, 66, 0.94);
+          --ink: #f3e6cf;
+          --card: rgba(38, 28, 22, 0.94);
           color-scheme: dark;
         }
       }
       :root[data-theme="dark"] {
-        --ink: #f3eaff;
-        --card: rgba(34, 28, 66, 0.94);
+        --ink: #f3e6cf;
+        --card: rgba(38, 28, 22, 0.94);
         color-scheme: dark;
       }
       * {
@@ -38,7 +38,7 @@
         overflow: hidden;
         font-family: system-ui, "Segoe UI", Roboto, sans-serif;
         color: var(--ink);
-        background: linear-gradient(#7d6ddb, #f0b4d8 58%, #ffdcb8);
+        background: linear-gradient(#6a7a96, #dcc1a0 58%, #f4dcb4);
       }
       canvas {
         position: fixed;
@@ -65,15 +65,62 @@
       #acts {
         position: fixed;
         z-index: 10;
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
         left: 50%;
         transform: translateX(-50%);
         display: flex;
-        gap: 7px;
-        flex-wrap: wrap;
+        gap: 8px;
         justify-content: center;
         align-items: center;
-        width: 96vw;
+        max-width: 96vw;
+      }
+      #acts button { padding: 10px 16px; font-size: 14px; white-space: nowrap; }
+      #acts button:disabled { display: none; }
+      #tools {
+        position: fixed;
+        z-index: 11;
+        top: calc(env(safe-area-inset-top, 0px) + 10px);
+        right: 10px;
+        display: flex;
+        gap: 8px;
+      }
+      button.ic {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        border-radius: 50%;
+        font-size: 18px;
+        line-height: 40px;
+        background: var(--card);
+        color: var(--ink);
+        box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
+      }
+      button.ic.on { background: #8a6a2a; color: #fbeccc; }
+      #menu, #hint {
+        display: none;
+        top: calc(env(safe-area-inset-top, 0px) + 58px);
+        right: 10px;
+        width: min(250px, 90vw);
+        padding: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        z-index: 11;
+      }
+      #menu.open { display: flex; flex-direction: column; gap: 8px; }
+      #hint.open { display: block; }
+      #menu button { width: 100%; text-align: left; padding: 8px 12px; font-size: 13px; }
+      #menu label { display: flex; align-items: center; gap: 8px; }
+      #menu .row { display: flex; gap: 6px; }
+      #menu .row button { text-align: center; padding: 8px 4px; }
+      #hint h4 { margin: 0 0 6px; font-size: 13px; }
+      #hint .k { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; }
+      #hint kbd {
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+        padding: 0 6px;
+        font: inherit;
+        font-weight: 800;
+        text-align: center;
       }
       button {
         font: inherit;
@@ -81,32 +128,24 @@
         border: 0;
         border-radius: 14px;
         padding: 9px 14px;
-        background: #ff7eb6;
-        color: #fff;
+        background: #9a2016;
+        color: #fbeccc;
         cursor: pointer;
-        box-shadow: 0 4px 0 #d2588f;
+        box-shadow: 0 4px 0 #5e130d;
       }
       button.alt {
-        background: #8e7bff;
-        box-shadow: 0 4px 0 #6a58cc;
+        background: #8a6a2a;
+        box-shadow: 0 4px 0 #52401a;
       }
       button:disabled {
         opacity: 0.45;
         cursor: default;
       }
       #vol {
+        flex: 1;
+        min-width: 0;
         width: 90px;
-        accent-color: #8e7bff;
-      }
-      #hint {
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 82px);
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 12px;
-        white-space: nowrap;
-        opacity: 0.92;
-        pointer-events: none;
-        padding: 6px 12px;
+        accent-color: #8a6a2a;
       }
       #start {
         top: 50%;
@@ -130,12 +169,12 @@
         font-weight: 700;
         padding: 9px 12px;
         border-radius: 12px;
-        border: 2px solid #ffb3d1;
+        border: 2px solid #c9a95c;
         margin: 4px 0 10px;
         width: 200px;
         text-align: center;
         background: #fff;
-        color: #3b2f5c;
+        color: #3a2a1e;
       }
       #toast {
         top: calc(env(safe-area-inset-top, 0px) + 12px);
@@ -161,30 +200,29 @@
       #fortune {
         display: none;
         z-index: 20;
-        top: 50%;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
         left: 50%;
-        transform: translate(-50%, -50%);
-        width: min(420px, 92vw);
-        max-height: 86vh;
-        overflow-y: auto;
+        transform: translateX(-50%);
+        width: min(400px, 94vw);
         text-align: center;
-        padding: 18px 20px;
+        padding: 12px 16px 10px;
       }
-      #fortune h3 { margin: 0 0 4px; }
-      #fortune p { margin: 0 0 10px; font-size: 13px; opacity: 0.85; }
-      #fStick { font-size: 54px; line-height: 1.1; min-height: 62px; }
-      #fStick.shake { animation: fshake 0.28s linear infinite; }
-      @keyframes fshake { 0%, 100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
-      #fResult { min-height: 78px; margin: 4px 0 10px; font-size: 15px; line-height: 1.5; }
-      #fResult b { font-size: 18px; }
+      #fResult { min-height: 66px; margin: 0 0 8px; font-size: 14px; line-height: 1.5; transition: opacity 0.4s; }
+      #fResult.wait { opacity: 0; }
+      #fResult b { font-size: 17px; }
       #fResult .win { color: #1f9d55; }
-      #fResult .lose { color: #d23f5f; }
-      #fResult .draw { color: #c28a12; }
-      #fortune details { margin-top: 12px; text-align: left; font-size: 12px; }
-      #fortune summary { cursor: pointer; text-align: center; opacity: 0.85; }
+      #fResult .lose { color: #b8332f; }
+      #fResult .draw { color: #b07c12; }
+      #fortune .frow { display: flex; gap: 8px; justify-content: center; }
+      #fortune .fnote { margin-top: 6px; font-size: 11px; font-weight: 600; opacity: 0.65; }
+      #fortune details { position: absolute; top: 6px; right: 10px; font-size: 12px; text-align: left; }
+      #fortune summary { cursor: pointer; opacity: 0.4; list-style: none; width: 22px; text-align: center; }
+      #fortune details[open] { right: 6px; left: 6px; top: auto; bottom: calc(100% + 8px); background: var(--card); border-radius: 14px; padding: 8px 10px; max-height: 38vh; overflow-y: auto; }
+      #fortune details[open] summary { text-align: right; width: auto; opacity: 0.7; }
       #fTable { width: 100%; border-collapse: collapse; margin-top: 6px; }
       #fTable th, #fTable td { padding: 3px 4px; border-bottom: 1px solid rgba(128, 128, 128, 0.25); text-align: right; font-weight: 600; }
       #fTable th:first-child, #fTable td:first-child { text-align: left; }
+      body.fmode #acts { display: none; }
     </style>
   </head>
   <body>
@@ -199,34 +237,37 @@
     <div id="ytbox" class="card" style="display: none">
       <div id="ytp"></div>
     </div>
-    <div id="hint" class="card">
-      WASD / mũi tên: đi · Space: ngồi/đứng · B: lạy · H: thắp hương (lại gần lư
-      hương) · M: gõ mõ · Q: gieo quẻ (lại gần ống quẻ) · kéo chuột: xoay góc nhìn
-    </div>
+    <div id="hint" class="card"></div>
     <div id="acts">
-      <button id="bSit">🧘 Ngồi</button><button id="bBow">🙏 Lạy</button
+      <button id="bSit">🧘 Ngồi</button
+      ><button id="bBow">🙏 Lạy</button
       ><button id="bInc" class="alt">🪔 Thắp hương</button
       ><button id="bMo" class="alt">🪘 Gõ mõ</button
       ><button id="bFortune" class="alt">🎋 Gieo quẻ</button>
-      <button id="bMus" class="alt">🎵 Nhạc: tắt</button
-      ><input
-        id="vol"
-        type="range"
-        min="0"
-        max="100"
-        value="55"
-        aria-label="Âm lượng"
-      /><button id="bSnd" class="alt">🔔 Âm: bật</button>
+    </div>
+    <div id="tools">
+      <button id="bMenu" class="ic" aria-label="Cài đặt" title="Cài đặt">⚙️</button
+      ><button id="bHelp" class="ic" aria-label="Hướng dẫn" title="Hướng dẫn">?</button>
+    </div>
+    <div id="menu" class="card">
+      <button id="bMus" class="alt">🎵 Nhạc: tắt</button>
+      <button id="bSnd" class="alt">🔔 Âm: bật</button>
+      <label>🔊 <input id="vol" type="range" min="0" max="100" value="55" aria-label="Âm lượng" /></label>
+      <div class="row">
+        <button id="bDN" class="alt" title="Ngày/đêm (N)">🌗</button
+        ><button id="bWx" class="alt" title="Thời tiết (K)">🌦️</button
+        ><button id="bBell" class="alt" title="Chuông lầu (C)">🛎️</button>
+      </div>
     </div>
     <div id="fortune" class="card" role="dialog" aria-label="Gieo quẻ cầu may">
-      <h3>🎋 Gieo quẻ cầu may</h3>
-      <p>Mỗi lần gieo dùng <span id="fStake">5</span> công đức. Kết quả do máy chủ quyết định.</p>
-      <div id="fStick">🎋</div>
-      <div id="fResult">Thành tâm khấn nguyện rồi gieo quẻ.</div>
-      <button id="fCast">Gieo quẻ (-5)</button>
-      <button id="fClose" class="alt">Đóng</button>
+      <div id="fResult">Thành tâm khấn nguyện, rồi lắc ống quẻ.</div>
+      <div class="frow">
+        <button id="fCast">🎋 Lắc quẻ (-5)</button>
+        <button id="fClose" class="alt">Thoát</button>
+      </div>
+      <div class="fnote">Mỗi lần lắc dùng <span id="fStake">5</span> công đức</div>
       <details id="fOdds">
-        <summary>Xem bảng tỉ lệ</summary>
+        <summary title="Chi tiết tỉ lệ">ⓘ</summary>
         <table id="fTable"></table>
       </details>
     </div>
@@ -253,16 +294,16 @@
       R.setSize(innerWidth, innerHeight);
       document.body.insertBefore(R.domElement, document.body.firstChild);
       const S = new THREE.Scene();
-      S.fog = new THREE.Fog(0xf0c8dc, 60, 170);
+      S.fog = new THREE.Fog(0xd9c8ae, 60, 170);
       const C = new THREE.PerspectiveCamera(
         50,
         innerWidth / innerHeight,
         0.1,
         500,
       );
-      S.add(new THREE.HemisphereLight(0xfff2ee, 0x9d8fc0, 0.5));
-      const sunL = new THREE.DirectionalLight(0xffe2c4, 0.45);
-      sunL.position.set(-10, 22, 14);
+      S.add(new THREE.HemisphereLight(0xfff0dc, 0x7a6a52, 0.5));
+      const sunL = new THREE.DirectionalLight(0xffd7a6, 0.55);
+      sunL.position.set(-26, 11, 12); // nắng xiên
       S.add(sunL);
       addEventListener("resize", () => {
         R.setSize(innerWidth, innerHeight);
@@ -314,7 +355,7 @@
       // nền đất, sân đá, mặt trăng, sao, núi
       put(
         S,
-        new THREE.Mesh(new THREE.CircleGeometry(150, 48), tm(0xa6cf94)),
+        new THREE.Mesh(new THREE.CircleGeometry(150, 48), tm(0x7b8659)),
         0,
         -0.03,
         0,
@@ -325,9 +366,9 @@
         const c = document.createElement("canvas");
         c.width = c.height = 256;
         const x = c.getContext("2d");
-        x.fillStyle = "#dcc59c";
+        x.fillStyle = "#bfb6a4";
         x.fillRect(0, 0, 256, 256);
-        x.strokeStyle = "#b39870";
+        x.strokeStyle = "#8c8474";
         x.lineWidth = 5;
         x.strokeRect(0, 0, 256, 256);
         x.beginPath();
@@ -354,7 +395,7 @@
       for (let i = 0; i < 7; i++) {
         const m = mk(
           new THREE.ConeGeometry(26 + (i % 3) * 6, 26 + (i % 4) * 8, 7),
-          i % 2 ? 0xc3b3ee : 0xb3c4f0,
+          i % 2 ? 0x8d90a4 : 0x7c899b,
           0,
         );
         put(S, m, -90 + i * 30, 13 + (i % 4) * 4 - 6, -120 - (i % 2) * 20);
@@ -503,7 +544,7 @@
       roofG.rotateY(Math.PI / 4);
       put(
         hall,
-        mk(roofG, 0x4d8f8a, 1.01),
+        mk(roofG, 0x586a55, 1.01),
         0,
         7.8 + 1.35,
         -17.5,
@@ -518,7 +559,7 @@
       );
       put(
         hall,
-        mk(roofG, 0x4d8f8a, 1.01),
+        mk(roofG, 0x586a55, 1.01),
         0,
         11.7 + 1.8,
         -17.5,
@@ -676,8 +717,8 @@
         0,
       );
       [
-        [18, 3.05, 0.95, 0, 0xff9cc6, 0.62, 1.3],
-        [14, 2.4, 1.15, 0.22, 0xffb8d6, 0.55, 1.2],
+        [18, 3.05, 0.95, 0, 0xd98f8a, 0.62, 1.3],
+        [14, 2.4, 1.15, 0.22, 0xe2aaa3, 0.55, 1.2],
       ].forEach(([n, rad, y, off, col, w, h], r) => {
         for (let i = 0; i < n; i++) {
           const a = (i / n) * TAU + off,
@@ -1126,7 +1167,7 @@
         [2.7, 8.15, -1.0],
         [4.1, 8.2, -1.0],
       ].forEach(([x, y, z], i) =>
-        bm(0xffb5c8, x, y, z, 0.12, 0.32, 0.12, [0.3, 0, i ? -0.4 : 0.4], 1.06),
+        bm(0xe0a79f, x, y, z, 0.12, 0.32, 0.12, [0.3, 0, i ? -0.4 : 0.4], 1.06),
       );
       plum(-3.6, 0.12, 2.6, 1.1, 0.5, 0.05); // hoa rơi dưới đài sen
 
@@ -1247,9 +1288,9 @@
           0.2,
         );
         [
-          [0, 0.9, 0xff9ec4],
-          [-0.18, 0.75, 0xfff0f7],
-          [0.18, 0.78, 0xffb8d6],
+          [0, 0.9, 0xd98f8a],
+          [-0.18, 0.75, 0xf6e8de],
+          [0.18, 0.78, 0xe2aaa3],
         ].forEach(([dx, dy, c]) =>
           put(altar, mk(SP(0.24), c, 0), x + dx, 1.25 + dy, 0.2),
         );
@@ -1404,10 +1445,10 @@
         );
       }
       [
-        [-20, 10],
-        [-24, -6],
+        [-29, 10],
+        [-30, -6],
         [-22, -22],
-        [22, -2],
+        [29, -2],
         [25, -20],
         [-30, 18],
         [28, 14],
@@ -1436,7 +1477,7 @@
           [1.8, 4.2, -0.5, 1.8],
           [0.4, 5.7, 0.3, 1.6],
         ].forEach(([dx, dy, dz, r]) =>
-          put(g, mk(SP(r), 0xffc2dc, 1.04, 0x4a1a2a), dx, dy, dz),
+          put(g, mk(SP(r), 0xe6b6ad, 1.04, 0x4a1a2a), dx, dy, dz),
         );
       }
       sakura(-14.5, 9);
@@ -1491,7 +1532,7 @@
             pond,
             mk(
               new THREE.ConeGeometry(0.36, 0.7, 8),
-              i ? 0xfff0f7 : 0xff9ec4,
+              i ? 0xf6e8de : 0xd98f8a,
               1.05,
             ),
             x + 0.3,
@@ -1852,7 +1893,7 @@
               p.rotation.y = a;
               g.add(p);
             }
-            put(g, mk(roofQ, 0x3f8a84, 1.02), 0, y + 2.1 + 0.55, 0, [
+            put(g, mk(roofQ, 0x4b5b49, 1.02), 0, y + 2.1 + 0.55, 0, [
               w * 1.6,
               1.1,
               w * 1.6,
@@ -1899,10 +1940,10 @@
             0,
           );
         }
-        pagoda(-31, -12, 5, 1.15, 0.35);
+        pagoda(-33, -31, 5, 1.15, 0.35);
 
         // --- lầu chuông bên phải ---
-        function belfry(x, z, sc, ry) {
+        function belfry(x, z, sc, ry, drum) {
           const g = new THREE.Group();
           g.position.set(x, 0, z);
           g.scale.setScalar(sc);
@@ -1925,7 +1966,7 @@
           );
           box(g, 6.2, 0.3, 0.4, mG, 0, 3.95, 2.7);
           box(g, 6.2, 0.3, 0.4, mG, 0, 3.95, -2.7);
-          put(g, mk(roofQ, 0x3f8a84, 1.02), 0, 4 + 0.75, 0, [9.4, 1.5, 9.4]);
+          put(g, mk(roofQ, 0x4b5b49, 1.02), 0, 4 + 0.75, 0, [9.4, 1.5, 9.4]);
           put(
             g,
             mk(new THREE.BoxGeometry(3.4, 1.3, 3.4), 0xb8493c),
@@ -1933,9 +1974,26 @@
             5.75,
             0,
           );
-          put(g, mk(roofQ, 0x3f8a84, 1.02), 0, 6.4 + 0.65, 0, [6, 1.3, 6]);
+          put(g, mk(roofQ, 0x4b5b49, 1.02), 0, 6.4 + 0.65, 0, [6, 1.3, 6]);
           box(g, 9.5, 0.18, 9.5, mG, 0, 4, 0);
           put(g, mk(SP(0.4), GOLD, 1.05, 0x3a2600), 0, 8.1, 0);
+          if (drum) {
+            // trống lớn nằm ngang trên giá gỗ, hai mặt da + đinh đồng
+            const dg = new THREE.Group();
+            dg.position.set(0, 2.9, 0);
+            g.add(dg);
+            put(dg, mk(new THREE.CylinderGeometry(1.25, 1.25, 2.4, 24), 0x9a2016, 1.04), 0, 0, 0, null, [0, 0, Math.PI / 2]);
+            [-1.22, 1.22].forEach((sx) =>
+              put(dg, mk(new THREE.CylinderGeometry(1.2, 1.2, 0.08, 24), 0xd9b27a, 1.02), sx, 0, 0, null, [0, 0, Math.PI / 2]),
+            );
+            [-0.8, 0.8].forEach((sx) =>
+              put(dg, new THREE.Mesh(new THREE.TorusGeometry(1.26, 0.07, 6, 28), mG), sx, 0, 0, null, [0, Math.PI / 2, 0]),
+            );
+            put(g, mk(new THREE.BoxGeometry(3.4, 0.5, 1.8), 0x5a3a24), 0, 1.45, 0);
+            put(g, mk(new THREE.BoxGeometry(0.4, 0.9, 1.4), 0x5a3a24), -1.3, 1.9, 0);
+            put(g, mk(new THREE.BoxGeometry(0.4, 0.9, 1.4), 0x5a3a24), 1.3, 1.9, 0);
+            return;
+          }
           const pv = new THREE.Group();
           pv.position.set(0, 3.9, 0);
           g.add(pv);
@@ -1966,6 +2024,7 @@
           });
         }
         belfry(31, -12, 1.15, -0.35);
+        belfry(-31, -12, 1.15, 0.35, true); // lầu trống đối xứng
 
         // --- dây đèn lồng lễ hội căng qua sân ---
         function festival(z) {
@@ -2065,7 +2124,7 @@
       for (let i = 0; i < 220; i++) {
         smk.push({ a: 99, l: 5, x: 0, y: -99, z: 0, vx: 0 });
       }
-      const PT = pts(70, 0.45, 0xffc1da, 0.9, false),
+      const PT = pts(70, 0.45, 0xe6b6ad, 0.9, false),
         ptl = [];
       for (let i = 0; i < 70; i++)
         ptl.push({
@@ -2455,7 +2514,16 @@
         return 1.5 * (1 - t * t);
       }
       const gY = (x, z) =>
-        bridgeY(x, z) + (z > -9.4 ? 0 : z > -10.6 ? 0.4 : H0);
+        bridgeY(x, z) +
+        (z > -9.4
+          ? z <= -3
+            ? 0.4
+            : Math.abs(x) < 4.6 && z < -1.2
+              ? (0.4 * (-1.2 - z)) / 1.8
+              : 0
+          : z > -10.6
+            ? 0.6
+            : H0);
       const faceBud = (p) => Math.atan2(0 - p.x, -21.4 - p.z);
 
       // ================= NÂNG CẤP V3: mái cong, tam quan, ngày/đêm, thời tiết, ao sen, âm thanh, bàn thờ, gõ mõ =================
@@ -2711,11 +2779,11 @@
         // ---------- TAM QUAN (cổng chùa) ----------
         {
           const gate = new THREE.Group();
-          gate.position.set(0, 0, 31);
+          gate.position.set(0, 0, 55);
           S.add(gate);
           const STONE = 0xd9cdb4,
             RED = 0xc4553d,
-            TEAL = 0x4d8f8a;
+            TEAL = 0x586a55;
           put(
             gate,
             mk(new THREE.BoxGeometry(17, 0.5, 6.4), STONE, 1.02),
@@ -2905,8 +2973,8 @@
               put(gate, mk(SP(0.26), GOLD, 1.05, 0x3a2600), x, 2.9, 0);
             }
           });
-          lamp(-3.9, 25);
-          lamp(3.9, 25);
+          lamp(-3.9, 49);
+          lamp(3.9, 49);
           // nối lối đi ra cổng
           S.traverse((o) => {
             if (
@@ -2919,12 +2987,12 @@
               S.userData.pathExt = 1;
               const t2 = o.material.map.clone();
               t2.needsUpdate = true;
-              t2.repeat.set(1, 1.6);
+              t2.repeat.set(1, 5.9);
               t2.wrapS = t2.wrapT = THREE.RepeatWrapping;
               put(
                 S,
                 new THREE.Mesh(
-                  new THREE.PlaneGeometry(5.6, 9),
+                  new THREE.PlaneGeometry(5.6, 33),
                   new THREE.MeshToonMaterial({
                     map: t2,
                     polygonOffset: true,
@@ -2934,7 +3002,7 @@
                 ),
                 0,
                 0.03,
-                26.5,
+                38.5,
                 null,
                 [-Math.PI / 2, 0, 0],
               );
@@ -3110,7 +3178,7 @@
               const pv = new THREE.Group();
               pv.rotation.y = (i / 8) * TAU;
               gl.add(pv);
-              const pt = mk(SP(1), i % 2 ? 0xffd978 : 0xffc2da, 1.05, 0x3a1a00);
+              const pt = mk(SP(1), i % 2 ? 0xffd978 : 0xe6b6ad, 1.05, 0x3a1a00);
               pt.position.set(0, 0.55, 0.28);
               pt.scale.set(0.12, 0.33, 0.06);
               pt.rotation.x = 0.35;
@@ -3137,7 +3205,7 @@
           for (let i = 0; i < 9; i++) {
             const bud2 = mk(
               new THREE.ConeGeometry(0.17, 0.46, 8),
-              i % 2 ? 0xfff0f7 : 0xff9ec4,
+              i % 2 ? 0xf6e8de : 0xd98f8a,
               1.05,
             );
             put(altar, bud2, -4 + i, 1.5, 1.2);
@@ -3346,9 +3414,9 @@
             pond.add(g);
             const rings = [];
             [
-              [9, 0xff9ec4, 0.5, 0.2],
-              [7, 0xffc2da, 0.4, 0.13],
-              [5, 0xfff0f7, 0.3, 0.07],
+              [9, 0xd98f8a, 0.5, 0.2],
+              [7, 0xe6b6ad, 0.4, 0.13],
+              [5, 0xf6e8de, 0.3, 0.07],
             ].forEach(([n, col, len, rad], ri) => {
               const piv = [];
               for (let i = 0; i < n; i++) {
@@ -3385,7 +3453,7 @@
           ].forEach(([x, z]) =>
             put(
               pond,
-              mk(new THREE.ConeGeometry(0.16, 0.5, 8), 0xff9ec4, 1.05),
+              mk(new THREE.ConeGeometry(0.16, 0.5, 8), 0xd98f8a, 1.05),
               x,
               0.35,
               z,
@@ -3766,17 +3834,17 @@
             lastSky = nv;
             const bgc =
               "linear-gradient(" +
-              css(hexMix(0x7d6ddb, 0x070a26, nv)) +
+              css(hexMix(0x6a7a96, 0x070a26, nv)) +
               "," +
-              css(hexMix(0xf0b4d8, 0x1d2160, nv)) +
+              css(hexMix(0xdcc1a0, 0x1d2160, nv)) +
               " 58%," +
-              css(hexMix(0xffdcb8, 0x4b2f68, nv)) +
+              css(hexMix(0xf4dcb4, 0x3a2a3c, nv)) +
               ")";
             document.body.style.background = bgc;
             document.documentElement.style.background = bgc;
           }
           const fogC = hexMix(
-            hexMix(0xf0c8dc, 0x20245a, nv),
+            hexMix(0xd9c8ae, 0x20245a, nv),
             hexMix(0xeae6f0, 0x2c3158, nv),
             w1,
           );
@@ -3784,12 +3852,12 @@
           S.fog.near = lerp(60, 14, w1);
           S.fog.far = lerp(170, 85, w1);
           if (hemi) {
-            hemi.intensity = lerp(0.5, 0.3, nv);
-            hemi.color.setHex(hexMix(0xfff2ee, 0xaebcff, nv));
-            hemi.groundColor.setHex(hexMix(0x9d8fc0, 0x3a3470, nv));
+            hemi.intensity = lerp(0.5, 0.26, nv);
+            hemi.color.setHex(hexMix(0xfff0dc, 0xaebcff, nv));
+            hemi.groundColor.setHex(hexMix(0x7a6a52, 0x34304e, nv));
           }
-          sunL.intensity = lerp(0.45, 0.28, nv);
-          sunL.color.setHex(hexMix(0xffe2c4, 0x9db4ff, nv));
+          sunL.intensity = lerp(0.55, 0.22, nv); // chiều ngả vàng, đêm chỉ còn đèn
+          sunL.color.setHex(hexMix(0xffd7a6, 0x9db4ff, nv));
           hallLight.intensity *= 1 + 0.7 * nv;
           budL.intensity = 0.35 * (1 + 0.8 * nv);
           stars.p.material.opacity = 0.9 * nv;
@@ -3966,6 +4034,7 @@
           o.start(t0);
           o.stop(t0 + 0.2);
         };
+        window.__bigBell = () => bigBell();
         const bigBell = () => {
           if (!M.ac || !M.sfx) return;
           window.BELLK.t = 0;
@@ -4037,12 +4106,200 @@
         });
         const hint = $("hint");
         hint.innerHTML =
-          "WASD / mũi tên: đi · Space: ngồi · B: lạy · H: thắp hương · M: gõ mõ (giữ để gõ liên tục) · N: ngày/đêm · K: thời tiết · C: chuông lầu · kéo chuột: xoay";
-        hint.style.whiteSpace = "normal";
-        hint.style.width = "min(92vw, 760px)";
-        hint.style.textAlign = "center";
-        hint.style.bottom = "calc(env(safe-area-inset-bottom, 0px) + 122px)";
+          '<h4>🪷 Hướng dẫn</h4><div class="k">' +
+          "<kbd>WASD</kbd><span>đi (hoặc mũi tên)</span>" +
+          "<kbd>Space</kbd><span>ngồi / đứng</span>" +
+          "<kbd>B</kbd><span>lạy</span>" +
+          "<kbd>H</kbd><span>thắp hương (gần lư hương)</span>" +
+          "<kbd>M</kbd><span>gõ mõ (giữ để gõ liên tục)</span>" +
+          "<kbd>Q</kbd><span>gieo quẻ (gần ống quẻ)</span>" +
+          "<kbd>N</kbd><span>ngày / đêm</span>" +
+          "<kbd>K</kbd><span>thời tiết</span>" +
+          "<kbd>C</kbd><span>chuông lầu</span>" +
+          "<kbd>Kéo</kbd><span>xoay góc nhìn</span></div>";
+        const fire = (code) => dispatchEvent(new KeyboardEvent("keydown", { code }));
+        $("bDN").onclick = () => fire("KeyN");
+        $("bWx").onclick = () => fire("KeyK");
+        $("bBell").onclick = () => fire("KeyC");
+        const panels = { bMenu: $("menu"), bHelp: hint };
+        Object.keys(panels).forEach((id) => {
+          $(id).onclick = () => {
+            const open = !panels[id].classList.contains("open");
+            Object.keys(panels).forEach((k) => {
+              panels[k].classList.remove("open");
+              $(k).classList.remove("on");
+            });
+            if (open) {
+              panels[id].classList.add("open");
+              $(id).classList.add("on");
+            }
+          };
+        });
       }
+
+
+      // ===== MỞ RỘNG ĐỢT 1: sân ngoài + ao sen + bồ đề + bia đá, sân trong nâng nền bậc thang, hành lang hai bên =====
+      (function () {
+        const STONE = 0xbdb4a3, WOOD = 0x5a3a24, RED = 0x9a2016, GC = 0xc9a14a,
+          TILEC = 0x4b5b49, CREAM = 0xe8dcc4;
+        const mGold = new THREE.MeshToonMaterial({ color: GC, emissive: 0x3a2600, gradientMap: GRAD });
+        const bx = (par, w, h, d, c, x, y, z, o) =>
+          put(par, mk(new THREE.BoxGeometry(w, h, d), c, o === undefined ? 1.015 : o), x, y, z);
+        window.OBS = [];
+        const obs = (x, z, hx, hz) => window.OBS.push([x, z, hx, hz]);
+
+        // nâng các vật sẵn có ở sân trong lên theo nền mới
+        S.children.slice().forEach((o) => {
+          if (o === hall || o.isLight || o.isPoints || o.isCamera) return;
+          const gt = o.geometry && o.geometry.type;
+          if (gt === "PlaneGeometry" || gt === "CircleGeometry") return;
+          if (o.position.z > -9.9 && o.position.z < -3.2 && Math.abs(o.position.x) < 17.5)
+            o.position.y += 0.4;
+        });
+
+        // --- sân trong: nền cao + bậc thang + lan can ---
+        bx(S, 34, 0.4, 7.2, 0xb4ab9a, 0, 0.2, -6.4, 0);
+        bx(S, 34.4, 0.12, 7.6, GC, 0, 0.4, -6.4, 0).material = mGold;
+        bx(S, 34, 0.38, 7.2, 0xb4ab9a, 0, 0.21, -6.4, 0);
+        bx(S, 9.2, 0.13, 1.9, STONE, 0, 0.065, -2.05);
+        bx(S, 9.0, 0.27, 1.25, STONE, 0, 0.135, -2.4);
+        bx(S, 8.8, 0.4, 0.6, 0xcfc6b2, 0, 0.2, -2.85);
+        [-1, 1].forEach((sg) => {
+          bx(S, 12.2, 0.55, 0.35, STONE, sg * 10.7, 0.68, -3);
+          bx(S, 0.35, 0.55, 7.2, STONE, sg * 17, 0.68, -6.4);
+          for (let i = 0; i <= 5; i++) {
+            const x = sg * (4.6 + i * 2.5);
+            put(S, mk(new THREE.BoxGeometry(0.4, 0.8, 0.4), 0xa9a08e, 1.03), x, 0.8, -3);
+            put(S, mk(SP(0.2), GC, 1.05, 0x3a2600), x, 1.3, -3);
+          }
+          obs(sg * 10.85, -3, 6.2, 0.3);
+          obs(sg * 17, -6.4, 0.3, 3.6);
+        });
+
+        // --- sân ngoài: nền đá rộng, tường hai bên ---
+        const t3 = tileTex.clone();
+        t3.needsUpdate = true;
+        t3.repeat.set(12, 8.7);
+        put(S, new THREE.Mesh(new THREE.BoxGeometry(48.8, 0.3, 34), new THREE.MeshToonMaterial({ map: t3 })), 0, -0.15, 39);
+        [-1, 1].forEach((sg) => {
+          const cx = sg * 24.6;
+          bx(S, 0.9, 2, 43, CREAM, cx, 1, 34.5, 1.01);
+          bx(S, 0.96, 0.3, 43.1, 0xb8493c, cx, 1.65, 34.5, 0);
+          bx(S, 1.5, 0.3, 43.5, TILEC, cx, 2.28, 34.5, 0);
+          for (let i = 0; i < 6; i++) {
+            const z = 14 + i * 8.5;
+            bx(S, 0.8, 2.6, 0.8, 0xe0d2b8, cx, 1.3, z, 1.04);
+            put(S, mk(SP(0.26), GC, 1.05, 0x3a2600), cx, 2.9, z);
+          }
+        });
+        [31, 37, 43].forEach((z) => { lamp(-3.9, z); lamp(3.9, z); });
+
+        // ao sen hai bên lối đi
+        const padsA = [];
+        [-1, 1].forEach((sg) => {
+          const g = new THREE.Group();
+          g.position.set(sg * 11, 0, 40);
+          S.add(g);
+          bx(g, 9.4, 0.4, 0.5, STONE, 0, 0.2, -3.5);
+          bx(g, 9.4, 0.4, 0.5, STONE, 0, 0.2, 3.5);
+          bx(g, 0.5, 0.4, 7.4, STONE, -4.45, 0.2, 0);
+          bx(g, 0.5, 0.4, 7.4, STONE, 4.45, 0.2, 0);
+          put(g, new THREE.Mesh(new THREE.PlaneGeometry(8.4, 6.5), new THREE.MeshToonMaterial({ color: 0x5f8c8f, transparent: true, opacity: 0.88 })), 0, 0.26, 0, null, [-Math.PI / 2, 0, 0]);
+          for (let i = 0; i < 9; i++) {
+            const px = ((i * 37) % 7) - 3.2, pz = ((i * 53) % 5) - 2.3;
+            const pad = put(g, new THREE.Mesh(new THREE.CircleGeometry(0.55, 14), new THREE.MeshToonMaterial({ color: i % 2 ? 0x587a41 : 0x4f6f3a })), px, 0.3, pz, null, [-Math.PI / 2, 0, 0]);
+            padsA.push([pad, i]);
+            if (i % 3 === 0)
+              put(g, mk(new THREE.ConeGeometry(0.28, 0.4, 7), i % 2 ? 0xf2e2dc : 0xe0a8a0, 1.04), px, 0.55, pz);
+          }
+          obs(sg * 11, 40, 4.7, 3.7);
+        });
+        GA.push((t) => padsA.forEach(([m, i]) => (m.position.y = 0.3 + Math.sin(t * 0.9 + i) * 0.015)));
+
+        // cây bồ đề lớn
+        function bodhi(x, z, k) {
+          const g = new THREE.Group();
+          g.position.set(x, 0, z);
+          S.add(g);
+          put(g, mk(new THREE.CylinderGeometry(0.7 * k, 1.1 * k, 6 * k, 10), 0x6b4a32), 0, 3 * k, 0);
+          [[0, 8, 0, 4], [-3, 7.2, 1, 3], [3, 7.4, -1, 3.2], [1, 10, 1, 3], [-1.5, 9.6, -2, 2.8]].forEach(([a, b, c, r], i) =>
+            put(g, mk(SP(1), [0x5f7a45, 0x6d8a4f, 0x536e3c][i % 3]), a * k, b * k, c * k, [r * k, r * k * 0.85, r * k]),
+          );
+          obs(x, z, 1.3 * k, 1.3 * k);
+        }
+        bodhi(-15, 31, 1.15);
+        bodhi(16, 47, 1);
+
+        // bia đá đặt trên lưng rùa
+        [-1, 1].forEach((sg) => {
+          const g = new THREE.Group();
+          g.position.set(sg * 6.4, 0, 28);
+          g.rotation.y = -sg * 0.15;
+          S.add(g);
+          bx(g, 2.2, 0.5, 1.4, STONE, 0, 0.25, 0);
+          put(g, mk(SP(0.45), 0xa9a08e), 0, 0.5, 0.9, [1, 0.8, 1.3]);
+          bx(g, 1.5, 2.6, 0.4, 0x8d877d, 0, 1.8, 0);
+          bx(g, 1.1, 1.8, 0.05, 0x6e675d, 0, 1.8, 0.23, 0);
+          const rf = mk(new THREE.ConeGeometry(1.2, 0.7, 4), TILEC, 1.04);
+          rf.rotation.y = Math.PI / 4;
+          rf.scale.set(1, 1, 0.6);
+          put(g, rf, 0, 3.4, 0);
+          obs(sg * 6.4, 28, 1.2, 0.8);
+        });
+
+        // --- hành lang (nhà tăng, nhà tổ) hai bên sân giữa ---
+        function gable(w, h, len, c) {
+          const sh = new THREE.Shape();
+          sh.moveTo(-w / 2, 0); sh.lineTo(w / 2, 0); sh.lineTo(0, h); sh.lineTo(-w / 2, 0);
+          const ge = new THREE.ExtrudeGeometry(sh, { depth: len, bevelEnabled: false });
+          ge.translate(0, 0, -len / 2);
+          return new THREE.Mesh(ge, tm(c));
+        }
+        [-1, 1].forEach((sg) => {
+          const g = new THREE.Group();
+          g.position.set(sg * 20.2, 0, 1.5);
+          S.add(g);
+          const ix = -sg * 3;
+          bx(g, 6.4, 0.12, 22, 0x6e5a46, 0, 0.06, 0, 0);
+          bx(g, 0.5, 3.4, 21.6, CREAM, sg * 3.1, 1.7, 0, 1.01);
+          bx(g, 0.56, 0.25, 21.7, 0xb8493c, sg * 3.1, 3.3, 0, 0);
+          bx(g, 0.4, 0.3, 21.8, WOOD, ix, 3.55, 0, 0);
+          for (let z = -10; z <= 10; z += 4) {
+            put(g, mk(new THREE.CylinderGeometry(0.28, 0.32, 3.5, 12), RED), ix, 1.8, z);
+            put(g, mk(new THREE.CylinderGeometry(0.42, 0.46, 0.3, 12), 0xa9a08e, 1.04), ix, 0.15, z);
+            bx(g, 6.8, 0.3, 0.35, WOOD, 0, 3.55, z, 0);
+          }
+          for (let z = -8; z <= 8; z += 4) {
+            const l = put(g, mk(SP(0.3), 0xb8332f, 1.06, 0x401008), ix + sg * 0.2, 2.9, z, [0.85, 1.1, 0.85]);
+          }
+          const r = gable(8, 1.9, 22.6, TILEC);
+          r.position.set(0, 3.7, 0);
+          g.add(r);
+          bx(g, 0.3, 0.25, 22.8, GC, 0, 5.62, 0, 0).material = mGold;
+        });
+      })();
+
+      // ===== giờ công phu: 5h sáng và 17h chiều, chuông lầu ngân + mõ nhỏ dần =====
+      (function () {
+        let last = "";
+        const slots = [5, 17];
+        function check() {
+          const d = new Date(), h = d.getHours();
+          if (slots.indexOf(h) < 0 || d.getMinutes() > 4) return;
+          const key = d.toDateString() + h;
+          if (key === last) return;
+          last = key;
+          toast(h < 12 ? "🪷 Đến giờ công phu sáng…" : "🪷 Đến giờ công phu chiều…");
+          if (window.__bigBell) window.__bigBell();
+          let n = 0;
+          const iv = setInterval(() => {
+            if (++n > 12) return clearInterval(iv);
+            try { moSound(1 - n / 14); } catch (e) {}
+          }, 1100);
+        }
+        setInterval(check, 20000);
+        setTimeout(check, 4000);
+      })();
 
       // ================= trạng thái + điều khiển =================
       const COLS = [0xffb3d1, 0xa8d8ff, 0xc9b6f2, 0xffd9a0, 0xb6e8c8, 0xffc2b0],
@@ -4282,6 +4539,88 @@
         rewardMerit("mallet", true);
       }
       // ================= Gieo quẻ cầu may =================
+
+      // ===== Gieo quẻ 3D: lắc ống, thẻ quẻ bay ra rồi rơi xuống khay =====
+      const fSlip = new THREE.Group();
+      let fsT = -1, fsTex = null, fcamK = 0;
+      fSlip.visible = false;
+      fStand.add(fSlip);
+      // khay dâng quẻ phía trước bàn
+      put(fStand, mk(new THREE.BoxGeometry(1.9, 0.1, 1.1), 0x8a5a2b), 0, 0.98, 1.05);
+      put(fStand, mk(new THREE.BoxGeometry(1.7, 0.03, 0.95), 0xb3322a, 0), 0, 1.045, 1.05);
+      [[-0.85, 1.55], [0.85, 1.55]].forEach(([x, z]) => put(fStand, mk(new THREE.BoxGeometry(0.12, 0.93, 0.12), 0x6b431f, 0), x, 0.47, z));
+      {
+        const body = mk(new THREE.BoxGeometry(0.95, 0.2, 0.03), 0xf1dca8, 1.05);
+        fSlip.add(body);
+        put(fSlip, mk(new THREE.BoxGeometry(0.14, 0.2, 0.034), 0xb3322a, 0), -0.405, 0, 0);
+        fSlip.userData.face = new THREE.Mesh(new THREE.PlaneGeometry(0.76, 0.17), new THREE.MeshBasicMaterial({ transparent: true }));
+        fSlip.userData.face.position.set(0.07, 0, 0.0165);
+        fSlip.add(fSlip.userData.face);
+      }
+      function fSlipShow(f) {
+        const c = document.createElement("canvas");
+        c.width = 512; c.height = 112;
+        const x = c.getContext("2d");
+        x.fillStyle = "#f1dca8"; x.fillRect(0, 0, 512, 112);
+        x.strokeStyle = "#b3322a"; x.lineWidth = 3; x.strokeRect(3, 3, 506, 106);
+        x.fillStyle = "#b3322a"; x.font = "bold 64px system-ui,sans-serif";
+        x.textAlign = "center"; x.textBaseline = "middle";
+        x.fillText(String(f.hex || "🎋"), 52, 58);
+        x.textAlign = "left"; x.fillStyle = "#3a2a1e";
+        x.font = "bold 34px system-ui,sans-serif";
+        x.fillText(String(f.name || "").slice(0, 16), 104, 36);
+        x.font = "600 22px system-ui,sans-serif"; x.fillStyle = "#6b431f";
+        x.fillText(String(f.prize || "").slice(0, 28), 104, 78);
+        if (fsTex) fsTex.dispose();
+        fsTex = new THREE.CanvasTexture(c);
+        fSlip.userData.face.material.map = fsTex;
+        fSlip.userData.face.material.needsUpdate = true;
+        fSlip.visible = true;
+        fsT = 0;
+        fPop = 0;
+        $("fResult").classList.add("wait");
+        setTimeout(() => $("fResult").classList.remove("wait"), 1700);
+      }
+      function fSlipHide() { fsT = -1; fSlip.visible = false; $("fResult").classList.remove("wait"); }
+      const ease = (u) => u * u * (3 - 2 * u);
+      GA.push((t, dt) => {
+        // ống nảy lên khi lắc
+        const k = Math.min(1, fShake / 0.4);
+        fTube.position.y = 1.08 + Math.abs(Math.sin(t * 22)) * 0.06 * k;
+        if (fsT < 0) return;
+        fsT += dt;
+        const LX = 0, LY = 1.09, LZ = 1.05, RZ = 0.12;
+        if (fsT < 0.45) {
+          const u = ease(fsT / 0.45);
+          fSlip.position.set(0, 1.45 + u * 1.0, 0);
+          fSlip.rotation.set(0, 0, Math.PI / 2);
+        } else if (fsT < 1.4) {
+          const u = (fsT - 0.45) / 0.95, e = ease(u);
+          fSlip.position.set(LX, 2.45 + (LY - 2.45) * e + Math.sin(u * Math.PI) * 0.55, LZ * e);
+          fSlip.rotation.set(-Math.PI / 2 * e, 0, RZ + (1 - e) * (Math.PI / 2 + Math.PI * 2));
+        } else {
+          const u = Math.min(1, (fsT - 1.4) / 0.3);
+          fSlip.position.set(LX, LY + Math.sin(u * Math.PI) * 0.07, LZ);
+          fSlip.rotation.set(-Math.PI / 2, 0, RZ);
+        }
+      });
+      // camera cận cảnh khi gieo quẻ
+      window.__fcam = (C, dt) => {
+        fcamK += ((window.__fortuneMode ? 1 : 0) - fcamK) * Math.min(1, dt * 4);
+        if (fcamK < 0.002) return;
+        const dir = new THREE.Vector3();
+        C.getWorldDirection(dir);
+        const curT = C.position.clone().add(dir.multiplyScalar(6));
+        let dx = me.x - FXZ[0], dz = me.z - FXZ[1];
+        const dl = Math.hypot(dx, dz) || 1;
+        dx /= dl; dz /= dl;
+        // dựng camera ở phía người chơi nhưng nhìn xuống bàn để không bị che
+        const cp = new THREE.Vector3(FXZ[0] + dx * 3.1 + dz * 0.5, 4.0, FXZ[1] + dz * 3.1 - dx * 0.5);
+        const ct = new THREE.Vector3(FXZ[0] + dx * 0.35, 1.5, FXZ[1] + dz * 0.35);
+        C.position.lerp(cp, fcamK);
+        C.lookAt(curT.lerp(ct, fcamK));
+      };
+
       const fortuneBox = $("fortune"), fCast = $("fCast");
       let fortuneBusy = false, fortuneRequestId = null, fortuneLoaded = false;
       const fmt = (n) => Number(n).toLocaleString("vi-VN");
@@ -4297,7 +4636,7 @@
         try {
           const data = await window.MebiMerit.fortuneTable();
           $("fStake").textContent = data.stake;
-          fCast.textContent = "Gieo quẻ (-" + data.stake + ")";
+          fCast.textContent = "🎋 Lắc quẻ (-" + data.stake + ")";
           const t = $("fTable");
           t.replaceChildren();
           const head = t.insertRow();
@@ -4313,7 +4652,9 @@
         const show = open === undefined ? fortuneBox.style.display !== "block" : open;
         if (show && !nearFortune()) { audio(); toast("Lại gần ống quẻ để xóc quẻ nhé"); return; }
         fortuneBox.style.display = show ? "block" : "none";
-        if (show) { audio(); loadFortuneTable(); }
+        window.__fortuneMode = show;
+        document.body.classList.toggle("fmode", show);
+        if (show) { audio(); loadFortuneTable(); fSlipHide(); fortuneSetResult([fortuneLine("Thành tâm khấn nguyện, rồi lắc ống quẻ.")]); }
       }
       async function castFortune() {
         if (fortuneBusy) return;
@@ -4321,15 +4662,15 @@
         fCast.disabled = true;
         // Giữ nguyên requestId nếu lỗi mạng, để gửi lại không bị trừ điểm hai lần.
         fortuneRequestId = fortuneRequestId || crypto.randomUUID();
-        $("fStick").classList.add("shake");
+        fSlipHide();
         fortuneSetResult([fortuneLine("Đang xóc ống quẻ...")]);
         audio(); fShake = 1.3; rattleSound(1); send({ t: "ev", k: "q" });
         try {
-          const [data] = await Promise.all([window.MebiMerit.fortune(fortuneRequestId), new Promise((ok) => setTimeout(ok, 1000))]);
+          const [data] = await Promise.all([window.MebiMerit.fortune(fortuneRequestId), new Promise((ok) => setTimeout(ok, 1400))]);
           fortuneRequestId = null;
           fPop = 1.6;
           const f = data.fortune, good = f.net > 0;
-          $("fStick").textContent = f.payout === 0 ? "🥀" : f.net === 0 ? "☯️" : f.payout >= 36 ? "🌟" : "🎋";
+          fSlipShow(f);
           fortuneSetResult([
             fortuneLine(f.hex + " · " + f.name, "b"),
             fortuneLine(f.prize + (f.meaning ? " — " + f.meaning : "") + " (số gieo " + f.roll + "/100)"),
@@ -4338,11 +4679,11 @@
           renderTempleMerit();
           if (f.payout >= 36) toast("🌟 " + f.hex + " " + f.name + "! +" + fmt(f.net) + " công đức");
         } catch (err) {
-          $("fStick").textContent = "🎋";
+          fSlipHide();
           if (err && err.definitive) fortuneRequestId = null;
           fortuneSetResult([fortuneLine(err && err.message ? err.message : "Không gieo được quẻ, hãy thử lại", "div", "lose")]);
         } finally {
-          $("fStick").classList.remove("shake");
+          
           fortuneBusy = false;
           fCast.disabled = false;
         }
@@ -4350,7 +4691,10 @@
       $("bFortune").onclick = () => toggleFortune();
       $("fClose").onclick = () => toggleFortune(false);
       fCast.onclick = castFortune;
-      addEventListener("keydown", (e) => { if (e.code === "Escape") toggleFortune(false); });
+      addEventListener("keydown", (e) => {
+        if (e.code === "Escape") toggleFortune(false);
+        else if (e.code === "Enter" && window.__fortuneMode && e.target.tagName !== "BUTTON") castFortune();
+      });
       $("bSit").onclick = toggleSit;
       $("bBow").onclick = bow;
       $("bInc").onclick = incense;
@@ -4725,7 +5069,7 @@
             jy,
           m = Math.hypot(ix, iz);
         me.moving = false;
-        if (playing && me.st === 0 && m > 0.12) {
+        if (playing && me.st === 0 && m > 0.12 && !window.__fortuneMode) {
           const k = Math.min(1, m),
             fx = -Math.sin(camYaw),
             fz = -Math.cos(camYaw),
@@ -4741,8 +5085,17 @@
           me.f = me.tf;
           me.moving = true;
           const inHall = me.z < -10.6;
-          me.x = Math.max(inHall ? -11 : -16, Math.min(inHall ? 11 : 16, me.x));
-          me.z = Math.max(-14.6, Math.min(18, me.z));
+          me.x = Math.max(inHall ? -11 : -22.5, Math.min(inHall ? 11 : 22.5, me.x));
+          me.z = Math.max(-14.6, Math.min(52, me.z));
+          if (window.OBS)
+            for (const r of window.OBS) {
+              const ox = me.x - r[0], oz = me.z - r[1],
+                qx = r[2] - Math.abs(ox), qz = r[3] - Math.abs(oz);
+              if (qx > 0 && qz > 0) {
+                if (qx < qz) me.x = r[0] + (ox < 0 ? -r[2] : r[2]);
+                else me.z = r[1] + (oz < 0 ? -r[3] : r[3]);
+              }
+            }
           const bx = me.x - BXZ[0],
             bz = me.z - BXZ[1],
             bd = Math.hypot(bx, bz);
@@ -4870,7 +5223,7 @@
         $("cnt").textContent = others.size + 1;
         $("bInc").disabled = !near() || incCd > 0;
         $("bFortune").disabled = !nearFortune();
-        if (fortuneBox.style.display === "block" && !nearFortune() && !fortuneBusy) fortuneBox.style.display = "none";
+        if (fortuneBox.style.display === "block" && !nearFortune() && !fortuneBusy) toggleFortune(false);
         $("bSit").textContent = me.st === 1 ? "🚶 Đứng dậy" : "🧘 Ngồi";
         $("bBow").disabled = me.st === 2;
       }
@@ -4900,6 +5253,7 @@
             tgt.z - Math.cos(camYaw) * 3,
           );
         else C.lookAt(tgt);
+        if (window.__fcam) window.__fcam(C, dt);
         R.render(S, C);
         requestAnimationFrame(frame);
       }
