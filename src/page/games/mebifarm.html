@@ -3,739 +3,590 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>🐔 MebiFarm</title>
+<title>MebiFarm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { --ink:#3a2a1e; --card:rgba(250,243,230,.94); }
-  @media (prefers-color-scheme: dark) { :root { --ink:#f3e6cf; --card:rgba(38,28,22,.94); } }
-  * { box-sizing: border-box; }
-  html, body { height:100%; margin:0; overflow:hidden; font-family: system-ui,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:linear-gradient(#6a7a96,#dcc1a0 58%,#f4dcb4); user-select:none; }
+  :root { --o:#e8601f; --od:#a8400f; --br:#6b2c10; --cr:#fff3dc; --ye:#ffc94a; --gr:#7cc84e; --bg:#d9e8d0; }
+  * { box-sizing:border-box; }
+  html,body { height:100%; margin:0; overflow:hidden; font-family:"Baloo 2","Nunito",system-ui,sans-serif; color:var(--br); background:#a8e0f5; user-select:none; -webkit-user-select:none; }
   canvas { position:fixed; inset:0; display:block; touch-action:none; }
-  .card { position:fixed; z-index:10; background:var(--card); border-radius:16px; padding:8px 14px; font-weight:700; box-shadow:0 4px 0 rgba(0,0,0,.12); }
-  button { font:inherit; font-weight:800; border:0; border-radius:14px; padding:9px 14px; background:#9a2016; color:#fbeccc; cursor:pointer; box-shadow:0 4px 0 #5e130d; }
-  button.alt { background:#8a6a2a; box-shadow:0 4px 0 #52401a; }
-  button:active:not(:disabled) { transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.3); }
-  button:disabled { opacity:.45; cursor:default; }
-  #top { top:calc(env(safe-area-inset-top,0px) + 10px); left:10px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; font-size:14px; max-width:calc(100vw - 130px); }
-  #top b { font-size:16px; }
-  .lvl { display:flex; align-items:center; gap:6px; }
-  .lvl .bar { width:90px; height:10px; border-radius:6px; background:rgba(0,0,0,.18); overflow:hidden; display:inline-block; }
-  .lvl .bar i { display:block; height:100%; width:0; background:linear-gradient(90deg,#c9a14a,#e8c46a); transition:width .3s; }
-  .lvl small { font-size:11px; opacity:.7; font-weight:600; }
-  .up.locked { opacity:.6; }
-  .up .need { font-size:11px; font-weight:700; color:#b8332f; white-space:nowrap; }
-  #tools { position:fixed; z-index:11; top:calc(env(safe-area-inset-top,0px) + 10px); right:10px; display:flex; gap:8px; }
-  button.ic { width:40px; height:40px; padding:0; border-radius:50%; font-size:18px; line-height:40px; background:var(--card); color:var(--ink); box-shadow:0 3px 0 rgba(0,0,0,.15); }
-  button.ic.on { background:#8a6a2a; color:#fbeccc; }
-  #flow { left:50%; transform:translateX(-50%); bottom:calc(env(safe-area-inset-bottom,0px) + 70px); display:flex; gap:6px; align-items:center; font-size:12px; padding:6px 10px; max-width:96vw; overflow-x:auto; white-space:nowrap; }
-  #flow span.chip { padding:2px 8px; border-radius:10px; background:rgba(0,0,0,.08); }
-  #flow span.lock { opacity:.45; }
-  #flow i { opacity:.5; font-style:normal; }
-  #acts { position:fixed; z-index:10; left:50%; transform:translateX(-50%); bottom:calc(env(safe-area-inset-bottom,0px) + 12px); display:flex; gap:8px; max-width:96vw; flex-wrap:wrap; justify-content:center; }
-  #acts button { font-size:14px; white-space:nowrap; }
-  #shop { display:none; top:calc(env(safe-area-inset-top,0px) + 58px); right:10px; width:min(330px,94vw); max-height:calc(100vh - 150px); overflow-y:auto; padding:10px; font-size:13px; z-index:12; }
-  #shop.open { display:block; }
-  #shop h4 { margin:0 0 8px; font-size:14px; }
-  .up { display:flex; gap:8px; align-items:center; padding:7px 0; border-top:1px solid rgba(128,128,128,.25); }
-  .up .t { flex:1; min-width:0; } .up .t small { display:block; font-weight:600; opacity:.7; font-size:11px; }
-  .up button { padding:7px 10px; font-size:12px; white-space:nowrap; }
-  #foc { position:fixed; z-index:10; left:10px; top:calc(env(safe-area-inset-top,0px) + 62px); display:flex; gap:6px; }
-  #foc button { padding:6px 10px; font-size:12px; }
-  #toast { top:calc(env(safe-area-inset-top,0px) + 108px); left:50%; transform:translateX(-50%); opacity:0; transition:opacity .3s; pointer-events:none; white-space:nowrap; font-size:13px; z-index:20; }
+  .sk { background:var(--cr); border:3px solid var(--br); border-radius:18px; box-shadow:0 4px 0 var(--br); }
+  #hud { position:fixed; z-index:10; top:calc(env(safe-area-inset-top,0px) + 8px); left:8px; display:flex; gap:8px; align-items:stretch; max-width:calc(100vw - 110px); }
+  #hud .logo { width:66px; height:66px; border-radius:50%; padding:2px; background:#fff; flex:none; overflow:hidden; }
+  #hud .logo img { width:100%; height:100%; object-fit:contain; display:block; }
+  #stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px 8px; padding:6px 10px; font-weight:800; font-size:13px; min-width:0; }
+  .st { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .st .row { display:flex; justify-content:space-between; gap:6px; white-space:nowrap; line-height:1.15; }
+  .st .row small { font-weight:700; opacity:.65; font-size:11px; overflow:hidden; text-overflow:ellipsis; }
+  .bar { height:9px; border-radius:6px; background:#e9d2ad; border:2px solid var(--br); overflow:hidden; }
+  .bar i { display:block; height:100%; width:0; transition:width .3s; }
+  #bLv { background:linear-gradient(90deg,#ffb23e,#ff7a2a); } #bFeed { background:#e0b030; } #bHen { background:var(--gr); } #bCoin { background:var(--ye); }
+  .pop { animation:pop .35s; } @keyframes pop { 50% { transform:scale(1.18); } }
+  #tools { position:fixed; z-index:11; top:calc(env(safe-area-inset-top,0px) + 8px); right:8px; display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
+  .rb { width:44px; height:44px; border-radius:50%; font-size:20px; cursor:pointer; padding:0; font-family:inherit; color:var(--br); }
+  .rb:active { transform:translateY(2px); box-shadow:0 2px 0 var(--br); }
+  #quest { position:fixed; z-index:10; top:calc(env(safe-area-inset-top,0px) + 86px); left:8px; max-width:210px; padding:6px 10px; font-size:12.5px; font-weight:700; line-height:1.25; }
+  #quest b { color:var(--o); }
+  #foc { position:fixed; z-index:10; top:calc(env(safe-area-inset-top,0px) + 150px); left:8px; display:flex; gap:5px; }
+  #foc button { font:inherit; font-weight:800; font-size:12px; padding:3px 10px; border-radius:14px; cursor:pointer; color:var(--br); }
+  #flow { position:fixed; z-index:10; left:50%; transform:translateX(-50%); bottom:calc(env(safe-area-inset-bottom,0px) + 84px); display:flex; gap:3px; align-items:center; padding:6px 8px; max-width:98vw; overflow-x:auto; }
+  .stn { display:flex; flex-direction:column; align-items:center; min-width:52px; padding:3px 4px; border-radius:12px; font-weight:800; font-size:12px; line-height:1.1; border:2px solid transparent; }
+  .stn span { font-size:20px; } .stn.off { opacity:.4; filter:grayscale(1); }
+  .stn.warn { animation:blink .7s infinite; border-color:#d63a2a; } @keyframes blink { 50% { background:#ffc4b8; } }
+  .arw { opacity:.45; font-weight:800; }
+  #acts { position:fixed; z-index:10; left:50%; transform:translateX(-50%); bottom:calc(env(safe-area-inset-bottom,0px) + 10px); display:flex; gap:8px; }
+  #acts button { font:inherit; font-weight:800; font-size:12.5px; width:74px; padding:5px 0 4px; border:3px solid var(--br); border-radius:18px; background:var(--o); color:#fff; box-shadow:0 5px 0 var(--br); cursor:pointer; display:flex; flex-direction:column; align-items:center; line-height:1.05; }
+  #acts button span { font-size:24px; } #acts button.alt { background:var(--ye); color:var(--br); }
+  #acts button:active:not(:disabled) { transform:translateY(3px); box-shadow:0 2px 0 var(--br); }
+  #acts button:disabled { opacity:.5; }
+  #pn { position:fixed; z-index:12; right:8px; top:calc(env(safe-area-inset-top,0px) + 110px); width:min(310px,94vw); max-height:calc(100vh - 290px); overflow-y:auto; padding:10px 12px; display:none; }
+  #pn.open { display:block; animation:pop .25s; }
+  #pn h4 { margin:0 0 6px; font-size:17px; display:flex; justify-content:space-between; align-items:center; }
+  #pnX { width:28px; height:28px; font-size:14px; }
+  .it { padding:7px 0; border-top:2px dashed #e2c89c; font-size:13px; font-weight:700; }
+  .it small { display:block; font-weight:600; opacity:.75; font-size:11.5px; } .it .nm { display:flex; justify-content:space-between; gap:6px; }
+  .pips { display:flex; gap:3px; margin:3px 0 5px; } .pips i { width:14px; height:8px; border-radius:4px; background:#e9d2ad; border:1.5px solid var(--br); } .pips i.on { background:var(--o); }
+  .it button.up { font:inherit; font-weight:800; font-size:13px; width:100%; padding:4px 8px; border:2px solid var(--br); border-radius:12px; background:var(--gr); color:var(--br); box-shadow:0 3px 0 var(--br); cursor:pointer; }
+  .it button.up:disabled { background:#d9c9aa; opacity:.8; cursor:default; box-shadow:0 3px 0 #a89870; }
+  #toast { position:fixed; z-index:20; top:calc(env(safe-area-inset-top,0px) + 8px); left:50%; transform:translateX(-50%); opacity:0; transition:opacity .3s; pointer-events:none; padding:6px 14px; font-size:14px; font-weight:800; white-space:nowrap; max-width:60vw; overflow:hidden; text-overflow:ellipsis; }
+  .coinfly { position:fixed; z-index:30; font-weight:800; font-size:22px; color:#fff; -webkit-text-stroke:1px var(--br); text-shadow:0 2px 0 var(--br); pointer-events:none; animation:fly 1.3s forwards; }
+  @keyframes fly { to { transform:translateY(-90px); opacity:0; } }
+  @media (max-width:560px) { #pn { top:auto; bottom:calc(env(safe-area-inset-bottom,0px) + 150px); right:50%; transform:translateX(50%); max-height:40vh; } #quest { top:calc(env(safe-area-inset-top,0px) + 86px); } }
+  @media (prefers-reduced-motion:reduce) { * { animation:none !important; } }
+
+  #bb { position:fixed; z-index:11; left:50%; transform:translateX(-50%); bottom:calc(env(safe-area-inset-bottom,0px) + 8px); width:min(720px,98vw); padding:6px 8px 8px; display:none; }
+  body.building #bb { display:block; } body.building #acts, body.building #flow, body.building #quest { display:none; }
+  #bb .hint { font-weight:800; font-size:13px; text-align:center; margin-bottom:5px; } #bb .row { display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; }
+  .pc { flex:none; width:84px; font:inherit; font-weight:800; font-size:12px; line-height:1.1; padding:5px 3px; border:3px solid var(--br); border-radius:14px; background:#fff; color:var(--br); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:1px; box-shadow:0 3px 0 var(--br); }
+  .pc span { font-size:22px; } .pc small { font-size:11px; opacity:.8; } .pc.sel { background:var(--ye); transform:translateY(-3px); } .pc.done { background:var(--gr); } .pc:disabled { opacity:.45; cursor:default; }
+  .rb.on { background:var(--ye); } .it button.up.red { background:#ff9a8a; } body.building #pn { top:calc(env(safe-area-inset-top,0px) + 8px); right:62px; max-height:calc(100vh - 190px); }
+  @media (max-width:560px) { body.building #pn { top:calc(env(safe-area-inset-top,0px) + 80px); right:50%; bottom:auto; transform:translateX(50%); max-height:36vh; } }
+  #bMerit { display:none; font:inherit; font-weight:800; font-size:14px; padding:4px 12px; border-radius:22px; cursor:pointer; color:var(--br); } #bMerit.show { display:block; }
 </style>
 </head>
 <body>
-<div id="top" class="card">
-  <span class="lvl">⭐ Lv <b id="vLv">1</b><span class="bar"><i id="vXp"></i></span><small id="vXpT"></small></span>
-  <span>🪙 <b id="vCoins">0</b></span>
-  <span>🌾 Kho cám <b id="vFeed">0</b></span>
-  <span>🐔 <b id="vHens">0</b>/<span id="vMax">0</span></span>
+<div id="hud">
+  <div class="logo sk"><img id="logoImg" alt="MebiFarm - Real Farm, Real Food" /></div>
+  <div id="stats" class="sk">
+    <div class="st"><div class="row"><span>🪙 <b id="vCoins">0</b></span></div><div class="bar"><i id="bCoin" style="width:100%"></i></div></div>
+    <div class="st"><div class="row"><span>⭐ Cấp <b id="vLv">1</b></span><small id="vXpT"></small></div><div class="bar"><i id="bLv"></i></div></div>
+    <div class="st"><div class="row"><span>🌾 Kho <b id="vFeed">0</b></span><small id="vTr"></small></div><div class="bar"><i id="bFeed"></i></div></div>
+    <div class="st"><div class="row"><span>🐔 <b id="vHens">0</b>/<span id="vMax">0</span></span></div><div class="bar"><i id="bHen"></i></div></div>
+  </div>
 </div>
-<div id="tools">
-  <button id="bShop" class="ic" title="Nâng cấp">🛠️</button>
-  <button id="bTemple" class="ic" title="Về chùa MEBI">🏯</button>
-</div>
-<div id="foc">
-  <button class="alt" data-f="coop">🐔 Chuồng</button><button class="alt" data-f="fac">🏭 Nhà máy</button><button class="alt" data-f="shop">🚚 Bán hàng</button>
-</div>
-<div id="shop" class="card"><h4>🛠️ Nâng cấp & mua sắm</h4><div id="upList"></div></div>
-<div id="flow" class="card"></div>
+<div id="tools"><button id="bBuild" class="rb sk" title="Xây dựng">🔧</button><button id="bTemple" class="rb sk" title="Về chùa MEBI">🏯</button><button id="bMerit" class="sk" title="Công đức">🪷 <b id="vMerit">0</b></button></div>
+<div id="quest" class="sk"></div>
+<div id="pn" class="sk"></div>
+<div id="flow" class="sk"></div>
 <div id="acts">
-  <button id="bFeed">🌾 Rải cám</button><button id="bBuyFeed" class="alt">🛒 Mua cám</button><button id="bCollect">🧺 Thu trứng</button><button id="bSell">🚚 Bán hàng</button>
+  <button id="bFeedA"><span>🌾</span>Rải cám</button><button id="bBuyFeed" class="alt"><span>🛒</span>Mua cám</button><button id="bCollect"><span>🧺</span>Thu trứng</button><button id="bSell" class="alt"><span>🚚</span>Bán hàng</button>
 </div>
-<div id="toast" class="card"></div>
+<div id="bb" class="sk"></div>
+<div id="toast" class="sk"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const TEMPLE_URL = "chua-mebi.html"; // đổi nếu file chùa đặt tên/đường dẫn khác
-
-// LOGIC_START ===========================================================
-const SIZES = ["S", "M", "L"];
-const SIZE_P = { S: 0.3, M: 0.5, L: 0.2 };
-const PRICE = { loose: 1.5, S: 2.2, M: 2.8, L: 3.6 }; // giá/quả khi bán rời
-const PACK_P = { S: 3.0, M: 3.8, L: 5.0 }; // giá/quả khi đã đóng vỉ
-const CARTON_BONUS = 1.15;
-const BREAK_RATE = 0.08;
-const FEED_PACK = 50, FEED_COST = 25;
-const hensMax = (s) => 3 + 3 * s.lv.coop;
-const nestCap = (s) => 10 + 10 * s.lv.coop;
-const troughCap = (s) => 20 + 10 * s.lv.coop;
+const LOGO = "data:image/png;base64,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";
+document.getElementById("logoImg").src = LOGO;
+// LOGIC_START: mô phỏng theo đồ thị máy + băng chuyền
+const SIZES = ["S", "M", "L"], SIZE_P = { S: 0.3, M: 0.5, L: 0.2 }, PACK_P = { S: 3.0, M: 3.8, L: 5.0 }, BONUS = 1.15, BREAK = 0.08;
+const FEED_PACK = 50, FEED_COST = 25, CS = 2.4, GW = 14, GH = 8, CAP = 20, BELT = 2.5;
+const ITEM_V = { egg: 1, ok: 1.5, S: 2.2, M: 2.8, L: 3.6 };
+SIZES.forEach((z) => { ITEM_V["p" + z] = 10 * PACK_P[z]; ITEM_V["c" + z] = 60 * PACK_P[z] * BONUS; });
+const ITEM_E = (k) => (k[0] === "p" ? 10 : k[0] === "c" ? 60 : 1);
+const DEF = {
+  coop: { n: "Chuồng gà", ic: "🐔", w: 3, h: 2, base: 200, need: (i) => [1, 3, 5][i] || 99, ins: 0, outs: 1, acc: null },
+  wash: { n: "Máy rửa & soi", ic: "🚿", w: 2, h: 2, base: 60, need: () => 1, ins: 1, outs: 1, acc: ["egg"], col: 0x4fb7e8 },
+  sort: { n: "Máy phân cỡ", ic: "📏", w: 2, h: 2, base: 90, need: () => 2, ins: 1, outs: 3, acc: ["ok"], col: 0x7cc84e },
+  pack: { n: "Máy đóng vỉ", ic: "📦", w: 2, h: 2, base: 160, need: () => 3, ins: 1, outs: 1, acc: SIZES, col: 0xffc94a },
+  box: { n: "Máy đóng thùng", ic: "🧰", w: 2, h: 2, base: 260, need: () => 4, ins: 1, outs: 1, acc: ["pS", "pM", "pL"], col: 0xe8601f },
+  dock: { n: "Bến giao hàng", ic: "🚚", w: 2, h: 2, base: 100, need: () => 1, ins: 1, outs: 0, acc: null },
+};
+const outKeys = (t, p) => (t === "coop" ? ["egg"] : t === "wash" ? ["ok"] : t === "sort" ? [SIZES[p]] : t === "pack" ? ["pS", "pM", "pL"] : ["cS", "cM", "cL"]);
+const tot = (o) => { let n = 0; for (const k in o) n += o[k]; return n; };
+const add = (o, k, n) => { o[k] = (o[k] || 0) + (n === undefined ? 1 : n); };
+const coopsOf = (s) => s.nodes.filter((n) => n.t === "coop");
+const cnt = (s, t) => s.nodes.filter((n) => n.t === t).length;
+const hensCap = (n) => 3 + 3 * n.lv, nestCap = (n) => 10 + 10 * n.lv;
+const hensAll = (s) => coopsOf(s).reduce((a, n) => a + n.hens.length, 0);
+const hensTotalCap = (s) => coopsOf(s).reduce((a, n) => a + hensCap(n), 0);
+const troughCap = (s) => 20 + 10 * coopsOf(s).reduce((a, n) => a + n.lv, 0);
 const layBase = (s) => 26 * Math.pow(0.86, s.lv.breed);
+const layMul = (s) => (s.buff && s.buff.lay > Date.now() ? 2 : 1), priceMul = (s) => (s.buff && s.buff.price > Date.now() ? 1.5 : 1);
 const newHen = (s) => ({ h: 0.3, l: layBase(s) * (0.4 + Math.random()) });
-
-function newState() {
-  const s = {
-    v: 1, t0: Date.now(), coins: 100, feed: 40, trough: 10, nest: 0, basket: 0, clean: 0,
-    g: { S: 0, M: 0, L: 0 }, packs: { S: 0, M: 0, L: 0 }, cartons: { S: 0, M: 0, L: 0 },
-    broken: 0, totalEggs: 0, totalCoins: 0, xp: 0,
-    lv: { coop: 1, wash: 1, sort: 0, pack: 0, box: 0, auto: 0, feeder: 0, breed: 0 },
-    acc: { wash: 0, sort: 0, pack: 0, box: 0, collect: 0, feeder: 0 }, hens: [],
-  };
-  for (let i = 0; i < 3; i++) s.hens.push(newHen(s));
-  return s;
-}
-function flow(s, k, rate, dt, avail) {
-  s.acc[k] = Math.min(s.acc[k] + dt * rate, avail + 1);
-  const n = Math.min(Math.floor(s.acc[k]), avail);
-  s.acc[k] -= n;
-  return n;
-}
-function pickSize() {
-  const r = Math.random();
-  return r < SIZE_P.S ? "S" : r < SIZE_P.S + SIZE_P.M ? "M" : "L";
-}
-function tick(s, dt, ev) {
-  ev = ev || (() => {});
-  s.hens.forEach((hn, i) => {
-    hn.h = Math.min(1, hn.h + dt / 90);
-    if (hn.h > 0.4 && s.trough >= 1) { s.trough -= 1; hn.h = 0; ev("eat", i); }
-    if (hn.h < 0.75) {
-      hn.l -= dt;
-      if (hn.l <= 0) {
-        hn.l = layBase(s) * (0.8 + Math.random() * 0.4);
-        if (s.nest < nestCap(s)) { s.nest++; ev("lay", i); }
-      }
-    }
-  });
-  if (s.lv.feeder > 0) {
-    s.acc.feeder += dt;
-    if (s.acc.feeder >= 5) {
-      s.acc.feeder = 0;
-      if (s.trough < troughCap(s) * 0.6 && s.feed > 0) {
-        const f = Math.min(s.feed, troughCap(s) - s.trough, 8 + 4 * s.lv.feeder);
-        s.trough += f; s.feed -= f; ev("feeder", f);
-      }
-    }
-  }
-  if (s.lv.auto > 0) {
-    s.acc.collect += dt;
-    if (s.acc.collect >= Math.max(1.5, 7 - 1.5 * s.lv.auto)) {
-      s.acc.collect = 0;
-      if (s.nest > 0) { s.basket += s.nest; ev("collect", s.nest); s.nest = 0; }
-    }
-  }
-  const nw = flow(s, "wash", 0.4 + 0.4 * s.lv.wash, dt, s.basket);
-  if (nw) {
-    s.basket -= nw;
-    for (let i = 0; i < nw; i++) { if (Math.random() < BREAK_RATE) { s.broken++; ev("broken", 1); } else s.clean++; }
-    ev("wash", nw);
-  }
-  if (s.lv.sort > 0) {
-    const n = flow(s, "sort", 0.4 + 0.4 * s.lv.sort, dt, s.clean);
-    if (n) { s.clean -= n; for (let i = 0; i < n; i++) s.g[pickSize()]++; ev("sort", n); }
-  }
-  if (s.lv.pack > 0) {
-    const sz = SIZES.filter((z) => s.g[z] >= 10).sort((a, b) => s.g[b] - s.g[a])[0];
-    if (sz) {
-      s.acc.pack += dt * (0.25 + 0.15 * s.lv.pack);
-      if (s.acc.pack >= 1) { s.acc.pack -= 1; s.g[sz] -= 10; s.packs[sz]++; s.xp += 5; ev("pack", sz); }
-    } else s.acc.pack = 0;
-  }
-  if (s.lv.box > 0) {
-    const sz = SIZES.filter((z) => s.packs[z] >= 6).sort((a, b) => s.packs[b] - s.packs[a])[0];
-    if (sz) {
-      s.acc.box += dt * (0.2 + 0.1 * s.lv.box);
-      if (s.acc.box >= 1) { s.acc.box -= 1; s.packs[sz] -= 6; s.cartons[sz]++; s.xp += 15; ev("box", sz); }
-    } else s.acc.box = 0;
-  }
-}
-const sum3 = (o) => o.S + o.M + o.L;
-function sellValue(s) {
-  let v = s.clean * PRICE.loose, eggs = s.clean;
-  SIZES.forEach((z) => {
-    v += s.g[z] * PRICE[z] + s.packs[z] * 10 * PACK_P[z] + s.cartons[z] * 60 * PACK_P[z] * CARTON_BONUS;
-    eggs += s.g[z] + s.packs[z] * 10 + s.cartons[z] * 60;
-  });
-  return { coins: Math.round(v), eggs };
-}
-function sellAll(s) {
-  const r = sellValue(s);
-  if (!r.eggs) return null;
-  s.clean = 0;
-  SIZES.forEach((z) => { s.g[z] = 0; s.packs[z] = 0; s.cartons[z] = 0; });
-  s.coins += r.coins; s.totalCoins += r.coins; s.totalEggs += r.eggs; s.xp += r.eggs;
-  return r;
-}
-function collectEggs(s) { const n = s.nest; s.basket += n; s.nest = 0; return n; }
-function feedTrough(s) {
-  const n = Math.min(s.feed, troughCap(s) - s.trough);
-  s.trough += n; s.feed -= n; return n;
-}
-function buyFeed(s) { if (s.coins < FEED_COST) return false; s.coins -= FEED_COST; s.feed += FEED_PACK; return true; }
 const XP_TH = [0, 60, 180, 400, 800, 1400, 2300, 3600, 5500, 8000];
 const farmLevel = (s) => XP_TH.filter((x) => s.xp >= x).length;
-function levelProgress(s) {
-  const L = farmLevel(s);
-  if (L >= XP_TH.length) return { L, cur: s.xp, next: s.xp, p: 1 };
-  const a = XP_TH[L - 1], b = XP_TH[L];
-  return { L, cur: s.xp - a, next: b - a, p: (s.xp - a) / (b - a) };
-}
-const LEVEL_NOTE = {
-  2: "Mở máy phân cỡ S/M/L", 3: "Mở máy đóng vỉ, chuồng lớn", 4: "Mở máy đóng thùng, rải cám, băng chuyền thu trứng",
-  5: "Máy lên được thêm 1 cấp tốc độ", 6: "Máy lên được thêm 1 cấp tốc độ", 7: "Máy lên được thêm 1 cấp tốc độ",
-  8: "Máy lên được thêm 1 cấp tốc độ", 9: "Máy lên được thêm 1 cấp tốc độ", 10: "Tất cả máy mở tối đa tốc độ",
-};
-const UNL = { wash: 1, sort: 2, pack: 3, box: 4, auto: 4, feeder: 4 }; // cấp trại mở máy
+function levelProgress(s) { const L = farmLevel(s); if (L >= XP_TH.length) return { L, cur: s.xp, next: s.xp, p: 1 }; const a = XP_TH[L - 1], b = XP_TH[L]; return { L, cur: s.xp - a, next: b - a, p: (s.xp - a) / (b - a) }; }
+const LEVEL_NOTE = { 2: "Mở máy phân cỡ", 3: "Mở máy đóng vỉ, chuồng thứ 2", 4: "Mở máy đóng thùng, máy rải cám", 5: "Mở chuồng thứ 3" };
 const f1 = (n) => (Math.round(n * 10) / 10).toString().replace(".", ",");
-const SPEED = {
-  wash: (l) => f1(0.4 + 0.4 * l) + " trứng/giây",
-  sort: (l) => f1(0.4 + 0.4 * l) + " trứng/giây",
-  pack: (l) => f1((0.25 + 0.15 * l) * 60) + " vỉ/phút",
-  box: (l) => f1((0.2 + 0.1 * l) * 60) + " thùng/phút",
-  auto: (l) => "thu mỗi " + f1(Math.max(1.5, 7 - 1.5 * l)) + " giây",
-  feeder: (l) => "rải " + (8 + 4 * l) + " cám/lần",
-  breed: (l) => "đẻ mỗi ~" + Math.round(26 * Math.pow(0.86, l)) + " giây",
-};
-function mach(id, name, baseCost, desc, cap) {
-  return {
-    id, name, desc, cap, kind: "machine", lvl: (s) => s.lv[id], cost: (s) => baseCost * (s.lv[id] + 1),
-    need: (s) => UNL[id] + s.lv[id], speed: SPEED[id],
-  };
+const unlocked = (s, c, r) => c >= 0 && r >= 0 && c < Math.min(GW, 10 + 2 * s.land) && r < 5 + s.land;
+const cellOcc = (s, x, y) => s.nodes.some((n) => { const d = DEF[n.t]; return x >= n.c && x < n.c + d.w && y >= n.r && y < n.r + d.h; });
+function mkNode(s, t, c, r) { return { id: s.nid++, t, c, r, lv: 1, q: {}, o: Array.from({ length: DEF[t].outs }, () => ({})), a: 0, w: 0, hens: t === "coop" ? [] : undefined }; }
+function link(s, a, p, b) { s.edges.push({ id: s.nid++, a: a.id, p, b: b.id, f: 0, on: 0 }); }
+const AUTO = [[0, 1], [4, 1], [7, 1], [10, 1], [10, 4], [7, 4]];
+function autoChain(s, types) {
+  const ns = types.map((t, i) => { const n = mkNode(s, t, AUTO[i][0], AUTO[i][1]); s.nodes.push(n); return n; });
+  ns.forEach((n, i) => { if (i < ns.length - 1) for (let p = 0; p < DEF[n.t].outs; p++) link(s, n, p, ns[i + 1]); });
+  return ns;
 }
-const UPS = [
-  { id: "hen", name: "🐔 Mua thêm gà", desc: "Mỗi con gà đẻ trứng theo giờ", kind: "farm", cap: 18, lvl: (s) => s.hens.length, limit: (s) => hensMax(s), cost: (s) => 40 + 12 * s.hens.length, need: () => 1, apply: (s) => s.hens.push(newHen(s)) },
-  { id: "coop", name: "🏠 Mở rộng chuồng", desc: "Thêm chỗ cho gà, ổ trứng và máng ăn", kind: "farm", cap: 5, lvl: (s) => s.lv.coop, cost: (s) => 120 * s.lv.coop * s.lv.coop, need: (s) => 2 * s.lv.coop + 1 },
-  { id: "breed", name: "🧬 Gà giống tốt", desc: "Gà đẻ nhanh hơn", kind: "farm", cap: 5, lvl: (s) => s.lv.breed, cost: (s) => 140 * (s.lv.breed + 1), need: (s) => s.lv.breed + 2, speed: SPEED.breed },
-  mach("wash", "🚿 Máy rửa & soi trứng", 60, "Rửa nhanh hơn, loại trứng nứt", 5),
-  mach("sort", "📏 Máy phân cỡ S/M/L", 90, "Phân cỡ trứng, giá cao hơn", 5),
-  mach("pack", "📦 Máy đóng vỉ 10 quả", 160, "Đóng vỉ theo cỡ, dán nhãn MebiFarm", 5),
-  mach("box", "🧰 Máy đóng thùng 6 vỉ", 260, "Thùng bán lời thêm 15%", 5),
-  mach("auto", "🧺 Băng chuyền thu trứng", 120, "Tự thu trứng từ ổ về nhà máy", 3),
-  mach("feeder", "🌾 Máy rải cám", 100, "Tự đổ cám từ kho ra máng", 3),
-];
-function upState(s, u) {
-  const lv = u.lvl(s);
-  if (lv >= u.cap) return { st: "max" };
-  if (u.limit && lv >= u.limit(s)) return { st: "limit", why: "Cần mở rộng chuồng" };
-  const need = u.need(s);
-  if (farmLevel(s) < need) return { st: "lock", need };
-  const c = u.cost(s);
-  return { st: s.coins >= c ? "ok" : "poor", cost: c };
+function newState() {
+  const s = { v: 2, t0: Date.now(), coins: 100, feed: 40, trough: 10, stock: {}, xp: 0, totalEggs: 0, totalCoins: 0, boxes: 0, land: 1, lv: { breed: 0, feeder: 0 }, nid: 1, nodes: [], edges: [] };
+  const ns = autoChain(s, ["coop", "wash", "dock"]); for (let i = 0; i < 3; i++) ns[0].hens.push(newHen(s));
+  return s;
 }
-function buyUp(s, id) {
-  const u = UPS.find((x) => x.id === id);
-  if (!u) return false;
-  const r = upState(s, u);
-  if (r.st !== "ok") return false;
-  s.coins -= r.cost;
-  if (u.apply) u.apply(s); else s.lv[id]++;
-  return true;
+function pickSize() { const r = Math.random(); return r < SIZE_P.S ? "S" : r < SIZE_P.S + SIZE_P.M ? "M" : "L"; }
+function tick(s, dt, ev) {
+  ev = ev || (() => {});
+  const M = {}; s.nodes.forEach((n) => (M[n.id] = n));
+  s.nodes.forEach((n) => {
+    if (n.t === "coop") n.hens.forEach((hn, i) => {
+      hn.h = Math.min(1, hn.h + dt / 90);
+      if (hn.h > 0.4 && s.trough >= 1) { s.trough -= 1; hn.h = 0; ev("eat", n.id, i); }
+      if (hn.h < 0.75) { hn.l -= dt * layMul(s); if (hn.l <= 0) { hn.l = layBase(s) * (0.8 + Math.random() * 0.4); if (tot(n.o[0]) < nestCap(n)) { add(n.o[0], "egg"); ev("lay", n.id, i); } } }
+    });
+  });
+  if (s.lv.feeder > 0) {
+    s.feedAcc = (s.feedAcc || 0) + dt;
+    if (s.feedAcc >= 5) { s.feedAcc = 0; const tc = troughCap(s); if (s.trough < tc * 0.6 && s.feed > 0) { const f = Math.min(s.feed, tc - s.trough, 8 + 4 * s.lv.feeder); s.trough += f; s.feed -= f; } }
+  }
+  s.nodes.forEach((n) => {
+    const q = n.q, o = n.o; n.a = Math.min(n.a, 2);
+    if (n.t === "wash") {
+      n.a += dt * (0.4 + 0.4 * n.lv);
+      while (n.a >= 1 && (q.egg || 0) > 0 && tot(o[0]) < CAP) { n.a -= 1; q.egg--; n.w = 0.6; if (Math.random() < BREAK) ev("broken", n.id); else add(o[0], "ok"); }
+    } else if (n.t === "sort") {
+      n.a += dt * (0.4 + 0.4 * n.lv);
+      while (n.a >= 1 && (q.ok || 0) > 0) { const z = pickSize(), p = SIZES.indexOf(z); if (tot(o[p]) >= CAP) break; n.a -= 1; q.ok--; n.w = 0.6; add(o[p], z); }
+    } else if (n.t === "pack" || n.t === "box") {
+      const pk = n.t === "pack", need = pk ? 10 : 6, pre = pk ? "" : "p", out = pk ? "p" : "c";
+      const sz = SIZES.filter((z) => (q[pre + z] || 0) >= need).sort((a, b) => q[pre + b] - q[pre + a])[0];
+      if (sz && tot(o[0]) < CAP) {
+        n.a += dt * (pk ? 0.25 + 0.15 * n.lv : 0.2 + 0.1 * n.lv); n.w = 0.4;
+        if (n.a >= 1) { n.a -= 1; q[pre + sz] -= need; add(o[0], out + sz); s.xp += pk ? 5 : 15; if (!pk) s.boxes++; }
+      } else n.a = 0;
+    } else if (n.t === "dock") {
+      for (const k in q) if (q[k] > 0) { const v = q[k] * ITEM_V[k] * priceMul(s), e = q[k] * ITEM_E(k); s.coins += v; s.totalCoins += v; s.totalEggs += e; s.xp += e; n.pop = (n.pop || 0) + v; q[k] = 0; }
+    }
+  });
+  s.edges.forEach((e) => {
+    const a = M[e.a], b = M[e.b]; if (!a || !b) return;
+    const src = a.o[e.p], acc = DEF[b.t].acc; e.f = (e.f || 0) + dt * BELT; let mv = 0;
+    while (e.f >= 1) {
+      const key = Object.keys(src).find((k) => src[k] > 0 && (!acc || acc.includes(k)));
+      if (!key || (b.q[key] || 0) >= CAP) break;
+      src[key]--; add(b.q, key); e.f -= 1; mv++; e.on = 1.2;
+    }
+    e.f = Math.min(e.f, 1); e.blk = !mv && tot(src) >= CAP - 1;
+  });
+  s.nodes.forEach((n) => { n.blk = n.o.some((x) => tot(x) >= CAP - 1) || Object.keys(n.q).some((k) => n.q[k] >= CAP - 1); });
+}
+function collectEggs(s) { let n = 0; coopsOf(s).forEach((c) => { if (s.edges.some((e) => e.a === c.id)) return; n += c.o[0].egg || 0; c.o[0].egg = 0; }); add(s.stock, "egg", n); return n; }
+function stockValue(s) { let v = 0, e = 0; for (const k in s.stock) { v += s.stock[k] * ITEM_V[k]; e += s.stock[k] * ITEM_E(k); } return { coins: Math.round(v), eggs: e }; }
+function sellStock(s) { const r = stockValue(s); if (!r.eggs) return null; r.coins = Math.round(r.coins * priceMul(s)); s.stock = {}; s.coins += r.coins; s.totalCoins += r.coins; s.totalEggs += r.eggs; s.xp += r.eggs; return r; }
+function feedTrough(s) { const n = Math.min(s.feed, troughCap(s) - s.trough); s.trough += n; s.feed -= n; return n; }
+function buyFeed(s) { if (s.coins < FEED_COST) return false; s.coins -= FEED_COST; s.feed += FEED_PACK; return true; }
+function placeInfo(s, t) {
+  const d = DEF[t], c = cnt(s, t); if (c >= 3) return { why: "Đã đủ số lượng" };
+  const need = d.need(c); if (farmLevel(s) < need) return { why: "Cần cấp trại " + need, need };
+  return { cost: t === "coop" ? 200 * Math.max(1, c) * Math.max(1, c) : d.base * (c + 1) };
+}
+function tryPlace(s, t, c, r) {
+  const d = DEF[t], st = placeInfo(s, t); if (st.why) return st.why; if (s.coins < st.cost) return "Không đủ xu";
+  for (let y = r; y < r + d.h; y++) for (let x = c; x < c + d.w; x++) { if (!unlocked(s, x, y)) return "Ô này chưa mở đất"; if (cellOcc(s, x, y)) return "Ô đã có máy"; }
+  s.coins -= st.cost; s.nodes.push(mkNode(s, t, c, r)); return null;
+}
+function linkNodes(s, aid, p, bid) {
+  const a = s.nodes.find((n) => n.id === aid), b = s.nodes.find((n) => n.id === bid); if (!a || !b || a === b) return "Không nối được";
+  const bd = DEF[b.t]; if (!bd.ins) return "Máy này không có cổng vào";
+  if (bd.acc && !outKeys(a.t, p).some((k) => bd.acc.includes(k))) return "Máy đích không nhận loại hàng này";
+  s.edges = s.edges.filter((e) => !(e.a === aid && e.p === p)); link(s, a, p, b); return null;
+}
+function removeEdge(s, id) { s.edges = s.edges.filter((e) => e.id !== id); }
+function removeNode(s, id) {
+  const n = s.nodes.find((x) => x.id === id); if (!n) return 0;
+  const back = Math.floor(DEF[n.t].base / 2) + (n.t === "coop" ? n.hens.length * 30 : 0);
+  s.coins += back; s.nodes = s.nodes.filter((x) => x !== n); s.edges = s.edges.filter((e) => e.a !== id && e.b !== id); return back;
+}
+function upInfo(s, n) {
+  const d = DEF[n.t]; if (n.t === "dock") return { cap: 1, st: "max" };
+  const cap = 5; if (n.lv >= cap) return { cap, st: "max" };
+  const need = n.t === "coop" ? 2 * n.lv + 1 : d.need(0) + n.lv; if (farmLevel(s) < need) return { cap, st: "lock", need };
+  const cost = n.t === "coop" ? 120 * n.lv * n.lv : d.base * n.lv; return { cap, cost, st: s.coins >= cost ? "ok" : "poor" };
+}
+function upNode(s, id) { const n = s.nodes.find((x) => x.id === id), u = n && upInfo(s, n); if (!u || u.st !== "ok") return false; s.coins -= u.cost; n.lv++; return true; }
+const henCost = (s) => 40 + 12 * hensAll(s);
+function buyHen(s, id) { const n = s.nodes.find((x) => x.id === id); if (!n || n.hens.length >= hensCap(n) || s.coins < henCost(s)) return false; s.coins -= henCost(s); n.hens.push(newHen(s)); return true; }
+function globalUp(s, k) {
+  const b = k === "breed", lv = s.lv[k], cap = b ? 5 : 3, cost = (b ? 140 : 100) * (lv + 1), need = b ? lv + 2 : 4 + lv;
+  if (lv >= cap) return { st: "max", cap, lv }; if (farmLevel(s) < need) return { st: "lock", need, cap, lv };
+  return { st: s.coins >= cost ? "ok" : "poor", cost, cap, lv };
+}
+function buyGlobal(s, k) { const u = globalUp(s, k); if (u.st !== "ok") return false; s.coins -= u.cost; s.lv[k]++; return true; }
+const landCost = (s) => 300 * s.land * s.land;
+function landUp(s) { if (s.land >= 3 || s.coins < landCost(s)) return false; s.coins -= landCost(s); s.land++; return true; }
+function fromV1(o) {
+  const s = newState(); s.nodes = []; s.edges = []; s.nid = 1;
+  const types = ["coop"]; ["wash", "sort", "pack", "box"].forEach((k) => { if (o.lv[k] > 0) types.push(k); }); types.push("dock");
+  const ns = autoChain(s, types); ns[0].lv = Math.min(5, o.lv.coop || 1); ns[0].hens = o.hens || [];
+  ns.forEach((n) => { if (o.lv[n.t] > 0) n.lv = o.lv[n.t]; });
+  ["coins", "feed", "trough", "totalEggs", "totalCoins"].forEach((k) => { s[k] = o[k] || 0; }); s.xp = o.xp != null ? o.xp : o.totalEggs || 0;
+  s.lv.breed = o.lv.breed || 0; s.lv.feeder = o.lv.feeder || 0; s.stock.egg = (o.nest || 0) + (o.basket || 0); s.stock.ok = o.clean || 0;
+  SIZES.forEach((z) => { s.stock[z] = o.g[z]; s.stock["p" + z] = o.packs[z]; s.stock["c" + z] = o.cartons[z]; });
+  return s;
 }
 function simulateOffline(s, secs) {
-  const before = { eggs: s.nest + s.basket + s.clean + sum3(s.g) + sum3(s.packs) * 10 + sum3(s.cartons) * 60 };
-  secs = Math.min(secs, 4 * 3600);
-  for (let t = 0; t < secs; t += 5) tick(s, 5, null);
-  const after = s.nest + s.basket + s.clean + sum3(s.g) + sum3(s.packs) * 10 + sum3(s.cartons) * 60;
-  return { secs, eggs: after - before.eggs };
+  const sum = () => s.nodes.reduce((a, n) => a + tot(n.q) + n.o.reduce((b, x) => b + tot(x), 0), 0) + s.totalEggs;
+  const b = sum(); secs = Math.min(secs, 4 * 3600); for (let t = 0; t < secs; t += 5) tick(s, 5, null); return { secs, eggs: Math.round(sum() - b) };
 }
-// LOGIC_END =============================================================
+// LOGIC_END
 
-// ---------- lưu trữ (đổi sang API server sau này bằng window.MebiFarmStore) ----------
-const KEY = "mebifarm_v1";
-const Store = window.MebiFarmStore || {
-  load() { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } },
-  save(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch {} },
-};
-let S0 = Store.load();
-if (!S0 || S0.v !== 1) S0 = newState();
-const G = S0;
-let offlineMsg = null;
-{
-  const gap = (Date.now() - (G.t0 || Date.now())) / 1000;
-  if (gap > 30) offlineMsg = simulateOffline(G, gap);
-}
-if (G.xp == null) G.xp = G.totalEggs || 0;
-G.t0 = Date.now();
-const $ = (id) => document.getElementById(id);
-const fmt = (n) => Math.round(n).toLocaleString("vi-VN");
-function toast(t) {
-  const el = $("toast");
-  el.textContent = t; el.style.opacity = 1;
-  clearTimeout(toast.t); toast.t = setTimeout(() => (el.style.opacity = 0), 2400);
-}
-
-// ---------- 3D ----------
 const R = new THREE.WebGLRenderer({ antialias: true });
-R.setPixelRatio(Math.min(devicePixelRatio, 2));
-R.setSize(innerWidth, innerHeight);
+R.setPixelRatio(Math.min(devicePixelRatio, 2)); R.setSize(innerWidth, innerHeight);
 document.body.prepend(R.domElement);
-const S = new THREE.Scene();
-S.background = new THREE.Color(0xdcc9a8);
-S.fog = new THREE.Fog(0xdcc9a8, 70, 160);
+const S = new THREE.Scene(); S.background = new THREE.Color(0xa8e0f5); S.fog = new THREE.Fog(0xa8e0f5, 80, 170);
 const C = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 0.1, 400);
-S.add(new THREE.HemisphereLight(0xfff0dc, 0x7a6a52, 0.85));
-const sun = new THREE.DirectionalLight(0xffd7a6, 0.75);
-sun.position.set(-20, 26, 18);
-S.add(sun);
-const mat = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o || {}));
-const box = (w, h, d, c, x, y, z, par) => {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
-  m.position.set(x, y, z); (par || S).add(m); return m;
+S.add(new THREE.HemisphereLight(0xffffff, 0x9bc27a, 0.95));
+const sun = new THREE.DirectionalLight(0xfff1d0, 0.7); sun.position.set(-20, 30, 20); S.add(sun);
+const INK = 0x6b2c10, OL = new THREE.MeshBasicMaterial({ color: INK, side: THREE.BackSide });
+const mat = (c) => new THREE.MeshToonMaterial({ color: c });
+function put(m, x, y, z, par, ol) { m.position.set(x, y, z); if (ol !== 0) { const o = new THREE.Mesh(m.geometry, OL); o.scale.setScalar(ol || 1.05); m.add(o); } (par || S).add(m); return m; }
+function rgeo(w, h, d, r) {
+  const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r); s.lineTo(x + w, y + h - r); s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h); s.quadraticCurveTo(x, y + h, x, y + h - r); s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  const g = new THREE.ExtrudeGeometry(s, { depth: d, bevelEnabled: true, bevelThickness: r * 0.4, bevelSize: r * 0.4, bevelSegments: 2 }); g.center(); return g;
+}
+const rb = (w, h, d, c, x, y, z, par, r) => put(new THREE.Mesh(rgeo(w, h, d, r || 0.3), mat(c)), x, y, z, par, 1 + 0.12 / Math.max(w, h, d, 1));
+const cyl = (r1, r2, h, c, x, y, z, par, seg) => put(new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, h, seg || 14), mat(c)), x, y, z, par);
+const sph = (r, c, x, y, z, par, sc, ol) => { const m = put(new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), mat(c)), x, y, z, par, ol); if (sc) m.scale.set(sc[0], sc[1], sc[2]); return m; };
+function pill(text, w, h, bg, fg) {
+  const c = document.createElement("canvas"); c.width = 512; c.height = Math.round(512 * h / w);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, fog: false }));
+  sp.scale.set(w, h, 1); sp.userData = { c, t: sp.material.map }; setLabel(sp, text, bg, fg, true); return sp;
+}
+function setLabel(sp, text, bg, fg, force) {
+  const k = text + bg; if (!force && sp.userData.k === k) return; sp.userData.k = k;
+  const { c, t } = sp.userData, x = c.getContext("2d"), W = c.width, H = c.height;
+  x.clearRect(0, 0, W, H); x.fillStyle = bg || "#e8601f"; x.strokeStyle = "#6b2c10"; x.lineWidth = 10;
+  x.beginPath(); x.moveTo(H / 2, 6); x.arcTo(W - 6, 6, W - 6, H - 6, H / 2 - 6); x.arcTo(W - 6, H - 6, 6, H - 6, H / 2 - 6); x.arcTo(6, H - 6, 6, 6, H / 2 - 6); x.arcTo(6, 6, W - 6, 6, H / 2 - 6); x.closePath(); x.fill(); x.stroke();
+  x.fillStyle = fg || "#fff"; x.font = "800 " + Math.round(H * 0.5) + "px 'Baloo 2',system-ui,sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(text, W / 2, H / 2 + 4); t.needsUpdate = true;
+}
+const logoImg = new Image(); logoImg.src = LOGO;
+function logoSign(w) {
+  const h = w * 0.84, c = document.createElement("canvas"); c.width = 320; c.height = 270;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, fog: false })); sp.scale.set(w, h, 1);
+  const draw = () => { const x = c.getContext("2d"); x.fillStyle = "#fff"; x.strokeStyle = "#6b2c10"; x.lineWidth = 10; x.beginPath(); x.arc(160, 135, 128, 0, 7); x.fill(); x.save(); x.clip(); x.drawImage(logoImg, 12, 8, 296, 248); x.restore(); x.beginPath(); x.arc(160, 135, 128, 0, 7); x.stroke(); sp.material.map.needsUpdate = true; };
+  if (logoImg.complete) draw(); else logoImg.onload = draw; return sp;
+}
+const clickables = []; const act = (o, n) => { o.userData.act = n; clickables.push(o); };
+// ---------- lưu trữ ----------
+const Store = window.MebiFarmStore || {
+  load() { try { const a = JSON.parse(localStorage.getItem("mebifarm_v2")); if (a) return a; const b = JSON.parse(localStorage.getItem("mebifarm_v1")); return b && b.v === 1 ? fromV1(b) : null; } catch { return null; } },
+  save(s) { try { localStorage.setItem("mebifarm_v2", JSON.stringify(s)); } catch {} },
 };
-const cyl = (r1, r2, h, c, x, y, z, par, seg) => {
-  const m = new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, h, seg || 12), mat(c));
-  m.position.set(x, y, z); (par || S).add(m); return m;
-};
-const sph = (r, c, x, y, z, par, sc) => {
-  const m = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 10), mat(c));
-  m.position.set(x, y, z); if (sc) m.scale.set(sc[0], sc[1], sc[2]); (par || S).add(m); return m;
-};
-function label(text, w, h, bg) {
-  const c = document.createElement("canvas");
-  c.width = 512; c.height = Math.round((512 * h) / w);
-  const x = c.getContext("2d");
-  x.fillStyle = bg || "rgba(110,28,22,.94)"; x.fillRect(0, 0, c.width, c.height);
-  x.strokeStyle = "#e0b655"; x.lineWidth = 8; x.strokeRect(6, 6, c.width - 12, c.height - 12);
-  x.fillStyle = "#ffe9b0"; x.font = "bold 64px system-ui,sans-serif";
-  x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(text, c.width / 2, c.height / 2 + 4);
-  const t = new THREE.CanvasTexture(c);
-  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, fog: false }));
-  sp.scale.set(w, h, 1); sp.userData = { c, x, t, w, h }; return sp;
-}
-function relabel(sp, text, bg) {
-  const { c, x, t } = sp.userData;
-  x.clearRect(0, 0, c.width, c.height);
-  x.fillStyle = bg; x.fillRect(0, 0, c.width, c.height);
-  x.strokeStyle = "#e0b655"; x.lineWidth = 8; x.strokeRect(6, 6, c.width - 12, c.height - 12);
-  x.fillStyle = "#ffe9b0"; x.font = "bold 64px system-ui,sans-serif";
-  x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(text, c.width / 2, c.height / 2 + 4);
-  t.needsUpdate = true;
-}
-const clickables = [];
-const act = (obj, name) => { obj.userData.act = name; clickables.push(obj); };
-
-// nền
-const ground = new THREE.Mesh(new THREE.CircleGeometry(120, 48), mat(0x7b8659));
-ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02; S.add(ground);
-box(52, 0.1, 22, 0xa89870, 6, 0.0, 1, S); // nền sân đất
-box(30, 0.12, 15, 0x6f8a4e, -10, 0.01, 2.5, S); // bãi cỏ chăn thả
-
-// hàng rào bãi chăn
-{
-  const post = (x, z) => box(0.25, 1.1, 0.25, 0x6b431f, x, 0.55, z);
-  const rail = (x, z, w, d) => box(w, 0.12, d, 0x8a5a2b, x, 0.8, z);
-  for (let x = -24; x <= -3; x += 3) { post(x, 9.5); }
-  for (let z = -4; z <= 9.5; z += 3.2) { post(-24, z); post(-2.5, z); }
-  rail(-13.2, 9.5, 21.5, 0.1); rail(-24, 2.8, 0.1, 13.6); rail(-2.5, 2.8, 0.1, 13.6);
-}
-
-// chuồng gà
-const coop = new THREE.Group();
-coop.position.set(-14, 0, -6);
-S.add(coop);
-box(12, 3, 5, 0xe0d0b0, 0, 1.5, -1, coop);
-box(12.6, 0.3, 0.3, 0x6b431f, 0, 3, 1.4, coop);
-{
-  const sh = new THREE.Shape();
-  sh.moveTo(-3.6, 0); sh.lineTo(3.6, 0); sh.lineTo(0, 2.1); sh.lineTo(-3.6, 0);
-  const g = new THREE.ExtrudeGeometry(sh, { depth: 13, bevelEnabled: false });
-  g.translate(0, 0, -6.5);
-  const r = new THREE.Mesh(g, mat(0x8a3a2a));
-  r.rotation.y = Math.PI / 2; r.position.set(0, 3, -1); coop.add(r);
-}
-box(12.2, 0.12, 0.4, 0xb3322a, 0, 3, 1.55, coop);
-const coopSign = label("MebiFarm", 4.2, 1.1, "rgba(110,28,22,.94)");
-coopSign.position.set(0, 4.7, 1.9); coop.add(coopSign);
-const nestSlots = [];
-for (let n = 0; n < 4; n++) {
-  const nx = -4.2 + n * 2.8;
-  const nb = box(2.2, 0.6, 1.2, 0x8a5a2b, nx, 0.4, 0.6, coop);
-  box(2.0, 0.12, 1.0, 0xd8b45a, nx, 0.72, 0.6, coop); // rơm
-  act(nb, "collect");
-  for (let k = 0; k < 4; k++) nestSlots.push(new THREE.Vector3(-14 + nx + (k % 2) * 0.8 - 0.4, 0.95, -6 + 0.6 + Math.floor(k / 2) * 0.5 - 0.25));
-}
-const eggGeo = new THREE.SphereGeometry(0.2, 12, 10);
-const eggMat = new THREE.MeshLambertMaterial({ color: 0xf6ead0 });
-const nestEggs = nestSlots.slice(0, 16).map((p) => {
-  const m = new THREE.Mesh(eggGeo, eggMat);
-  m.scale.set(0.9, 1.15, 0.9); m.position.copy(p); m.visible = false; S.add(m); act(m, "collect"); return m;
-});
-
-// máng ăn + kho cám
-const trough = new THREE.Group();
-trough.position.set(-7, 0, 5);
-S.add(trough);
-const troughBox = box(5, 0.6, 1.2, 0x8a5a2b, 0, 0.3, 0, trough);
-const troughFeed = box(4.6, 0.25, 0.8, 0xd9a93f, 0, 0.62, 0, trough);
-act(troughBox, "feed"); act(troughFeed, "feed");
-const sack = box(1.4, 1.5, 1, 0xd9c9a0, -3, 0.75, -3.5);
-const sackLabel = label("CÁM", 1.2, 0.45, "rgba(138,106,42,.95)");
-sackLabel.position.set(-3, 1.6, -2.9); S.add(sackLabel);
-act(sack, "buyfeed");
-
-// nhà máy
-const fac = new THREE.Group();
-fac.position.set(2, 0, 0);
-S.add(fac);
-box(24, 0.15, 11, 0xbdb4a3, 11, 0.07, 0, fac);
-box(24, 4.4, 0.6, 0xe8dcc4, 11, 2.2, -5.2, fac); // tường sau
-box(0.6, 4.4, 11, 0xe8dcc4, -1, 2.2, 0, fac);
-box(0.6, 4.4, 11, 0xe8dcc4, 23, 2.2, 0, fac);
-{
-  const sh = new THREE.Shape();
-  sh.moveTo(-6.2, 0); sh.lineTo(6.2, 0); sh.lineTo(0, 2.2); sh.lineTo(-6.2, 0);
-  const g = new THREE.ExtrudeGeometry(sh, { depth: 25, bevelEnabled: false });
-  g.translate(0, 0, -12.5);
-  const r = new THREE.Mesh(g, mat(0x4b5b49));
-  r.rotation.y = Math.PI / 2; r.position.set(11, 4.4, 0); fac.add(r);
-}
-[0, 7.3, 14.6, 22].forEach((x) => { cyl(0.22, 0.26, 4.4, 0x9a2016, x, 2.2, 5.3, fac); });
-box(24.6, 0.3, 0.4, 0x6b431f, 11, 4.4, 5.3, fac);
-const facSign = label("🏭 NHÀ MÁY TRỨNG MEBIFARM", 9, 1, "rgba(110,28,22,.94)");
-facSign.position.set(11, 5.4, 5.6); fac.add(facSign);
-// băng chuyền
-box(22, 0.25, 1.8, 0x3a3a40, 11, 1.0, 0, fac);
-box(22, 0.35, 0.15, 0x8a8a90, 11, 1.1, -0.95, fac);
-box(22, 0.35, 0.15, 0x8a8a90, 11, 1.1, 0.95, fac);
-for (let x = 0.5; x <= 21.5; x += 3) box(0.2, 0.9, 1.6, 0x6e6e74, x, 0.5, 0, fac);
-const STN = [
-  { key: "wash", name: "🚿 Rửa & soi", x: 4, col: 0x4f8fb0 },
-  { key: "sort", name: "📏 Phân cỡ", x: 9, col: 0x6f9a52 },
-  { key: "pack", name: "📦 Đóng vỉ", x: 14, col: 0xc9a14a },
-  { key: "box", name: "🧰 Đóng thùng", x: 19, col: 0xb3322a },
-];
-STN.forEach((st) => {
-  const g = new THREE.Group();
-  g.position.set(st.x, 0, 0); fac.add(g);
-  box(0.5, 2.4, 0.5, 0x59595f, -1.4, 1.2, -1.2, g); box(0.5, 2.4, 0.5, 0x59595f, 1.4, 1.2, -1.2, g);
-  box(0.5, 2.4, 0.5, 0x59595f, -1.4, 1.2, 1.2, g); box(0.5, 2.4, 0.5, 0x59595f, 1.4, 1.2, 1.2, g);
-  st.body = box(3.4, 1.3, 3.0, st.col, 0, 3.0, 0, g);
-  act(st.body, "shop");
-  st.rotor = box(1.8, 0.14, 0.3, 0xf0e6d0, 0, 3.72, 0, g);
-  st.chim = cyl(0.25, 0.3, 1.2, 0x59595f, 1.2, 4.0, -0.8, g); st.chim.visible = false;
-  st.trim = box(3.5, 0.12, 3.1, 0xe0b655, 0, 2.36, 0, g); st.trim.visible = false;
-  st.steam = sph(0.35, 0xf4f4f4, 1.2, 4.9, -0.8, g); st.steam.visible = false; st.steam.material.transparent = true;
-  st.lamp = sph(0.22, 0x4cd964, 0, 3.85, 0, g);
-  st.sign = label(st.name, 3.2, 0.8, "rgba(40,30,24,.92)");
-  st.sign.position.set(0, 4.7, 0); g.add(st.sign);
-  st.g = g;
-});
-// xe tải + quầy
-const truck = new THREE.Group();
-truck.position.set(26, 0, 4);
-S.add(truck);
-const tBox = box(4.2, 2.4, 2.4, 0xf0e6d0, 0, 1.9, 0, truck);
-box(4.3, 0.3, 2.5, 0x9a2016, 0, 3.2, 0, truck);
-box(1.5, 1.6, 2.3, 0x9a2016, 2.9, 1.5, 0, truck);
-box(0.1, 0.8, 1.6, 0x9ad0e0, 3.7, 1.9, 0, truck);
-[[-1.3, 1.3], [1.3, 1.3], [-1.3, -1.3], [1.3, -1.3], [3.2, 1.3], [3.2, -1.3]].forEach(([x, z]) => {
-  const w = cyl(0.5, 0.5, 0.4, 0x2a2a2a, x, 0.5, z, truck, 14); w.rotation.x = Math.PI / 2;
-});
-const truckSign = label("MebiFarm 🥚", 3.4, 0.85, "rgba(110,28,22,.94)");
-truckSign.position.set(0, 4.1, 0); truck.add(truckSign);
-truck.children.forEach((m) => { if (m.isMesh) act(m, "sell"); });
-const stallSign = label("🚚 BÁN HÀNG", 3.4, 0.85, "rgba(138,106,42,.95)");
-stallSign.position.set(26, 5, 4); S.add(stallSign); act(stallSign, "sell");
-// cổng về chùa
-const gate = new THREE.Group();
-gate.position.set(-27, 0, 3);
-S.add(gate);
-box(0.5, 4.4, 0.5, 0x9a2016, 0, 2.2, -2.2, gate); box(0.5, 4.4, 0.5, 0x9a2016, 0, 2.2, 2.2, gate);
-box(0.7, 0.45, 6, 0x9a2016, 0, 4.3, 0, gate); box(0.5, 0.3, 5, 0x6b431f, 0, 3.6, 0, gate);
-const gateSign = label("🏯 Về chùa", 3, 0.8, "rgba(40,30,24,.92)");
-gateSign.position.set(-1.2, 5.3, 0); gate.add(gateSign);
-gate.children.forEach((m) => { if (m.isMesh) act(m, "temple"); });
-act(gateSign, "temple");
-// cây trang trí
-function tree(x, z, k) {
-  cyl(0.35 * k, 0.5 * k, 3 * k, 0x6b4a32, x, 1.5 * k, z);
-  sph(2 * k, 0x5f7a45, x, 4 * k, z, S, [1, 0.9, 1]);
-  sph(1.4 * k, 0x6d8a4f, x + 1.1 * k, 3.4 * k, z + 0.6 * k);
-}
-[[-30, -12, 1.2], [-28, 14, 1], [34, -12, 1.1], [34, 14, 1], [10, -14, 1.3], [-4, 17, 1], [18, 17, 1.1], [-20, -16, 1.2]].forEach((t) => tree(t[0], t[1], t[2]));
-
-// gà
+let G = Store.load(); if (!G || G.v !== 2) G = newState();
+let offlineMsg = null; { const gap = (Date.now() - (G.t0 || Date.now())) / 1000; if (gap > 30) offlineMsg = simulateOffline(G, gap); } G.t0 = Date.now();
+const $ = (id) => document.getElementById(id), fmt = (n) => Math.round(n).toLocaleString("vi-VN");
+function toast(t) { const el = $("toast"); el.textContent = t; el.style.opacity = 1; clearTimeout(toast.t); toast.t = setTimeout(() => (el.style.opacity = 0), 2400); }
+const eggGeo = new THREE.SphereGeometry(0.24, 14, 10), eggMat = mat(0xfff6e0);
+const fitDist = (b) => Math.min(85, Math.max(b, (40.4 / (innerWidth / innerHeight)) * 0.95));
+const dark = mat(0x222222), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
+// gà chibi: đầu to, mắt to
 function makeChicken(brown) {
-  const g = new THREE.Group();
-  const body = sph(0.5, brown ? 0xd9a066 : 0xfaf3e0, 0, 0.7, 0, g, [1, 0.85, 1.2]);
-  sph(0.3, brown ? 0xd9a066 : 0xfaf3e0, 0, 1.2, 0.5, g);
-  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.24, 6), mat(0xe8952a));
-  beak.rotation.x = Math.PI / 2; beak.position.set(0, 1.15, 0.82); g.add(beak);
-  sph(0.11, 0xc8312a, 0, 1.5, 0.48, g, [0.6, 1, 1.3]);
-  sph(0.05, 0x222222, -0.17, 1.25, 0.72, g); sph(0.05, 0x222222, 0.17, 1.25, 0.72, g);
-  const tail = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.6, 6), mat(brown ? 0xa8703a : 0xe0d2b0));
-  tail.rotation.x = -2.2; tail.position.set(0, 1.0, -0.7); g.add(tail);
-  sph(0.28, brown ? 0xb87a40 : 0xeadfc6, -0.42, 0.75, 0, g, [0.35, 0.6, 0.9]); sph(0.28, brown ? 0xb87a40 : 0xeadfc6, 0.42, 0.75, 0, g, [0.35, 0.6, 0.9]);
-  [-0.18, 0.18].forEach((x) => cyl(0.04, 0.04, 0.4, 0xe8952a, x, 0.2, 0.05, g, 5));
-  g.scale.setScalar(0.85);
-  return g;
+  const g = new THREE.Group(), b = brown ? 0xf0b060 : 0xfffaf0, wing = brown ? 0xd89040 : 0xf0e4c8;
+  sph(0.55, b, 0, 0.62, 0, g, [1, 0.85, 1.1]); sph(0.55, b, 0, 1.35, 0.25, g);
+  [-0.22, 0.22].forEach((x) => { const e = put(new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), dark), x, 1.4, 0.74, g, 0); const h = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), white); h.position.set(0.04, 0.05, 0.1); e.add(h); });
+  [-0.4, 0.4].forEach((x) => { const c = put(new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff8fa8 })), x, 1.22, 0.62, g, 0); c.scale.set(1, 0.6, 0.4); });
+  const beak = put(new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.22, 6), mat(0xff9a1f)), 0, 1.25, 0.84, g, 0); beak.rotation.x = Math.PI / 2;
+  [-0.1, 0, 0.1].forEach((x, i) => sph(0.12, 0xe03a2a, x, 1.95 + (i === 1 ? 0.07 : 0), 0.28, g));
+  sph(0.18, wing, -0.52, 0.6, 0, g, [0.4, 0.8, 1]); sph(0.18, wing, 0.52, 0.6, 0, g, [0.4, 0.8, 1]);
+  const tail = put(new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.55, 6), mat(wing)), 0, 0.85, -0.65, g); tail.rotation.x = -2.1;
+  [-0.18, 0.18].forEach((x) => cyl(0.05, 0.05, 0.25, 0xff9a1f, x, 0.15, 0.05, g, 6));
+  const sh = new THREE.Mesh(new THREE.CircleGeometry(0.6, 14), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.18 })); sh.rotation.x = -Math.PI / 2; sh.position.y = 0.03; g.add(sh);
+  g.scale.setScalar(0.9); return g;
 }
-const chicks = [];
-for (let i = 0; i < 18; i++) {
-  const g = makeChicken(i % 3 === 0);
-  g.visible = false; S.add(g);
-  chicks.push({ g, x: -14 + Math.random() * 8, z: 1 + Math.random() * 5, tx: 0, tz: 0, st: "walk", t: 0, ph: Math.random() * 6 });
-  chicks[i].tx = chicks[i].x; chicks[i].tz = chicks[i].z;
-  g.position.set(chicks[i].x, 0, chicks[i].z);
+
+// ---------- thế giới ----------
+const GWW = GW * CS, GHH = GH * CS, PCOL = [0x7cc84e, 0xffc94a, 0xe8601f];
+const ctr = (c, r, w, h) => new THREE.Vector3((c + w / 2) * CS - GWW / 2, 0, (r + h / 2) * CS - GHH / 2);
+const NB = (id) => G.nodes.find((n) => n.id === id);
+const nodeC = (n) => ctr(n.c, n.r, DEF[n.t].w, DEF[n.t].h);
+function portPos(n, out, p) { const d = DEF[n.t], hw = (d.w * CS) / 2, k = d.outs; return nodeC(n).add(new THREE.Vector3(out ? hw : -hw, 1, !out ? 0 : n.t === "coop" ? -1.1 : k === 3 ? (p - 1) * 1.5 : 0)); }
+{
+  const g = new THREE.Mesh(new THREE.CircleGeometry(130, 48), mat(0x8fd35b)); g.rotation.x = -Math.PI / 2; g.position.y = -0.02; S.add(g);
+  const pl = new THREE.Mesh(new THREE.PlaneGeometry(GWW + 3, GHH + 3), mat(0xa6e36b)); pl.rotation.x = -Math.PI / 2; pl.position.y = 0.01; S.add(pl);
+  for (let i = 0; i < 46; i++) { const a = Math.random() * 6.28, r = 24 + Math.random() * 40; sph(0.22, [0xffffff, 0xffc94a, 0xff8fa8][i % 3], Math.cos(a) * r * 1.3, 0.2, Math.sin(a) * r * 0.9, S, null, 0); }
+  const tree = (x, z, k) => { cyl(0.4 * k, 0.55 * k, 2.6 * k, 0xa8693a, x, 1.3 * k, z); sph(2.2 * k, 0x5fbf4a, x, 4 * k, z); sph(1.3 * k, 0x7ad65a, x + 1.2 * k, 3.4 * k, z + 0.8 * k); };
+  [[-26, -14, 1.2], [-27, 12, 1], [28, -14, 1.1], [29, 13, 1], [-6, -19, 1.3], [8, 19, 1], [20, -19, 1.1], [-16, 19, 1.2]].forEach((t) => tree(t[0], t[1], t[2]));
+  const sack = rb(1.6, 1.8, 1.2, 0xf0dcae, -21, 0.9, 6, S, 0.5); sack.userData.act = "buyfeed"; const sl = pill("🌾 Mua cám", 2.6, 0.7, "#e0b030", "#6b2c10"); sl.position.set(-21, 2.5, 6); sl.userData.act = "buyfeed"; S.add(sl);
+  const gate = new THREE.Group(); gate.position.set(-24, 0, -4); S.add(gate);
+  [-2.2, 2.2].forEach((z) => { cyl(0.35, 0.4, 4.4, 0xe8601f, 0, 2.2, z, gate).userData.act = "temple"; }); rb(0.9, 0.5, 6.6, 0xe8601f, 0, 4.4, 0, gate, 0.2).userData.act = "temple";
+  const gs = pill("🏯 Về chùa", 3, 0.8, "#6b2c10", "#ffe9b0"); gs.position.set(0, 5.6, 0); gs.userData.act = "temple"; gate.add(gs);
 }
-const YARD = { x0: -22, x1: -4, z0: -3, z1: 8.2 };
-const TROUGH_P = [-7, 5];
-function updChick(c, i, dt, T) {
-  const hasHen = i < G.hens.length;
-  c.g.visible = hasHen;
-  if (!hasHen) return;
-  c.t -= dt;
+const clouds = []; for (let i = 0; i < 6; i++) { const g = new THREE.Group(); [[0, 0, 3], [3, -0.4, 2.4], [-3, -0.5, 2.2], [1.2, 1, 2.2]].forEach((p) => sph(p[2], 0xffffff, p[0], p[1], 0, g, [1, 0.7, 0.8], 0)); g.position.set(-70 + i * 28, 32 + (i % 3) * 5, -40 - (i % 2) * 30); S.add(g); clouds.push(g); }
+// lưới đất
+const gridG = new THREE.Group(); S.add(gridG); const cells = [];
+const mFree = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.38 }), mLock = new THREE.MeshBasicMaterial({ color: 0x5f9a48, transparent: true, opacity: 0.95 });
+for (let r = 0; r < GH; r++) for (let c = 0; c < GW; c++) { const m = new THREE.Mesh(new THREE.PlaneGeometry(CS - 0.12, CS - 0.12), mFree), p = ctr(c, r, 1, 1); m.rotation.x = -Math.PI / 2; m.position.set(p.x, 0.05, p.z); m.userData.act = "cell:" + c + ":" + r; gridG.add(m); cells.push({ m, c, r }); }
+function refreshGrid() { cells.forEach(({ m, c, r }) => { const u = unlocked(G, c, r), oc = cellOcc(G, c, r); m.visible = !u || (build && !oc); m.material = u ? mFree : mLock; }); }
+
+// ---------- modules ----------
+const views = {}, eviews = {};
+function mkTruck(k) {
+  const t = new THREE.Group(); rb(4.6, 2.8, 2.8, 0xfff6e0, 0, 2.1, 0, t, 0.5); rb(1.9, 2.0, 2.7, 0xe8601f, 3.2, 1.7, 0, t, 0.5); rb(4.7, 0.5, 2.9, 0xe8601f, 0, 0.9, 0, t, 0.2);
+  [[-1.4, 1.4], [1.4, 1.4], [-1.4, -1.4], [1.4, -1.4], [3.5, 1.4], [3.5, -1.4]].forEach(([x, z]) => { cyl(0.62, 0.62, 0.45, 0x333333, x, 0.62, z, t, 16).rotation.x = Math.PI / 2; });
+  t.scale.setScalar(k); return t;
+}
+function buildMach(v) {
+  const n = v.n, d = DEF[n.t], g = v.g, id = n.id;
+  [[-1.5, -1.2], [1.5, -1.2], [-1.5, 1.2], [1.5, 1.2]].forEach((p) => cyl(0.28, 0.28, 2.2, 0x8a8a98, p[0], 1.2, p[1], g, 10));
+  v.body = rb(3.6, 1.9, 3.2, d.col, 0, 3.3, 0, g, 0.6); v.body.userData.act = "node:" + id;
+  v.eyes = [-0.65, 0.65].map((x) => { const e = put(new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 10), dark), x, 3.5, 1.85, g, 0); const h = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), white); h.position.set(0.08, 0.1, 0.2); e.add(h); return e; });
+  [-1.25, 1.25].forEach((x) => { const b = put(new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff8fa8 })), x, 3.1, 1.75, g, 0); b.scale.set(1, 0.6, 0.3); });
+  put(new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.06, 6, 12, Math.PI), dark), 0, 3.25, 1.88, g, 0).rotation.z = Math.PI;
+  v.chim = cyl(0.3, 0.36, 1.2, 0x8a8a98, 1.2, 4.7, -0.8, g); v.trim = rb(3.8, 0.22, 3.4, 0xffd66a, 0, 2.45, 0, g, 0.1);
+  v.steam = sph(0.4, 0xffffff, 1.2, 5.5, -0.8, g, null, 0); v.steam.material.transparent = true;
+  v.lamp = sph(0.25, 0x4cd964, 0, 4.45, 0, g); v.sign = pill(d.n, 3.8, 0.85, "#e8601f"); v.sign.position.set(0, 5.6, 0); g.add(v.sign);
+  if (n.t === "wash") { v.brush = cyl(0.42, 0.42, 2.8, 0xff7ab0, 0, 2.15, 0, g, 6); v.brush.rotation.x = Math.PI / 2; v.drops = [0, 1, 2].map((i) => sph(0.13, 0x6ed0ff, -0.8 + i * 0.8, 2, 0.3, g, null, 0)); }
+  if (n.t === "sort") v.arm = rb(0.5, 0.6, 1.0, 0xffffff, 0, 1.75, -1.0, g, 0.15);
+  if (n.t === "pack") { v.rod = cyl(0.12, 0.12, 1, 0xdddddd, 0, 2.1, 0, g, 8); v.pad = rb(1.8, 0.3, 1.4, 0xffffff, 0, 1.8, 0, g, 0.1); }
+  if (n.t === "box") { v.hl = new THREE.Group(); v.hr = new THREE.Group(); v.hl.position.set(-1.7, 4.3, 0); v.hr.position.set(1.7, 4.3, 0); rb(1.3, 0.2, 2.6, 0xc98a4b, 0.65, 0, 0, v.hl, 0.08); rb(1.3, 0.2, 2.6, 0xc98a4b, -0.65, 0, 0, v.hr, 0.08); g.add(v.hl, v.hr); }
+  v.anim = (dt, TM) => {
+    const lv = n.lv, on = n.w > 0, sp = on ? 1 + lv * 0.5 : 0, a = Math.abs(Math.sin(TM * sp * 1.6));
+    setLabel(v.sign, d.n + " Lv" + lv, n.blk ? "#d63a2a" : "#e8601f");
+    v.body.material.color.set(d.col).lerp(new THREE.Color(0xffffff), (lv - 1) * 0.07); v.eyes.forEach((e) => (e.scale.y = n.blk ? 0.5 : 1));
+    v.lamp.material.color.setHex(n.blk ? (Math.sin(TM * 8) > 0 ? 0xe03a2a : 0x7a1f18) : on ? (Math.sin(TM * (4 + lv * 2)) > 0 ? 0x4cd964 : 0x2f8f44) : 0xffc94a);
+    v.g.position.y = on ? Math.sin(TM * sp * 3) * 0.03 : 0;
+    v.chim.visible = lv >= 3; v.trim.visible = lv >= 5; v.steam.visible = lv >= 3 && on;
+    if (v.steam.visible) { const u = (TM * 0.7) % 1; v.steam.position.y = 5.5 + u * 1.3; v.steam.scale.setScalar(0.7 + u * 0.9); v.steam.material.opacity = 0.8 * (1 - u); }
+    if (v.brush) { v.brush.rotateY(dt * sp * 7); v.drops.forEach((q, i) => { q.visible = on; q.position.y = 2.1 - ((TM * 1.6 + i * 0.33) % 1) * 0.8; }); }
+    if (v.arm) v.arm.position.z = -1.0 + (on ? a * 1.2 : 0);
+    if (v.pad) { const py = 2.2 - (on ? a * 0.55 : 0); v.pad.position.y = py; v.rod.position.y = (py + 2.4) / 2; v.rod.scale.y = Math.max(0.1, 2.4 - py); }
+    if (v.hl) { const o = on ? (Math.sin(TM * sp * 1.6) + 1) / 2 : 0; v.hl.rotation.z = o; v.hr.rotation.z = -o; }
+  };
+}
+function buildDock(v) {
+  const n = v.n, g = v.g; const h = rb(3.4, 2.6, 2.6, 0xfff0d2, -0.6, 1.6, -0.8, g, 0.4); h.userData.act = "node:" + n.id; rb(3.9, 0.4, 3.1, 0xe8601f, -0.6, 3.1, -0.8, g, 0.2);
+  v.tr = mkTruck(0.42); v.tr.position.set(0.5, 0.3, 1.5); g.add(v.tr); v.tt = -1;
+  v.sign = pill("🚚 Bến giao hàng", 4, 0.85, "#e0a020", "#6b2c10"); v.sign.position.set(0, 4.6, 0); g.add(v.sign); v.pt = 0;
+  v.anim = (dt) => {
+    if (n.pop >= 1) { v.pt -= dt; if (v.pt <= 0) { v.pt = 1.4; const p = nodeC(n).add(new THREE.Vector3(0, 4, 0)).project(C); coinFly("+" + fmt(n.pop) + " 🪙", (p.x + 1) / 2 * innerWidth, (1 - p.y) / 2 * innerHeight); n.pop = 0; if (v.tt < 0) v.tt = 0; } }
+    if (v.tt >= 0) { v.tt += dt; const t = v.tt; v.tr.position.x = t < 2 ? 0.5 + 18 * (t / 2) ** 2 : t < 3.5 ? 99 : t < 5.5 ? 0.5 + 18 * (1 - (t - 3.5) / 2) ** 2 : 0.5; if (t >= 5.5) v.tt = -1; }
+  };
+}
+function buildCoop(v) {
+  const n = v.n, g = v.g, id = n.id; rb(6.4, 0.2, 4.4, 0xa6e36b, 0, 0.1, 0.1, g, 0.1);
+  rb(6, 3, 0.5, 0xfff0d2, 0, 1.7, -2, g, 0.3).userData.act = "node:" + id; [-2.9, 2.9].forEach((x) => rb(0.5, 3, 1.9, 0xfff0d2, x, 1.7, -1.2, g, 0.25).userData.act = "node:" + id);
+  const sh = new THREE.Shape(); sh.moveTo(-1.9, 0); sh.lineTo(1.9, 0); sh.lineTo(0, 1.5); sh.lineTo(-1.9, 0);
+  const rg = new THREE.ExtrudeGeometry(sh, { depth: 6.6, bevelEnabled: true, bevelSize: 0.2, bevelThickness: 0.2, bevelSegments: 2 }); rg.translate(0, 0, -3.3);
+  const roof = put(new THREE.Mesh(rg, mat(0xe8601f)), 0, 3.2, -1.2, g, 1.03); roof.rotation.y = Math.PI / 2; roof.userData.act = "node:" + id;
+  [-1.8, 0, 1.8].forEach((x) => { rb(1.5, 0.6, 1.1, 0xc98a4b, x, 0.45, -1.2, g, 0.2).userData.act = "collect"; rb(1.25, 0.2, 0.9, 0xffd66a, x, 0.8, -1.2, g, 0.1); });
+  v.eggs = Array.from({ length: 9 }, (_, i) => { const m = new THREE.Mesh(eggGeo, eggMat); m.scale.set(0.9, 1.15, 0.9); m.position.set(-1.8 + 1.8 * (i % 3) + (Math.floor(i / 3) - 1) * 0.35, 1.05, -1.2 + (Math.floor(i / 3) % 2) * 0.2); m.userData.act = "collect"; g.add(m); return m; });
+  [-3.4, -1.1, 1.1, 3.4].forEach((x) => cyl(0.14, 0.14, 1.2, 0xc98a4b, x, 0.6, 2.4, g, 8)); [-3.4, 3.4].forEach((x) => cyl(0.14, 0.14, 1.2, 0xc98a4b, x, 0.6, 0.2, g, 8));
+  rb(6.9, 0.15, 0.15, 0xe0a860, 0, 0.9, 2.4, g, 0.06); [-3.4, 3.4].forEach((x) => rb(0.15, 0.15, 2.2, 0xe0a860, x, 0.9, 1.3, g, 0.06));
+  rb(2.2, 0.5, 0.7, 0xc98a4b, 2.0, 0.25, 1.8, g, 0.2).userData.act = "node:" + id; v.feed = rb(2.0, 0.2, 0.5, 0xffc94a, 2.0, 0.55, 1.8, g, 0.08);
+  const lg = logoSign(2.6); lg.position.set(0, 6.4, -1.2); g.add(lg); v.chicks = []; v.ep = [];
+  v.anim = (dt, TM) => {
+    const hs = n.hens.length, ne = Math.min(9, tot(n.o[0]));
+    while (v.chicks.length < hs) { const i = v.chicks.length, ck = makeChicken(i % 3 === 0); g.add(ck); ck.userData.act = "node:" + id; const c = { g: ck, x: -2.5 + Math.random() * 4, z: 0.4 + Math.random() * 1.5, tx: 0, tz: 0, st: "walk", t: 0, ph: Math.random() * 6 }; c.tx = c.x; c.tz = c.z; v.chicks.push(c); }
+    v.chicks.forEach((c, i) => updChick(c, i < hs, dt, TM)); v.eggs.forEach((e, i) => (e.visible = i < ne));
+    v.feed.scale.x = Math.max(0.02, G.trough / troughCap(G)); v.feed.visible = G.trough >= 0.5;
+  };
+}
+function updChick(c, has, dt, TM) {
+  c.g.visible = has; if (!has) return; c.t -= dt;
   if (c.st === "walk") {
     const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
-    if (d < 0.2) {
-      if (c.goEat) { c.st = "eat"; c.t = 1.6; c.goEat = false; }
-      else { c.st = "idle"; c.t = 0.6 + Math.random() * 2.2; }
-    } else {
-      const sp = 1.6 * dt;
-      c.x += (dx / d) * sp; c.z += (dz / d) * sp;
-      c.g.rotation.y = Math.atan2(dx, dz);
-      c.g.position.y = Math.abs(Math.sin(T * 9 + c.ph)) * 0.08;
-    }
-  } else if (c.st === "idle") {
-    c.g.position.y = 0;
-    c.g.rotation.x = Math.sin(T * 5 + c.ph) > 0.8 ? 0.25 : 0;
-    if (c.t <= 0) {
-      c.g.rotation.x = 0; c.st = "walk";
-      c.tx = YARD.x0 + Math.random() * (YARD.x1 - YARD.x0);
-      c.tz = YARD.z0 + Math.random() * (YARD.z1 - YARD.z0);
-    }
-  } else if (c.st === "eat") {
-    c.g.rotation.x = 0.35 + Math.sin(T * 14) * 0.18;
-    if (c.t <= 0) { c.g.rotation.x = 0; c.st = "idle"; c.t = 0.5; }
-  } else if (c.st === "lay") {
-    c.g.scale.y = 0.85 * (0.85 + 0.15 * Math.sin(T * 20));
-    if (c.t <= 0) { c.g.scale.y = 0.85; c.st = "idle"; c.t = 1; }
-  }
+    if (d < 0.2) { if (c.goEat) { c.st = "eat"; c.t = 1.6; c.goEat = false; } else { c.st = "idle"; c.t = 0.6 + Math.random() * 2.2; } }
+    else { const sp = 1.4 * dt; c.x += (dx / d) * sp; c.z += (dz / d) * sp; c.g.rotation.y = Math.atan2(dx, dz); c.g.position.y = Math.abs(Math.sin(TM * 10 + c.ph)) * 0.18; c.g.rotation.z = Math.sin(TM * 10 + c.ph) * 0.1; }
+  } else if (c.st === "idle") { c.g.position.y = 0; c.g.rotation.z = 0; c.g.rotation.x = Math.sin(TM * 5 + c.ph) > 0.8 ? 0.25 : 0; if (c.t <= 0) { c.g.rotation.x = 0; c.st = "walk"; c.tx = -3 + Math.random() * 6; c.tz = 0.3 + Math.random() * 1.7; } }
+  else if (c.st === "eat") { c.g.position.y = 0; c.g.rotation.x = 0.45 + Math.sin(TM * 14) * 0.2; if (c.t <= 0) { c.g.rotation.x = 0; c.st = "idle"; c.t = 0.5; } }
+  else if (c.st === "lay") { c.g.scale.set(0.9 * (1 + 0.08 * Math.sin(TM * 20)), 0.9 * (1 - 0.1 * Math.sin(TM * 20)), 0.9); c.g.position.y = Math.abs(Math.sin(TM * 12)) * 0.25; if (c.t <= 0) { c.g.scale.setScalar(0.9); c.g.position.y = 0; c.st = "idle"; c.t = 1; } }
   c.g.position.x = c.x; c.g.position.z = c.z;
 }
-// trứng/hộp bay (hiệu ứng)
-const fx = [];
-function spawnFx(mesh, p0, p1, dur, arc, vx) {
-  mesh.position.copy(p0); S.add(mesh);
-  fx.push({ m: mesh, p0: p0.clone(), p1: p1.clone(), t: 0, dur, arc, vx: vx || 0 });
+function buildView(n) {
+  const d = DEF[n.t], g = new THREE.Group(), v = { g, n }; g.position.copy(nodeC(n)); S.add(g);
+  if (n.t !== "coop") rb(d.w * CS - 0.5, 0.3, d.h * CS - 0.5, 0xfde8bd, 0, 0.1, 0, g, 0.12);
+  n.t === "coop" ? buildCoop(v) : n.t === "dock" ? buildDock(v) : buildMach(v);
+  v.ports = [];
+  if (d.ins) { const k = cyl(0.4, 0.4, 0.5, 0x4fb7e8, -d.w * CS / 2, 1, 0, g, 12); k.rotation.z = Math.PI / 2; k.userData.act = "in:" + n.id; v.ports.push(k); }
+  for (let p = 0; p < d.outs; p++) { const pp = portPos(n, 1, p).sub(nodeC(n)); const k = cyl(0.4, 0.4, 0.5, n.t === "sort" ? PCOL[p] : 0xff9a1f, pp.x, 1, pp.z, g, 12); k.rotation.z = Math.PI / 2; k.userData.act = "out:" + n.id + ":" + p; v.ports.push(k); }
+  return v;
 }
-function flyEgg(p0, p1) {
-  if (fx.length > 40) return;
-  const m = new THREE.Mesh(eggGeo, eggMat); m.scale.set(0.9, 1.15, 0.9);
-  spawnFx(m, p0, p1, 0.9, 2.2);
+function buildEdge(e) {
+  const a = NB(e.a), b = NB(e.b); if (!a || !b) return null;
+  const p0 = portPos(a, 1, e.p), p1 = portPos(b, 0, 0); p0.x += 0.5; p1.x -= 0.5; const mx = (p0.x + p1.x) / 2;
+  const pts = [p0, new THREE.Vector3(mx, 1, p0.z), new THREE.Vector3(mx, 1, p1.z), p1], g = new THREE.Group(), m = mat(0x4a4a58), segs = []; let L = 0;
+  for (let i = 0; i < 3; i++) { const A = pts[i], B = pts[i + 1], len = A.distanceTo(B); if (len < 0.05) continue; const hz = Math.abs(B.x - A.x) >= Math.abs(B.z - A.z);
+    const s = put(new THREE.Mesh(new THREE.BoxGeometry(hz ? len + 0.7 : 0.7, 0.2, hz ? 0.7 : len + 0.7), m), (A.x + B.x) / 2, 0.9, (A.z + B.z) / 2, g, 1.12); s.userData.act = "belt:" + e.id; segs.push({ A, B, len }); L += len; }
+  const dots = Array.from({ length: 8 }, () => { const q = new THREE.Mesh(eggGeo, eggMat); q.scale.set(0.8, 1, 0.8); g.add(q); return q; });
+  S.add(g); return { g, m, segs, L, dots };
 }
-const beltEggs = [];
-function beltItem(kind, x0) {
-  if (beltEggs.length > 36) return;
-  let m;
-  if (kind === "egg") { m = new THREE.Mesh(eggGeo, eggMat); m.scale.set(0.9, 1.15, 0.9); }
-  else if (kind === "pack") m = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.22, 0.5), mat(0xd9c28a));
-  else m = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.7, 0.9), mat(0x9b6b3a));
-  m.position.set(2 + x0, kind === "box" ? 1.5 : 1.28, (Math.random() - 0.5) * 0.7);
-  S.add(m); beltEggs.push({ m, x: 2 + x0, end: kind === "box" ? 22 : 24 });
+function animEdge(ev, e, TM) {
+  ev.m.color.setHex(e.blk ? 0xd63a2a : 0x4a4a58);
+  ev.dots.forEach((q, i) => { q.visible = e.on > 0; if (!q.visible) return; let d = ((TM * 1.8 + i / 8) % 1) * ev.L, k = 0; while (k < ev.segs.length - 1 && d > ev.segs[k].len) { d -= ev.segs[k].len; k++; } const s = ev.segs[k], u = Math.min(1, d / s.len); q.position.set(s.A.x + (s.B.x - s.A.x) * u, 1.25, s.A.z + (s.B.z - s.A.z) * u); });
 }
-function onEv(k, a) {
-  if (k === "lay") {
-    const c = chicks[a]; if (!c) return;
-    c.st = "lay"; c.t = 1;
-    const slot = nestSlots[Math.min(15, Math.max(0, G.nest - 1))];
-    flyEgg(new THREE.Vector3(c.x, 0.9, c.z), slot);
-  } else if (k === "eat") {
-    const c = chicks[a]; if (!c) return;
-    c.st = "walk"; c.goEat = true;
-    c.tx = TROUGH_P[0] - 2 + Math.random() * 4; c.tz = TROUGH_P[1] - 1.2;
-  } else if (k === "wash") { for (let i = 0; i < Math.min(a, 3); i++) beltItem("egg", i * 0.4); }
-  else if (k === "pack") beltItem("pack", 12);
-  else if (k === "box") beltItem("box", 17);
-  else if (k === "broken") toast("🥚 Một quả bị nứt, đã loại");
+function sync() {
+  const ids = new Set(G.nodes.map((n) => n.id)); G.nodes.forEach((n) => { if (!views[n.id]) views[n.id] = buildView(n); });
+  for (const id in views) if (!ids.has(+id)) { S.remove(views[id].g); delete views[id]; }
+  const eids = new Set(G.edges.map((e) => e.id)); G.edges.forEach((e) => { if (!eviews[e.id]) { const v = buildEdge(e); if (v) eviews[e.id] = v; } });
+  for (const id in eviews) if (!eids.has(+id)) { S.remove(eviews[id].g); delete eviews[id]; }
 }
-let truckT = -1;
-function startTruck() { if (truckT < 0) truckT = 0; }
-function updTruck(dt) {
-  if (truckT < 0) return;
-  truckT += dt;
-  const t = truckT;
-  if (t < 3) truck.position.x = 26 + 40 * (t / 3) * (t / 3);
-  else if (t < 5) truck.position.x = 200;
-  else if (t < 8) truck.position.x = 26 + 40 * (1 - (t - 5) / 3) * (1 - (t - 5) / 3);
-  else { truck.position.x = 26; truckT = -1; }
+const eggGeoFly = eggGeo, fx = [];
+function flyEgg(p0, p1) { if (fx.length > 30) return; const m = new THREE.Mesh(eggGeoFly, eggMat); m.scale.set(0.9, 1.15, 0.9); m.position.copy(p0); S.add(m); fx.push({ m, p0: p0.clone(), p1: p1.clone(), t: 0, dur: 0.8 }); }
+function onEv(k, id, i) {
+  const v = views[id]; if (!v) return;
+  if (k === "lay" && v.chicks && v.chicks[i]) { const c = v.chicks[i]; c.st = "lay"; c.t = 1; flyEgg(v.g.localToWorld(new THREE.Vector3(c.x, 1, c.z)), v.g.localToWorld(new THREE.Vector3(-1.8 + (i % 3) * 1.8, 1.1, -1.2))); }
+  else if (k === "eat" && v.chicks && v.chicks[i]) { const c = v.chicks[i]; c.st = "walk"; c.goEat = true; c.tx = 1.2 + Math.random() * 1.6; c.tz = 1.2; }
+  else if (k === "broken" && performance.now() - (onEv.bt || 0) > 4000) { onEv.bt = performance.now(); toast("🥚 Một quả nứt, đã loại"); }
 }
 
-// nhấp chuột vào vật thể
-const ray = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-function doAct(name) {
-  if (name === "collect") actCollect();
-  else if (name === "feed") actFeed();
-  else if (name === "buyfeed") actBuyFeed();
-  else if (name === "sell") actSell();
-  else if (name === "shop") { $("shop").classList.add("open"); $("bShop").classList.add("on"); renderShop(); }
-  else if (name === "temple") location.href = TEMPLE_URL;
+// ---------- chế độ xây dựng + tương tác ----------
+let build = false, placing = null, linking = null, pk = null, pHtml = "";
+const cam = { yaw: 0.3, pitch: 0.62, dist: 46 }, cg = { yaw: 0.3, pitch: 0.62, dist: 46 };
+function setBuild(b) {
+  build = b; placing = null; linking = null; document.body.classList.toggle("building", b); $("bBuild").classList.toggle("on", b);
+  if (b) { cg.yaw = 0; cg.pitch = 1.38; cg.dist = fitDist(40); closePn(); } else { cg.yaw = 0.3; cg.pitch = 0.62; cg.dist = fitDist(46); }
+  refreshGrid(); renderBB();
 }
-let down = null;
-R.domElement.addEventListener("pointerdown", (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+function closePn() { pk = null; $("pn").classList.remove("open"); }
+function placeInfoTxt(t) { const st = placeInfo(G, t); return st.why ? { ok: false, txt: st.why } : { ok: G.coins >= st.cost, txt: fmt(st.cost) + " 🪙" }; }
+function renderBB() {
+  if (!build) return;
+  const h = Object.keys(DEF).map((t) => { const i = placeInfoTxt(t); return '<button class="pc' + (placing === t ? " sel" : "") + '" data-a="pick:' + t + '"' + (i.ok ? "" : " disabled") + "><span>" + DEF[t].ic + "</span>" + DEF[t].n + "<small>" + i.txt + "</small></button>"; }).join("")
+    + '<button class="pc" data-a="land"' + (G.land >= 3 || G.coins < landCost(G) ? " disabled" : "") + "><span>🌱</span>Mở đất<small>" + (G.land >= 3 ? "Đã mở hết" : fmt(landCost(G)) + " 🪙") + '</small></button><button class="pc done" data-a="done"><span>✔</span>Xong<small>&nbsp;</small></button>';
+  const hint = placing ? "Chạm ô trống để đặt " + DEF[placing].n : linking ? "Chạm cổng vào (xanh) của máy đích" : "Chọn máy để đặt · chạm cổng cam rồi cổng xanh để nối";
+  const html = '<div class="hint">' + hint + '</div><div class="row">' + h + "</div>"; if ($("bb").dataset.h !== html) { $("bb").dataset.h = html; $("bb").innerHTML = html; }
+}
+$("bb").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; const a = b.dataset.a;
+  if (a === "done") setBuild(false); else if (a === "land") { if (landUp(G)) { toast("🌱 Đã mở rộng đất"); refreshGrid(); } } else if (a.startsWith("pick:")) { const t = a.slice(5); placing = placing === t ? null : t; linking = null; }
+  renderBB(); };
+function spd(n, l) { const t = n.t; return t === "wash" || t === "sort" ? f1(0.4 + 0.4 * l) + " trứng/giây" : t === "pack" ? f1((0.25 + 0.15 * l) * 60) + " vỉ/phút" : t === "box" ? f1((0.2 + 0.1 * l) * 60) + " thùng/phút" : t === "coop" ? "Chỗ gà " + (3 + 3 * l) + " · ổ trứng " + (10 + 10 * l) : "Tự bán mọi hàng nhận được"; }
+function pips(lv, cap) { return '<div class="pips">' + Array.from({ length: cap }, (_, i) => '<i class="' + (i < lv ? "on" : "") + '"></i>').join("") + "</div>"; }
+function btn(txt, a, dis, cls) { return '<button class="up ' + (cls || "") + '" data-a="' + a + '"' + (dis ? " disabled" : "") + ">" + txt + "</button>"; }
+function upBtn(u, a) { return u.st === "max" ? btn("Tối đa", a, 1) : u.st === "lock" ? btn("🔒 Cần cấp trại " + u.need, a, 1) : btn("Nâng cấp · " + fmt(u.cost) + " 🪙", a, u.st === "poor"); }
+function renderPn() {
+  if (!pk) return; let h = "";
+  if (pk.t === "merit") h = meritHtml(); else if (pk.t === "node") {
+    const n = NB(pk.id); if (!n) return closePn(); const d = DEF[n.t], u = upInfo(G, n);
+    h = '<h4><span>' + d.ic + " " + d.n + '</span><button class="rb sk" data-a="x" id="pnX">✕</button></h4>';
+    if (n.t !== "dock") h += '<div class="it"><div class="nm"><span>Cấp máy</span><span>Lv ' + n.lv + "/" + u.cap + "</span></div>" + pips(n.lv, u.cap) + "<small>" + spd(n, n.lv) + (n.lv < u.cap ? " → " + spd(n, n.lv + 1) : "") + "</small>" + upBtn(u, "up:" + n.id) + "</div>";
+    else h += '<div class="it"><small>Nối băng chuyền vào bến để bán hàng tự động. Bến nhận mọi loại hàng.</small></div>';
+    if (n.t === "coop") {
+      const hc = hensCap(n), full = n.hens.length >= hc;
+      h += '<div class="it"><div class="nm"><span>🐔 Gà trong chuồng</span><span>' + n.hens.length + "/" + hc + "</span></div><small>" + (n.o[0].egg || 0) + " trứng trong ổ" + (G.edges.some((e) => e.a === n.id) ? " · đang nối băng chuyền" : " · chưa nối, hãy thu tay") + "</small>" + btn(full ? "Chuồng đầy, hãy nâng cấp" : "Mua gà · " + fmt(henCost(G)) + " 🪙", "hen:" + n.id, full || G.coins < henCost(G)) + "</div>";
+      [["breed", "🧬 Gà giống tốt", "đẻ mỗi ~" + Math.round(26 * Math.pow(0.86, G.lv.breed)) + " giây"], ["feeder", "🌾 Máy rải cám tự động", "tự đổ cám từ kho ra máng"]].forEach(([k, nm, ds]) => { const g = globalUp(G, k); h += '<div class="it"><div class="nm"><span>' + nm + "</span><span>Lv " + g.lv + "/" + g.cap + "</span></div>" + pips(g.lv, g.cap) + "<small>" + ds + "</small>" + upBtn(g, "g:" + k) + "</div>"; });
+    }
+    if (build) h += '<div class="it">' + btn("🗑 Gỡ máy (+" + fmt(Math.floor(d.base / 2) + (n.t === "coop" ? n.hens.length * 30 : 0)) + " 🪙)", "rm:" + n.id, 0, "red") + "</div>";
+  } else { h = '<h4><span>🔗 Băng chuyền</span><button class="rb sk" data-a="x" id="pnX">✕</button></h4><div class="it"><small>' + (G.edges.find((e) => e.id === pk.id) || {}).blk + "</small>" + btn("Gỡ băng chuyền", "rmb:" + pk.id, 0, "red") + "</div>"; h = h.replace(/<small>.*?<\/small>/, "<small>Nối giữa hai máy. Màu đỏ là bị nghẽn: máy phía sau chưa kịp nhận hàng.</small>"); }
+  if (h !== pHtml) { pHtml = h; $("pn").innerHTML = h; $("pn").classList.add("open"); }
+}
+$("pn").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; const [k, x] = b.dataset.a.split(":");
+  if (k === "x") closePn(); else if (k === "m") { buyMerit(x); return; } else if (k === "tp") location.href = TEMPLE_URL; else if (k === "up") { if (upNode(G, +x)) toast("✔ Đã nâng cấp"); } else if (k === "hen") { if (buyHen(G, +x)) toast("🐔 Thêm một chú gà"); } else if (k === "g") { if (buyGlobal(G, x)) toast("✔ Đã nâng cấp"); }
+  else if (k === "rm") { toast("🗑 Đã gỡ máy (+" + fmt(removeNode(G, +x)) + " xu)"); closePn(); refreshGrid(); } else if (k === "rmb") { removeEdge(G, +x); closePn(); toast("Đã gỡ băng chuyền"); }
+  pHtml = ""; renderPn(); };
+function doAct(a) {
+  const [k, x, y] = a.split(":");
+  if (k === "cell") { if (placing) { const m = tryPlace(G, placing, +x, +y); if (m) toast(m); else { toast("✔ Đã đặt " + DEF[placing].n); placing = null; refreshGrid(); renderBB(); } } else { linking = null; closePn(); renderBB(); } }
+  else if (k === "node") { pk = { t: "node", id: +x }; pHtml = ""; renderPn(); }
+  else if (k === "out") { if (!build) { pk = { t: "node", id: +x }; pHtml = ""; return renderPn(); } linking = { id: +x, p: +y }; placing = null; toast("Chạm cổng vào (xanh) của máy đích"); renderBB(); }
+  else if (k === "in") { if (build && linking) { const m = linkNodes(G, linking.id, linking.p, +x); toast(m || "🔗 Đã nối băng chuyền"); linking = null; renderBB(); } else if (!build) { pk = { t: "node", id: +x }; pHtml = ""; renderPn(); } else toast("Chạm cổng ra (cam) của máy trước rồi mới chọn cổng này"); }
+  else if (k === "belt") { if (build) { pk = { t: "belt", id: +x }; pHtml = ""; renderPn(); } }
+  else if (k === "collect") actCollect(); else if (k === "buyfeed") actBuyFeed(); else if (k === "temple") location.href = TEMPLE_URL;
+}
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(); let down = null, drag = null;
+const vis = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
+R.domElement.addEventListener("pointerdown", (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; drag = { x: e.clientX, y: e.clientY }; });
+addEventListener("pointerup", () => (drag = null));
+addEventListener("pointermove", (e) => { if (!drag || build) return; cg.yaw -= (e.clientX - drag.x) * 0.006; cg.pitch = Math.max(0.25, Math.min(1.25, cg.pitch + (e.clientY - drag.y) * 0.004)); drag = { x: e.clientX, y: e.clientY }; });
+addEventListener("wheel", (e) => { cg.dist = Math.max(18, Math.min(70, cg.dist + e.deltaY * 0.03)); }, { passive: true });
 R.domElement.addEventListener("pointerup", (e) => {
   if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || performance.now() - down.t > 500) return;
-  mouse.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
-  ray.setFromCamera(mouse, C);
-  const hit = ray.intersectObjects(clickables, true)[0];
-  if (hit) {
-    let o = hit.object;
-    while (o && !o.userData.act) o = o.parent;
-    if (o) doAct(o.userData.act);
-  }
+  mouse.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(mouse, C);
+  for (const h of ray.intersectObjects(S.children, true)) { if (!vis(h.object)) continue; let o = h.object; while (o && !o.userData.act) o = o.parent; if (o && vis(o)) return doAct(o.userData.act); }
 });
-
-// camera: xoay bằng kéo, zoom bằng cuộn
-let yaw = 0.35, pitch = 0.62, dist = 46;
-const tgt = new THREE.Vector3(2, 0, 2), tgtGoal = tgt.clone();
-const FOCUS = { coop: [-12, 0, 2, 30], fac: [13, 0, 0, 34], shop: [24, 0, 4, 28] };
-document.querySelectorAll("#foc button").forEach((b) => (b.onclick = () => {
-  const f = FOCUS[b.dataset.f]; tgtGoal.set(f[0], f[1], f[2]); dist = f[3];
-}));
-{
-  let drag = null;
-  R.domElement.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY }; });
-  addEventListener("pointerup", () => (drag = null));
-  addEventListener("pointermove", (e) => {
-    if (!drag) return;
-    yaw -= (e.clientX - drag.x) * 0.006;
-    pitch = Math.max(0.25, Math.min(1.25, pitch + (e.clientY - drag.y) * 0.004));
-    drag = { x: e.clientX, y: e.clientY };
-  });
-  addEventListener("wheel", (e) => { dist = Math.max(16, Math.min(70, dist + e.deltaY * 0.03)); }, { passive: true });
-}
-
-// ---------- giao diện ----------
-function actCollect() { const n = collectEggs(G); if (!n) return toast("Chưa có trứng trong ổ"); toast("🧺 Đã thu " + n + " trứng về nhà máy"); }
-function actFeed() { const n = feedTrough(G); toast(n ? "🌾 Đã rải " + n + " cám ra máng" : G.feed ? "Máng đã đầy" : "Kho cám trống, hãy mua thêm"); }
+// ---------- thao tác nhanh ----------
+function actCollect() { const n = collectEggs(G); toast(n ? "🧺 Thu " + n + " trứng từ chuồng chưa nối băng" : "Không có trứng để thu (chuồng nối băng chuyền tự chạy)"); }
+function actFeed() { const n = feedTrough(G); toast(n ? "🌾 Rải " + n + " cám ra máng" : G.feed ? "Máng đã đầy" : "Kho cám trống, hãy mua thêm"); }
 function actBuyFeed() { toast(buyFeed(G) ? "🛒 Mua " + FEED_PACK + " cám (-" + FEED_COST + " xu)" : "Không đủ xu"); }
-function actSell() {
-  const r = sellAll(G);
-  if (!r) return toast("Chưa có hàng để bán");
-  startTruck(); toast("🚚 Bán " + fmt(r.eggs) + " trứng được " + fmt(r.coins) + " xu");
+function coinFly(t, x, y) { const d = document.createElement("div"); d.className = "coinfly"; d.textContent = t; d.style.left = x + "px"; d.style.top = y + "px"; document.body.appendChild(d); setTimeout(() => d.remove(), 1300); }
+function actSell() { const r = sellStock(G); if (!r) return toast("Kho tay đang trống. Máy nối bến giao tự bán"); const b = $("bSell").getBoundingClientRect(); coinFly("+" + fmt(r.coins) + " 🪙", b.left, b.top - 10); toast("🚚 Bán " + fmt(r.eggs) + " trứng"); }
+$("bCollect").onclick = actCollect; $("bFeedA").onclick = actFeed; $("bBuyFeed").onclick = actBuyFeed; $("bSell").onclick = actSell; $("bTemple").onclick = () => (location.href = TEMPLE_URL); $("bBuild").onclick = () => setBuild(!build); $("bMerit").onclick = () => { pk = { t: "merit" }; pHtml = ""; renderPn(); };
+
+// ---------- công đức: chỉ TIÊU điểm (server chỉ cho phép trừ từ trình duyệt) ----------
+let mWired = false, mBusy = false;
+const mmss = (ms) => Math.floor(ms / 60000) + ":" + String(Math.floor(ms / 1000) % 60).padStart(2, "0");
+const extend = (k) => { G.buff = G.buff || { lay: 0, price: 0 }; G.buff[k] = Math.min(Date.now() + 1800000, Math.max(Date.now(), G.buff[k] || 0) + 300000); };
+const MO = [
+  { id: "xu", ic: "🪙", n: "Túi xu", cost: 10, d: () => "+" + fmt(50 * farmLevel(G)) + " xu (theo cấp trại)", apply: () => { const x = 50 * farmLevel(G); G.coins += x; return "+" + fmt(x) + " xu"; } },
+  { id: "feed", ic: "🌾", n: "Bao cám phúc lộc", cost: 5, d: () => "+100 cám vào kho", apply: () => { G.feed += 100; return "+100 cám"; } },
+  { id: "lay", ic: "✨", n: "Phúc lộc đẻ trứng", cost: 15, d: () => "Gà đẻ nhanh gấp đôi trong 5 phút", apply: () => { extend("lay"); return "Gà đẻ nhanh 5 phút"; } },
+  { id: "price", ic: "💰", n: "Lộc buôn bán", cost: 25, d: () => "Giá bán ×1,5 trong 5 phút", apply: () => { extend("price"); return "Giá bán ×1,5 trong 5 phút"; } },
+];
+function wireMerit() { mWired = true; const M = window.MebiMerit; M.ready.then(refreshMerit).catch(() => {}); addEventListener("mebi-merit-change", refreshMerit); }
+function refreshMerit() { const b = $("bMerit"); b.classList.toggle("show", mWired); if (mWired) $("vMerit").textContent = fmt(window.MebiMerit.get()); }
+function buffTxt() { const n = Date.now(), b = G.buff || {}; return (b.lay > n ? "✨ Đẻ nhanh " + mmss(b.lay - n) + "<br>" : "") + (b.price > n ? "💰 Giá ×1,5 " + mmss(b.price - n) + "<br>" : ""); }
+function meritHtml() {
+  const M = window.MebiMerit, bal = M ? M.get() : 0, debt = M && M.getDebt ? M.getDebt() : 0;
+  let h = '<h4><span>🪷 Công đức</span><button class="rb sk" data-a="x" id="pnX">✕</button></h4><div class="it"><div class="nm"><span>Số dư</span><span>' + fmt(bal) + " 🪷</span></div><small>" + (debt ? "Đang nợ " + fmt(debt) + " công đức. " : "") + "Làm công đức ở Chùa Mebi để có thêm.</small>" + btn("🏯 Sang Chùa Mebi", "tp:", 0) + "</div>";
+  MO.forEach((o) => { h += '<div class="it"><div class="nm"><span>' + o.ic + " " + o.n + "</span><span>" + o.cost + " 🪷</span></div><small>" + o.d() + "</small>" + btn(bal >= o.cost ? "Đổi" : "Thiếu " + (o.cost - bal) + " 🪷", "m:" + o.id, bal < o.cost || mBusy) + "</div>"; });
+  return h;
 }
-$("bCollect").onclick = actCollect; $("bFeed").onclick = actFeed; $("bBuyFeed").onclick = actBuyFeed; $("bSell").onclick = actSell;
-$("bTemple").onclick = () => (location.href = TEMPLE_URL);
-$("bShop").onclick = () => { $("shop").classList.toggle("open"); $("bShop").classList.toggle("on"); };
-function renderShop() {
-  const box = $("upList");
-  box.replaceChildren();
-  const L = farmLevel(G);
-  UPS.forEach((u) => {
-    const lv = u.lvl(G), r = upState(G, u);
-    const row = document.createElement("div"); row.className = "up" + (r.st === "lock" && lv === 0 ? " locked" : "");
-    const t = document.createElement("div"); t.className = "t";
-    t.textContent = u.name + (u.id === "hen" ? " (" + lv + "/" + u.limit(G) + ")" : lv === 0 ? "" : " · cấp " + lv + "/" + u.cap);
-    const sm = document.createElement("small");
-    let line = u.desc;
-    if (u.speed) line += " · " + (lv > 0 || u.kind === "farm" ? u.speed(lv) : "chưa mở") + (lv < u.cap ? " → " + u.speed(lv + 1) : "");
-    sm.textContent = line; t.appendChild(sm);
-    const b = document.createElement("button");
-    if (r.st === "max") { b.textContent = "Tối đa"; b.disabled = true; }
-    else if (r.st === "limit") { b.textContent = r.why; b.disabled = true; }
-    else if (r.st === "lock") { b.textContent = "🔒 Lv " + r.need; b.disabled = true; }
-    else { b.textContent = (lv === 0 && u.kind === "machine" ? "Mở · " : "") + fmt(r.cost) + " xu"; b.disabled = r.st === "poor"; }
-    b.onclick = () => { if (buyUp(G, u.id)) { toast("✔ " + u.name); renderShop(); } };
-    row.append(t, b); box.appendChild(row);
-  });
+async function buyMerit(id) {
+  const o = MO.find((x) => x.id === id), M = window.MebiMerit; if (!o || !M || mBusy) return; mBusy = true; pHtml = ""; renderPn();
+  try {
+    await M.ready;
+    const r = await fetch("/api/merit", { credentials: "same-origin", cache: "no-store" }); const before = (await r.json()).balance; // số dư thật từ server
+    if (before < o.cost) throw new Error("Không đủ công đức");
+    const after = await M.change(-o.cost);
+    if (before - after < o.cost) throw new Error("Công đức vừa thay đổi, hãy thử lại"); // server đã kẹp về 0 nên không trao vật phẩm
+    const msg = o.apply(); G.t0 = Date.now(); Store.save(G); toast("🪷 -" + o.cost + " · " + msg);
+  } catch (e) { toast("⚠ " + (e.message || "Không dùng được công đức")); }
+  mBusy = false; pHtml = ""; renderPn();
 }
-function chip(txt, lock) { const s = document.createElement("span"); s.className = "chip" + (lock ? " lock" : ""); s.textContent = txt; return s; }
-function arrow() { const i = document.createElement("i"); i.textContent = "›"; return i; }
+// ---------- HUD ----------
+const QS = [
+  ["Thu trứng bằng tay rồi bán 20 trứng", () => G.totalEggs >= 20, () => G.totalEggs + "/20"], ["Mua thêm gà cho chuồng (bấm vào chuồng)", () => hensAll(G) >= 6, () => hensAll(G) + "/6"],
+  ["Lên cấp trại 2 và đặt máy phân cỡ giữa máy rửa và bến giao (🔧)", () => cnt(G, "sort") > 0, () => "cấp trại " + farmLevel(G)], ["Mở rộng đất trong chế độ 🔧", () => G.land >= 2, () => "cần " + fmt(landCost(G)) + " xu"],
+  ["Đặt máy đóng vỉ, nối trọn dây chuyền", () => cnt(G, "pack") > 0, () => "cấp trại " + farmLevel(G)], ["Đóng 1 thùng trứng", () => G.boxes > 0, () => "cần máy đóng thùng"], ["Đặt chuồng thứ hai", () => cnt(G, "coop") >= 2, () => "cấp trại 3"],
+];
+function renderQuest() { const i = QS.findIndex((q) => !q[1]()); $("quest").innerHTML = buffTxt() + (i < 0 ? "🏆 <b>Hoàn thành nhiệm vụ!</b>" : "📋 Nhiệm vụ " + (i + 1) + "/" + QS.length + "<br><b>" + QS[i][0] + "</b> (" + QS[i][2]() + ")"); }
 function renderFlow() {
-  const f = $("flow");
-  f.replaceChildren(
-    chip("🥚 Ổ " + G.nest + "/" + nestCap(G)), arrow(),
-    chip("🧺 Giỏ " + G.basket), arrow(),
-    chip("🚿 Sạch " + G.clean, false), arrow(),
-    chip("📏 S" + G.g.S + " M" + G.g.M + " L" + G.g.L, !G.lv.sort), arrow(),
-    chip("📦 Vỉ " + sum3(G.packs), !G.lv.pack), arrow(),
-    chip("🧰 Thùng " + sum3(G.cartons), !G.lv.box), arrow(),
-    chip("💰 ~" + fmt(sellValue(G).coins) + " xu"),
-    chip("🌾 Máng " + Math.round(G.trough) + "/" + troughCap(G)),
-  );
+  $("flow").innerHTML = Object.keys(DEF).map((t) => { const ns = G.nodes.filter((n) => n.t === t), q = ns.reduce((a, n) => a + (t === "coop" ? tot(n.o[0]) : tot(n.q)), 0);
+    return '<div class="stn' + (ns.length ? "" : " off") + (ns.some((n) => n.blk) ? " warn" : "") + '"><span>' + DEF[t].ic + "</span>" + (ns.length ? q : "–") + "</div>"; }).join('<b class="arw">›</b>') + '<div class="stn"><span>🧺</span>' + tot(G.stock) + "</div>";
 }
 function hud() {
-  $("vCoins").textContent = fmt(G.coins); $("vFeed").textContent = fmt(G.feed);
-  $("vHens").textContent = G.hens.length; $("vMax").textContent = hensMax(G);
-  const lp = levelProgress(G);
-  $("vLv").textContent = lp.L; $("vXp").style.width = Math.round(lp.p * 100) + "%";
-  $("vXpT").textContent = lp.L >= XP_TH.length ? "tối đa" : lp.cur + "/" + lp.next;
-  renderFlow();
-  if ($("shop").classList.contains("open")) renderShop();
-  $("bBuyFeed").textContent = "🛒 Mua cám (-" + FEED_COST + ")";
-  $("bBuyFeed").disabled = G.coins < FEED_COST;
-  $("bCollect").textContent = "🧺 Thu trứng" + (G.nest ? " (" + G.nest + ")" : "");
+  if (!mWired && window.MebiMerit) wireMerit(); refreshMerit();
+  $("vCoins").textContent = fmt(G.coins); $("vFeed").textContent = fmt(G.feed); $("vHens").textContent = hensAll(G); $("vMax").textContent = hensTotalCap(G);
+  $("vTr").textContent = "máng " + Math.round(G.trough) + "/" + troughCap(G); $("bFeed").style.width = (100 * G.trough / troughCap(G)) + "%"; $("bHen").style.width = (100 * hensAll(G) / Math.max(1, hensTotalCap(G))) + "%";
+  const lp = levelProgress(G); $("vLv").textContent = lp.L; $("bLv").style.width = Math.round(lp.p * 100) + "%"; $("vXpT").textContent = lp.L >= XP_TH.length ? "tối đa" : lp.cur + "/" + lp.next;
+  renderFlow(); renderQuest(); renderPn(); renderBB(); refreshGrid();
+  $("bBuyFeed").disabled = G.coins < FEED_COST; $("bCollect").lastChild.textContent = "Thu trứng";
 }
-
 // ---------- vòng lặp ----------
-let last = performance.now(), hudT = 0, saveT = 0, T = 0, lastL = farmLevel(G);
-const feedScaleBase = troughFeed.scale.x;
+let last = performance.now(), hudT = 0, saveT = 0, TM = 0, lastL = farmLevel(G); const tgt = new THREE.Vector3(0, 0, 0), pulse = new THREE.Color();
 function frame(now) {
-  const dt = Math.min((now - last) / 1000, 0.1);
-  last = now; T += dt;
-  tick(G, dt, onEv);
-  chicks.forEach((c, i) => updChick(c, i, dt, T));
-  for (let i = 0; i < nestEggs.length; i++) nestEggs[i].visible = i < G.nest;
-  troughFeed.scale.x = Math.max(0.02, G.trough / troughCap(G));
-  troughFeed.visible = G.trough >= 0.5;
-  for (let i = fx.length - 1; i >= 0; i--) {
-    const f = fx[i]; f.t += dt;
-    const u = Math.min(1, f.t / f.dur);
-    f.m.position.lerpVectors(f.p0, f.p1, u); f.m.position.y += Math.sin(u * Math.PI) * f.arc;
-    if (u >= 1) { S.remove(f.m); fx.splice(i, 1); }
-  }
-  for (let i = beltEggs.length - 1; i >= 0; i--) {
-    const b = beltEggs[i]; b.x += 2.4 * dt; b.m.position.x = b.x;
-    if (b.x > b.end) { S.remove(b.m); beltEggs.splice(i, 1); }
-  }
-  STN.forEach((st) => {
-    const lv = G.lv[st.key], on = lv > 0, need = UNL[st.key];
-    const txt = on ? st.name + " · Lv " + lv : farmLevel(G) < need ? "🔒 Cần cấp trại " + need : "🔓 " + st.name + " (chưa mở)";
-    relabel(st.sign, txt, on ? "rgba(40,30,24,.92)" : "rgba(90,90,96,.92)");
-    const col = new THREE.Color(on ? st.col : 0x8a8a90).lerp(new THREE.Color(0xffffff), Math.max(0, lv - 1) * 0.07);
-    st.body.material.color.copy(col);
-    st.lamp.material.color.setHex(on ? (Math.sin(T * (4 + lv * 2)) > 0 ? 0x4cd964 : 0x2f8f44) : 0xb33a3a);
-    st.rotor.rotation.y += on ? dt * (1.5 + lv * 1.6) : 0;
-    st.chim.visible = lv >= 3; st.trim.visible = lv >= 5; st.steam.visible = lv >= 3;
-    if (st.steam.visible) {
-      const u = (T * 0.7 + st.x) % 1;
-      st.steam.position.y = 4.9 + u * 1.2; st.steam.scale.setScalar(0.7 + u * 0.8); st.steam.material.opacity = 0.7 * (1 - u);
-    }
-  });
-  updTruck(dt);
-  { const L = farmLevel(G); if (L > lastL) { lastL = L; toast("🎉 Trại lên cấp " + L + "! " + (LEVEL_NOTE[L] || "")); renderShop(); } }
-  hudT += dt; saveT += dt;
-  if (hudT > 0.25) { hudT = 0; hud(); }
-  if (saveT > 5) { saveT = 0; G.t0 = Date.now(); Store.save(G); }
-  tgt.lerp(tgtGoal, Math.min(1, dt * 3));
-  C.position.set(tgt.x + Math.sin(yaw) * Math.cos(pitch) * dist, tgt.y + Math.sin(pitch) * dist, tgt.z + Math.cos(yaw) * Math.cos(pitch) * dist);
-  C.lookAt(tgt);
-  R.render(S, C);
-  requestAnimationFrame(frame);
-}
-// STN label lưu trạng thái để không vẽ lại mỗi khung
-{
-  const orig = relabel; const cache = new WeakMap();
-  window.relabel = null;
-  relabel = (sp, text, bg) => { const k = text + bg; if (cache.get(sp) === k) return; cache.set(sp, k); orig(sp, text, bg); };
+  const dt = Math.min((now - last) / 1000, 0.1); last = now; TM += dt;
+  tick(G, dt, onEv); sync();
+  G.nodes.forEach((n) => { n.w = Math.max(0, n.w - dt); const v = views[n.id]; if (v) { v.anim(dt, TM); v.ports.forEach((p, i) => { const s = build ? 1.3 + (linking && p.userData.act.startsWith("in:") ? 0.25 * Math.sin(TM * 8) : 0) : 0.8; p.scale.setScalar(s); }); } });
+  G.edges.forEach((e) => { e.on = Math.max(0, (e.on || 0) - dt); const v = eviews[e.id]; if (v) animEdge(v, e, TM); });
+  clouds.forEach((c, i) => { c.position.x += dt * (0.8 + i * 0.1); if (c.position.x > 90) c.position.x = -90; });
+  for (let i = fx.length - 1; i >= 0; i--) { const f = fx[i]; f.t += dt; const u = Math.min(1, f.t / f.dur); f.m.position.lerpVectors(f.p0, f.p1, u); f.m.position.y += Math.sin(u * Math.PI) * 2.2; if (u >= 1) { S.remove(f.m); fx.splice(i, 1); } }
+  { const L = farmLevel(G); if (L > lastL) { lastL = L; toast("🎉 Trại lên cấp " + L + "! " + (LEVEL_NOTE[L] || "Máy nâng được thêm cấp")); renderBB(); } }
+  hudT += dt; saveT += dt; if (hudT > 0.25) { hudT = 0; hud(); } if (saveT > 5) { saveT = 0; G.t0 = Date.now(); Store.save(G); }
+  const k = Math.min(1, dt * 4); cam.yaw += (cg.yaw - cam.yaw) * k; cam.pitch += (cg.pitch - cam.pitch) * k; cam.dist += (cg.dist - cam.dist) * k;
+  C.position.set(tgt.x + Math.sin(cam.yaw) * Math.cos(cam.pitch) * cam.dist, tgt.y + Math.sin(cam.pitch) * cam.dist, tgt.z + Math.cos(cam.yaw) * Math.cos(cam.pitch) * cam.dist); C.lookAt(tgt);
+  R.render(S, C); requestAnimationFrame(frame);
 }
 addEventListener("resize", () => { R.setSize(innerWidth, innerHeight); C.aspect = innerWidth / innerHeight; C.updateProjectionMatrix(); });
 addEventListener("beforeunload", () => { G.t0 = Date.now(); Store.save(G); });
 addEventListener("visibilitychange", () => { if (document.hidden) { G.t0 = Date.now(); Store.save(G); } });
-hud();
-if (offlineMsg && offlineMsg.eggs > 0) toast("🌙 Khi bạn vắng, trại làm thêm " + offlineMsg.eggs + " trứng");
-else toast("🐔 Chào mừng đến MebiFarm");
+cg.dist = cam.dist = fitDist(46);
+sync(); refreshGrid(); hud();
+if (offlineMsg && offlineMsg.eggs > 0) toast("🌙 Khi bạn vắng, trại làm thêm " + offlineMsg.eggs + " trứng"); else toast("🐔 Chào mừng đến MebiFarm");
 requestAnimationFrame(frame);
+
 </script>
 </body>
 </html>
