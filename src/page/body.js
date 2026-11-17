@@ -2,7 +2,7 @@
 // hay dấu gạch chéo ngược trong phần chuỗi này.
 export const body = (hostname) => `  </style>
 </head>
-<body>
+<body class="${hostname === 'game.mebidev.site' ? 'game-home' : ''}">
   <div class="card">
     <a class="domain-badge" id="gameLibraryLink" href="https://game.mebidev.site" target="_blank" rel="noopener noreferrer" aria-label="Mở thư viện game trong tab mới">${hostname}</a>
     <h1 id="homeTitle">Máy chủ local chưa bật 🐞</h1>
@@ -22,6 +22,7 @@ export const body = (hostname) => `  </style>
       <a class="tab tab-link" href="/goc-tra-nho"><span class="game-icon">❧</span><span><b>Mebi Trà</b><small>Pha trà, chăm vườn · Bán hàng nhận công đức</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/chua-mebi"><span class="game-icon">🪷</span><span><b>Chùa Mebi</b><small>Không gian 3D thư giãn cùng mọi người</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/mebifarm"><span class="game-icon">🐔</span><span><b>MebiFarm</b><small>Chăm nông trại, thu trứng và đổi công đức</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
+      <a class="tab tab-link" href="/vuot-nguc"><span class="game-icon">🎙️</span><span><b>Vượt Ngục</b><small>Nói để nhảy, vượt chướng ngại vật</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/tower-city"><span class="game-icon">🏗️</span><span><b>Tower City</b><small>Xây tháp và quy hoạch thành phố</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/ai-la-trieu-phu"><span class="game-icon">💰</span><span><b>Ai Là Triệu Phú</b><small>Đấu trí 15 câu hỏi · Nhận đến 1.000 công đức</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/chibi-rush"><span class="game-icon">🏃</span><span><b>Chibi Rush</b><small>Đua vượt chướng ngại vật, tối đa 8 người</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>

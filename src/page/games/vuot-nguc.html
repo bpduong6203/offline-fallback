@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vượt Ngục – nói để nhảy</title>
+<style>
+:root{--bg:#0e0d0b;--fg:#ebe3d0;--amber:#e8a93a;--red:#d8523d;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:8px}
+canvas{width:min(100%,960px);aspect-ratio:16/9;background:#15130f;border:3px solid #3a342a;border-radius:6px;touch-action:none}
+.bar{width:min(100%,960px);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,input{font:inherit;color:var(--fg);background:#26221b;border:2px solid #4a4233;border-radius:6px;padding:8px 14px}
+button{cursor:pointer}button:hover{border-color:var(--amber)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+#go{background:var(--amber);color:#1a1409;border-color:var(--amber);font-weight:700}
+#heard{flex:1;min-width:160px;color:#b9ad92}
+#typed{flex:1;min-width:140px}
+.pad{display:flex;gap:8px}.pad button{width:64px;font-size:20px;user-select:none}
+</style>
+</head>
+<body>
+<canvas id="c" width="960" height="540" aria-label="Màn chơi vượt ngục"></canvas>
+<div class="bar">
+  <button id="go">Bắt đầu và bật mic</button>
+  <span id="heard">Mic chưa bật.</span>
+</div>
+<div class="bar">
+  <input id="typed" placeholder="Không dùng được mic? Gõ “a a a a” rồi nhấn Enter" autocomplete="off">
+  <div class="pad"><button id="bl" aria-label="Đi trái">◀</button><button id="br" aria-label="Đi phải">▶</button></div>
+</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),W=960,H=540,G=430;
+const GROUPS=[
+ {t:'pit',word:'a',al:['a','ah','aa','ha'],n:4},
+ {t:'wall',word:'ư',al:['u','uu','uh','hu'],n:4},
+ {t:'pit',word:'ớ',al:['o','oh','ow','ho'],n:4},
+ {t:'wall',word:'ưm',al:['um','umm','mm','hum','uhm'],n:4}
+];
+const OBS=[];let cx0=600;
+GROUPS.forEach((g,gi)=>{for(let i=0;i<g.n;i++){const w=g.t==='pit'?90:40;OBS.push({t:g.t,x:cx0,w,h:g.t==='wall'?70+gi*12+i*6:0,word:g.word,al:g.al,g:gi});cx0+=w+110}cx0+=450});
+const EXIT=cx0+50;
+let S;
+function reset(){S={mode:'menu',x:80,px:80,y:G,vy:0,dir:1,t:0,jt:0,jd:null,falls:0,time:0,anim:0,msg:'',msgT:0}}
+reset();
+const keys={};
+addEventListener('keydown',e=>{keys[e.key]=true;if(e.key.startsWith('Arrow'))e.preventDefault()});
+addEventListener('keyup',e=>keys[e.key]=false);
+function hold(id,k){const b=document.getElementById(id);['pointerdown'].forEach(n=>b.addEventListener(n,()=>keys[k]=true));['pointerup','pointerleave','pointercancel'].forEach(n=>b.addEventListener(n,()=>keys[k]=false))}
+hold('bl','ArrowLeft');hold('br','ArrowRight');
+
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+function target(){return OBS.filter(o=>o.x>S.x&&o.x-S.x<320).sort((a,b)=>a.x-b.x)[0]}
+function hits(text,o){let n=0;const nw=norm(o.word),one=nw.length===1;for(const k of norm(text).split(' ')){if(o.al.includes(k))n++;else if(one&&new RegExp('^'+nw+'+$').test(k))n+=k.length}return n}
+function hop(o){const ex=o.x+o.w+40;S.jd={sx:S.x,ex,T:0.4+(ex-S.x)/900,peak:o.t==='wall'?o.h+45:95};S.jt=0}
+function say(text,n){
+  if(S.mode!=='play'||S.fall)return 0;
+  const o=target();if(!o)return 0;
+  const c=n===undefined?hits(text,o):n;
+  if(!c)return 0;
+  if(S.qg!==o.g){S.q=0;S.qg=o.g}
+  S.q=Math.min(6,(S.q||0)+c);
+  if(!S.jd){S.q--;hop(o)}
+  return c;
+}
+function flash(m){S.msg=m;S.msgT=2}
+
+const heard=document.getElementById('heard'),goBtn=document.getElementById('go'),typed=document.getElementById('typed');
+typed.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){heard.textContent='Bạn gõ: '+typed.value;say(typed.value);typed.value=''}});
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,micOn=false,seen={};
+function startMic(){
+  if(!SR){heard.textContent='Trình duyệt không hỗ trợ nhận giọng nói. Dùng Chrome hoặc gõ từ vào ô bên dưới.';return}
+  if(rec)return;
+  rec=new SR();rec.lang='vi-VN';rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=3;
+  rec.onresult=e=>{
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      let best=0;const o=target();
+      for(let j=0;j<e.results[i].length;j++){
+        const tx=e.results[i][j].transcript;
+        if(j===0)heard.textContent='Nghe được: '+tx;
+        if(o)best=Math.max(best,hits(tx,o));
+      }
+      const add=best-(seen[i]||0);
+      if(add>0){seen[i]=best;say('',add)}
+      if(e.results[i].isFinal)delete seen[i];
+    }
+  };
+  rec.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){micOn=false;heard.textContent='Mic bị chặn. Cho phép mic cho trang này hoặc gõ từ vào ô bên dưới.'}};
+  rec.onend=()=>{seen={};if(micOn){try{rec.start()}catch(_){}}};
+  micOn=true;heard.textContent='Mic đang bật, hãy đọc từ trên bảng.';
+  try{rec.start()}catch(_){}
+}
+goBtn.onclick=()=>{reset();S.mode='play';startMic();goBtn.textContent='Chơi lại';cv.focus()};
+
+let last=performance.now();
+function loop(n){const dt=Math.min(.05,(n-last)/1000);last=n;update(dt);draw();requestAnimationFrame(loop)}
+function update(dt){
+  S.t+=dt;S.msgT-=dt;
+  if(S.mode!=='play')return;
+  S.time+=dt;
+  if(S.jd){
+    S.jt+=dt/S.jd.T;const k=Math.min(1,S.jt);
+    S.x=S.jd.sx+(S.jd.ex-S.jd.sx)*k;S.y=G-S.jd.peak*4*k*(1-k);
+    if(S.jt>=1){S.jd=null;S.y=G;const nx=target();if(S.q>0&&nx&&nx.g===S.qg){S.q--;hop(nx)}else{S.q=0;flash('Qua rồi!')}}
+    return;
+  }
+  if(S.fall){
+    S.vy+=1500*dt;S.y+=S.vy*dt;
+    if(S.y>H+80){S.fall=false;S.y=G;S.vy=0;S.x=Math.max(80,S.respawn);S.falls++;flash('Ngã rồi, thử lại!')}
+    return;
+  }
+  const d=(keys.ArrowRight||keys.d||keys.D?1:0)-(keys.ArrowLeft||keys.a||keys.A?1:0);
+  if(d){S.dir=d;S.anim+=dt*10}
+  S.px=S.x;S.x=Math.max(30,S.x+d*190*dt);
+  for(const o of OBS){
+    if(o.t==='wall'){
+      if(S.x+14>o.x&&S.x-14<o.x+o.w){S.x=S.px<=o.x?o.x-14:o.x+o.w+14}
+    }else if(S.x>o.x+8&&S.x<o.x+o.w-8){S.fall=true;S.vy=0;S.respawn=o.x-150}
+  }
+  if(S.x>=EXIT){S.mode='win';goBtn.textContent='Chơi lại'}
+}
+
+function bricks(off,col,line,sc){
+  ctx.fillStyle=col;ctx.fillRect(0,0,W,G);ctx.strokeStyle=line;ctx.lineWidth=2;
+  const bw=90*sc,bh=40*sc;
+  for(let r=0;r*bh<G+bh;r++){
+    const sh=(r%2)*bw/2-((off%bw)+bw)%bw;
+    ctx.beginPath();ctx.moveTo(0,r*bh);ctx.lineTo(W,r*bh);ctx.stroke();
+    for(let x=sh;x<W;x+=bw){ctx.beginPath();ctx.moveTo(x,r*bh);ctx.lineTo(x,(r+1)*bh);ctx.stroke()}
+  }
+}
+function draw(){
+  const cam=Math.max(0,S.x-340);
+  bricks(cam*.4,'#26211a','#1a1612',1);
+  // barred windows
+  for(let i=-1;i<8;i++){
+    const wx=i*420+200-((cam*.5)%420);
+    ctx.fillStyle='#0a0f1a';ctx.fillRect(wx,90,90,120);
+    ctx.fillStyle='#8f8a7b';for(let b=1;b<5;b++)ctx.fillRect(wx+b*18-3,90,6,120);
+    ctx.strokeStyle='#8f8a7b';ctx.lineWidth=4;ctx.strokeRect(wx,90,90,120);
+  }
+  // searchlight
+  const lx=480+Math.sin(S.t*.7)*420;
+  const gr=ctx.createRadialGradient(lx,G,10,lx,G,230);
+  gr.addColorStop(0,'rgba(255,240,170,.32)');gr.addColorStop(1,'rgba(255,240,170,0)');
+  ctx.fillStyle=gr;ctx.beginPath();ctx.moveTo(lx-6,0);ctx.lineTo(lx+6,0);ctx.lineTo(lx+230,G);ctx.lineTo(lx-230,G);ctx.fill();
+  ctx.save();ctx.translate(-cam,0);
+  // ground segments
+  let gx=cam-10;const pits=OBS.filter(o=>o.t==='pit');
+  ctx.fillStyle='#4b4436';
+  let cur=cam-10;const end=cam+W+10;
+  for(const p of pits){
+    if(p.x>cur)ctx.fillRect(cur,G,Math.min(p.x,end)-cur,H-G);
+    cur=Math.max(cur,p.x+p.w);
+  }
+  if(cur<end)ctx.fillRect(cur,G,end-cur,H-G);
+  ctx.fillStyle='#6a604d';
+  cur=cam-10;
+  for(const p of pits){if(p.x>cur)ctx.fillRect(cur,G,Math.min(p.x,end)-cur,8);cur=Math.max(cur,p.x+p.w)}
+  if(cur<end)ctx.fillRect(cur,G,end-cur,8);
+  // pits
+  for(const p of pits){
+    ctx.fillStyle='#050403';ctx.fillRect(p.x,G,p.w,H-G);
+    ctx.fillStyle='#8c8878';
+    for(let sx=p.x+8;sx<p.x+p.w-10;sx+=20){ctx.beginPath();ctx.moveTo(sx,H);ctx.lineTo(sx+8,H-40);ctx.lineTo(sx+16,H);ctx.fill()}
+  }
+  // walls
+  for(const o of OBS.filter(o=>o.t==='wall')){
+    ctx.fillStyle='#5d564a';ctx.fillRect(o.x,G-o.h,o.w,o.h);
+    ctx.strokeStyle='#3a352c';ctx.lineWidth=2;
+    for(let y=G-o.h;y<G;y+=30){ctx.beginPath();ctx.moveTo(o.x,y);ctx.lineTo(o.x+o.w,y);ctx.stroke()}
+    ctx.fillStyle='#8c8878';for(let sx=o.x+4;sx<o.x+o.w;sx+=12)ctx.fillRect(sx,G-o.h-14,3,14);
+  }
+  // signs
+  const tg=S.mode==='play'?target():null;
+  ctx.textAlign='center';ctx.font='bold 22px "Trebuchet MS",sans-serif';
+  for(const o of OBS){
+    const cx=o.x+o.w/2,top=G-(o.t==='wall'?o.h+30:0)-110,tw=ctx.measureText(o.word).width+28,act=o===tg;
+    ctx.fillStyle='#2e2619';ctx.fillRect(cx-3,top+40,6,G-top-40-(o.t==='wall'?o.h-30:0));
+    ctx.fillStyle=act?'#e8a93a':'#8a6f3c';ctx.fillRect(cx-tw/2,top,tw,44);
+    ctx.strokeStyle='#1a1409';ctx.lineWidth=3;ctx.strokeRect(cx-tw/2,top,tw,44);
+    ctx.fillStyle='#1a1409';ctx.fillText(o.word,cx,top+30);
+  }
+  // exit door
+  ctx.fillStyle='#1d3a2a';ctx.fillRect(EXIT,G-150,90,150);
+  ctx.fillStyle='#7ee0a0';ctx.fillRect(EXIT+10,G-140,70,130);
+  ctx.fillStyle='#0e0d0b';ctx.font='bold 20px sans-serif';ctx.fillText('THOÁT',EXIT+45,G-70);
+  // player
+  drawPlayer();
+  ctx.restore();
+  // HUD
+  ctx.textAlign='left';ctx.font='18px "Trebuchet MS",sans-serif';ctx.fillStyle='#ebe3d0';
+  ctx.fillText('Thời gian '+S.time.toFixed(1)+'s    Số lần ngã '+S.falls,16,28);
+  ctx.fillStyle='#3a342a';ctx.fillRect(16,40,200,8);ctx.fillStyle='#e8a93a';ctx.fillRect(16,40,200*Math.min(1,S.x/EXIT),8);
+  ctx.textAlign='center';
+  if(S.mode==='play'&&tg){ctx.font='bold 26px "Trebuchet MS",sans-serif';ctx.fillStyle='#e8a93a';const left=OBS.filter(o=>o.g===tg.g&&o.x>=tg.x).length;ctx.fillText('Đọc liên tiếp: “'+Array(left).fill(tg.word).join(', ')+'”',W/2,86)}
+  if(S.msgT>0&&S.mode==='play'){ctx.font='bold 28px "Trebuchet MS",sans-serif';ctx.fillStyle=S.msg.startsWith('Ngã')?'#d8523d':'#7ee0a0';ctx.fillText(S.msg,W/2,130)}
+  if(S.mode!=='play'){
+    ctx.fillStyle='rgba(8,7,5,.72)';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#ebe3d0';ctx.font='bold 54px Georgia,serif';
+    if(S.mode==='menu'){
+      ctx.fillText('VƯỢT NGỤC',W/2,200);ctx.font='20px "Trebuchet MS",sans-serif';
+      ctx.fillText('Đi trái phải bằng phím mũi tên hoặc A / D.',W/2,262);
+      ctx.fillText('Mỗi hố hoặc tường là một nhịp: đọc liên tiếp “a, a, a, a” để nhảy liền nhiều lần.',W/2,296);
+      ctx.fillText('Nhấn nút bên dưới để bắt đầu và cho phép dùng mic.',W/2,330);
+    }else{
+      ctx.fillStyle='#7ee0a0';ctx.fillText('Bạn đã trốn thoát!',W/2,220);ctx.fillStyle='#ebe3d0';ctx.font='24px "Trebuchet MS",sans-serif';
+      ctx.fillText('Thời gian '+S.time.toFixed(1)+'s, ngã '+S.falls+' lần',W/2,280);
+    }
+  }
+}
+function drawPlayer(){
+  const x=S.x,y=S.y,f=S.dir,air=!!S.jd,sw=air?0:Math.sin(S.anim)*8;
+  ctx.save();ctx.translate(x,y);ctx.scale(f,1);
+  if(S.fall)ctx.rotate(.4);
+  ctx.fillStyle='#2b2b2b';ctx.fillRect(-9+sw,-16,8,16);ctx.fillRect(1-sw,-16,8,16);
+  ctx.fillStyle='#f2f0ea';ctx.fillRect(-13,-52,26,38);
+  ctx.fillStyle='#1d1d1d';for(let i=-52;i<-14;i+=10)ctx.fillRect(-13,i,26,5);
+  ctx.fillStyle='#f0c9a0';ctx.beginPath();ctx.arc(0,-66,15,0,7);ctx.fill();
+  ctx.fillStyle='#1d1d1d';ctx.fillRect(-15,-78,30,6);
+  ctx.beginPath();ctx.arc(6,-66,2.5,0,7);ctx.fill();
+  ctx.fillStyle='#e8a93a';ctx.fillRect(-4,-44,10,8);
+  ctx.restore();
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
