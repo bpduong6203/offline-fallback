@@ -30,6 +30,7 @@ import mebiFarm from './src/page/games/mebifarm.html';
 import aiLaTrieuPhu from './src/page/games/ai-la-trieu-phu.html';
 import vuotNguc from './src/page/games/vuot-nguc.html';
 import canNang from './src/page/games/can-nang.html';
+import khienHom from './src/page/games/khien-hom.html';
 export { MonopolyRoom } from './src/monopoly-room.generated.js';
 export { ChibiRushRoom } from './src/chibi-rush-room.js';
 export { PartyCatsRoom } from './src/party-cats-room.js';
@@ -161,6 +162,10 @@ const app = {
       if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
       return new Response(request.method === 'HEAD' ? null : canNang, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
     }
+    if (['/khien-hom', '/khien-hom/'].includes(url.pathname)) {
+      if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
+      return new Response(request.method === 'HEAD' ? null : khienHom, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
+    }
     if (url.pathname === '/__game/chua-mebi/ws') {
       if ((request.headers.get('Upgrade') || '').toLowerCase() !== 'websocket') return new Response('Cần WebSocket', { status: 426 });
       const origin = request.headers.get('Origin');
@@ -265,7 +270,7 @@ export default {
   async fetch(request,env,ctx){
     const response=await app.fetch(request,env,ctx);
     const path=new URL(request.url).pathname.replace(/\/$/,'');
-    const repoPage=path.startsWith('/__game/')||['/goc-tra-nho','/snake','/xi-dach','/ty-phu','/chibi-rush','/party-cats','/co-ca-ngua','/chua-mebi','/mebifarm','/vuot-nguc','/can-nang','/tower-city','/tower city','/tower city.html','/tower-city.html','/tien-len','/uno','/stickman-fight','/ai-la-trieu-phu','/ai la trieu phu','/ai-la-trieu-phu.html','/trieu-phu'].includes(decodeURIComponent(path).toLowerCase());
+    const repoPage=path.startsWith('/__game/')||['/goc-tra-nho','/snake','/xi-dach','/ty-phu','/chibi-rush','/party-cats','/co-ca-ngua','/chua-mebi','/mebifarm','/vuot-nguc','/can-nang','/khien-hom','/tower-city','/tower city','/tower city.html','/tower-city.html','/tien-len','/uno','/stickman-fight','/ai-la-trieu-phu','/ai la trieu phu','/ai-la-trieu-phu.html','/trieu-phu'].includes(decodeURIComponent(path).toLowerCase());
     return request.method==='GET'&&repoPage&&response.ok?withSharedChat(response):response;
   }
 };
