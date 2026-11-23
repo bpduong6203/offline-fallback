@@ -3,8 +3,7 @@
 // hay dấu gạch chéo ngược trong phần chuỗi này.
 export const clientMain = `    // ===================== CHUNG =====================
     var motorways = { w: 480, h: 270, hint: 'Kéo chuột hoặc ngón tay để vẽ đường nối nhà với điểm đến cùng màu.', update: function () {}, draw: function () {} };
-    var bangbang = { w: 1280, h: 800, hint: 'Chọn chế độ 1v1, 2v2 hoặc 3v3, chọn xe tăng rồi sẵn sàng tìm trận.', busy: function () { var f = document.getElementById('bangBangFrame'); return !!(f && f.contentWindow && f.contentWindow.bangBangBusy); }, update: function () {}, draw: function () {} };
-    var games = { flappy: flappy, pool: pool, caro: caro, '2048': game2048, sword: sword, wolf: wolf, motorways: motorways, bangbang: bangbang, played: played };
+    var games = { flappy: flappy, pool: pool, caro: caro, '2048': game2048, sword: sword, wolf: wolf, motorways: motorways, played: played };
     var cur = flappy;
     var hint = document.getElementById('hint');
     var tabs = document.querySelectorAll('.tab[data-g]');
@@ -28,19 +27,13 @@ export const clientMain = `    // ===================== CHUNG ==================
       document.getElementById('swordui').hidden = (g !== 'sword');
       document.getElementById('wolfui').hidden = (g !== 'wolf');
       document.getElementById('gameBox').hidden = (g === 'wolf');
-      document.getElementById('g').hidden = (g === 'motorways' || g === 'bangbang');
+      document.getElementById('g').hidden = (g === 'motorways');
       var mf = document.getElementById('motorwaysFrame');
       mf.hidden = (g !== 'motorways');
       if (g === 'motorways' && !mf.getAttribute('src')) mf.src = mf.getAttribute('data-src');
       else if (g !== 'motorways' && mf.getAttribute('src')) { mf.src = 'about:blank'; mf.removeAttribute('src'); }
-      var bbf = document.getElementById('bangBangFrame');
-      if (bbf) {
-        bbf.hidden = (g !== 'bangbang');
-        if (g === 'bangbang' && !bbf.getAttribute('src')) bbf.src = bbf.getAttribute('data-src');
-        else if (g !== 'bangbang' && bbf.getAttribute('src')) { bbf.src = 'about:blank'; bbf.removeAttribute('src'); }
-      }
       var cardEl = document.querySelector('.card');
-      if (cardEl) cardEl.setAttribute('data-w', g === 'wolf' ? 'menu' : (g === 'sword' ? 'arena' : (g === 'motorways' ? 'motorways' : (g === 'bangbang' ? 'bangbang' : (g === 'played' ? 'played' : '')))));
+      if (cardEl) cardEl.setAttribute('data-w', g === 'wolf' ? 'menu' : (g === 'sword' ? 'arena' : (g === 'motorways' ? 'motorways' : (g === 'played' ? 'played' : ''))));
       hint.textContent = cur.hint;
     }
     for (var t = 0; t < tabs.length; t++) {
@@ -64,7 +57,7 @@ export const clientMain = `    // ===================== CHUNG ==================
       document.getElementById('playScreen').hidden = false;
       document.getElementById('homeTitle').hidden = true;
       document.getElementById('homeIntro').hidden = true;
-      document.getElementById('playingTitle').textContent = ({ flappy: 'Flappy Bug', caro: 'Caro', '2048': '2048', wolf: 'Ma sói', played: 'YOU GOT PLAYED', motorways: 'Mini Motorways', bangbang: 'Bang Bang' })[requestedGame];
+      document.getElementById('playingTitle').textContent = ({ flappy: 'Flappy Bug', caro: 'Caro', '2048': '2048', wolf: 'Ma sói', played: 'YOU GOT PLAYED', motorways: 'Mini Motorways' })[requestedGame];
       document.getElementById('st').hidden = false;
       switchTo(requestedGame);
     } else if (location.hostname === 'game.mebidev.site') {
@@ -106,7 +99,7 @@ export const clientMain = `    // ===================== CHUNG ==================
       fetch(location.pathname + location.search, { method: 'HEAD', cache: 'no-store' })
         .then(function (r) {
           if (r.status < 500) {
-            if (pool.busy() || caro.busy() || (game2048 && game2048.busy()) || sword.busy() || wolf.busy() || played.busy() || bangbang.busy()) {
+            if (pool.busy() || caro.busy() || (game2048 && game2048.busy()) || sword.busy() || wolf.busy() || played.busy()) {
               st.textContent = 'Server đã sống lại! Chơi xong ván rồi bấm Tải lại trang nhé.';
             } else {
               st.textContent = 'Đã kết nối lại! Đang tải trang...';

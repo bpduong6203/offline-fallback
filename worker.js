@@ -11,7 +11,6 @@ import { renderOffline } from './src/page/render.js';
 import { handleGameSocket } from './src/game-socket.js';
 import { serveImage } from './src/image-assets.js';
 import miniMotorways from './src/page/games/Mini_Motorways.html';
-import bangBang from './src/page/games/Bang_Bang.html';
 import bombArena from './src/page/games/bomb-arena.generated.js';
 import stickmanFight from './src/page/games/stickman-fight.generated.js';
 import tienLen from './src/page/games/tien-len.generated.js';
@@ -43,7 +42,6 @@ export { PoolRoom } from './src/pool-room.js';
 export { WolfRoom } from './src/wolf/room.js';
 export { BombRoom } from './src/bomb-room.js';
 export { StickmanRoom } from './src/stickman-room.js';
-export { BangBangQueue } from './src/bang-bang-queue.js';
 export { TienLenRoom } from './src/tienlen-room.js';
 export { UnoRoom } from './src/uno-room.js';
 
@@ -207,22 +205,6 @@ const app = {
         if(result.status===429)return Response.json({error:'Thao tác quá nhanh, thử lại sau một phút'},{status:429});
       }
       return env.MONOPOLY.get(env.MONOPOLY.idFromName(match[1])).fetch(request);
-    }
-    if (url.pathname === '/__game/bang-bang-ws') {
-      const origin = request.headers.get('Origin');
-      if (origin) {
-        try { if (new URL(origin).host !== url.host) return new Response('Forbidden', { status: 403 }); }
-        catch { return new Response('Forbidden', { status: 403 }); }
-      }
-      const requestedMode = Number(url.searchParams.get('mode'));
-      const mode = [1, 2, 3].includes(requestedMode) ? requestedMode : 3;
-      const queueName = mode === 3 ? 'global-matchmaking' : `global-matchmaking-${mode}v${mode}`;
-      const id = env.BANGBANG.idFromName(queueName);
-      return env.BANGBANG.get(id).fetch(request);
-    }
-    if (url.pathname === '/__game/bang-bang') {
-      if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
-      return new Response(request.method === 'HEAD' ? null : bangBang, { headers: { 'Content-Type': 'text/html; charset=UTF-8', 'Cache-Control': 'no-store' } });
     }
     if (['/tien-len', '/tien-len/', '/__game/tien-len'].includes(url.pathname)) {
       if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });

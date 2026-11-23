@@ -9,7 +9,7 @@
 
 ### 1.1. Cách Thức Hoạt Động Của Trang Fallback Hiện Tại
 Trang fallback (`worker.js` trả về HTML từ `src/page/render.js` và `src/page/body.js`):
-1. Thư viện game dạng thẻ tab: `<nav class="tabs">` gồm Flappy, Caro, Ma sói, YOU GOT PLAYED, Mini Motorways, Bang Bang,...
+1. Thư viện game dạng thẻ tab: `<nav class="tabs">` gồm Flappy, Caro, Ma sói, YOU GOT PLAYED, Mini Motorways,...
 2. Khu vực hiển thị trò chơi trung tâm:
    - Khung thẻ `#gameBox` chứa phần tử Canvas duy nhất: `<canvas id="g"></canvas>`.
    - Các game Canvas (Flappy, Caro, Pool, Sword) dùng chung Canvas `#g` và vòng lặp `requestAnimationFrame` chung trong `src/page/client/core.js`.

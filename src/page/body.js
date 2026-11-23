@@ -17,7 +17,6 @@ export const body = (hostname) => `  </style>
       <a class="tab" href="/?game=wolf"><span class="game-icon">🐺</span><span><b>Ma sói</b><small>Trò chơi suy luận nhóm</small></span></a>
       <a class="tab" href="/?game=played"><span class="game-icon">🎮</span><span><b>YOU GOT PLAYED</b><small>Platformer đánh lừa</small></span></a>
       <a class="tab" href="/?game=motorways"><span class="game-icon">🚗</span><span><b>Mini Motorways</b><small>Nối đường và điều phối xe</small></span></a>
-      <a class="tab" href="/?game=bangbang"><span class="game-icon">🚀</span><span><b>Bang Bang</b><small>Đấu trường xe tăng</small></span></a>
       <a class="tab tab-link" href="/co-ca-ngua"><span class="game-icon">🐴</span><span><b>Cờ Cá Ngựa 3D</b><small>Chơi với máy hoặc bạn bè</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/goc-tra-nho"><span class="game-icon">❧</span><span><b>Mebi Trà</b><small>Pha trà, chăm vườn · Bán hàng nhận công đức</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
       <a class="tab tab-link" href="/chua-mebi"><span class="game-icon">🪷</span><span><b>Chùa Mebi</b><small>Không gian 3D thư giãn cùng mọi người</small></span><span class="launch-icon" aria-hidden="true">↗</span></a>
@@ -42,7 +41,7 @@ export const body = (hostname) => `  </style>
     <main id="playScreen" hidden>
     <h1 id="playingTitle"></h1>
     <a class="back-to-library" href="/">← Tất cả trò chơi</a>
-    <div class="game" id="gameBox"><canvas id="g"></canvas><div class="pg-touch" id="playedControls" hidden><div class="pg-touch-group"><button type="button" aria-label="Đi sang trái" data-played-control="left">←</button><button type="button" aria-label="Đi sang phải" data-played-control="right">→</button><button type="button" aria-label="Tạm dừng hoặc tiếp tục" data-played-control="pause">Ⅱ</button></div><button type="button" class="jump" aria-label="Nhảy" data-played-control="jump">NHẢY</button></div><iframe id="motorwaysFrame" title="Mini Motorways" data-src="/__game/mini-motorways" hidden></iframe><iframe id="bangBangFrame" title="Bang Bang đấu trường xe tăng" data-src="/__game/bang-bang" hidden></iframe></div>
+    <div class="game" id="gameBox"><canvas id="g"></canvas><div class="pg-touch" id="playedControls" hidden><div class="pg-touch-group"><button type="button" aria-label="Đi sang trái" data-played-control="left">←</button><button type="button" aria-label="Đi sang phải" data-played-control="right">→</button><button type="button" aria-label="Tạm dừng hoặc tiếp tục" data-played-control="pause">Ⅱ</button></div><button type="button" class="jump" aria-label="Nhảy" data-played-control="jump">NHẢY</button></div><iframe id="motorwaysFrame" title="Mini Motorways" data-src="/__game/mini-motorways" hidden></iframe></div>
     <div class="poolui" id="poolui" hidden>
       <div id="pMenu">
         <div class="row">

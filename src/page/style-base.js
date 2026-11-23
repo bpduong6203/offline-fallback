@@ -76,15 +76,13 @@ export const styleBase = `  <style>
       box-shadow: inset 6px 6px 12px #e6d3be, inset -6px -6px 12px #ffffff;
       max-width: 900px; margin: 0 auto 12px;
     }
-    .card[data-w="motorways"] .game, .card[data-w="bangbang"] .game { max-width: none; }
+    .card[data-w="motorways"] .game { max-width: none; }
     canvas { width: 100%; height: auto; display: block; touch-action: none; cursor: pointer; border-radius: 12px; }
     #motorwaysFrame { width: 100%; height: min(82vh, 1000px); min-height: 420px; display: block; border: 0; border-radius: 12px; background: #292e37; }
     #motorwaysFrame[hidden] { display: none; }
     #busEscapeFrame { width: 100%; height: min(82vh, 700px); min-height: 420px; display: block; border: 0; border-radius: 12px; background: #0f1218; }
     #busEscapeFrame[hidden] { display: none; }
-    #bangBangFrame { width: 100%; height: min(90vh, 960px); min-height: 620px; display: block; border: 0; border-radius: 12px; background: #101722; }
-    #bangBangFrame[hidden] { display: none; }
-    @media (max-width: 600px) { .card { padding: 18px 12px; } .card[data-w="motorways"] { width: calc(100vw - 16px); padding: 14px 10px; } .game-library { padding: 10px 9px 3px; } .library-heading { font-size: 0.68rem; } .library-heading span { font-size: 0.68rem; } .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .tab { min-height: 66px; padding: 8px; gap: 7px; font-size: 0.78rem; } .game-icon { flex-basis: 34px; height: 34px; font-size: 1.15rem; } .tab b { font-size: 0.75rem; } .tab small { font-size: 0.62rem; } #motorwaysFrame { height: 72vh; min-height: 360px; } #busEscapeFrame { height: 72vh; min-height: 360px; } #bangBangFrame { height: 86vh; min-height: 660px; } }
+    @media (max-width: 600px) { .card { padding: 18px 12px; } .card[data-w="motorways"] { width: calc(100vw - 16px); padding: 14px 10px; } .game-library { padding: 10px 9px 3px; } .library-heading { font-size: 0.68rem; } .library-heading span { font-size: 0.68rem; } .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .tab { min-height: 66px; padding: 8px; gap: 7px; font-size: 0.78rem; } .game-icon { flex-basis: 34px; height: 34px; font-size: 1.15rem; } .tab b { font-size: 0.75rem; } .tab small { font-size: 0.62rem; } #motorwaysFrame { height: 72vh; min-height: 360px; } #busEscapeFrame { height: 72vh; min-height: 360px; } }
     /* Spacious Liquid Glass game launcher, only on game.mebidev.site. */
     body.game-home {
       --glass-line: rgba(255,255,255,.68);

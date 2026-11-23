@@ -6,7 +6,6 @@ import {injectChatHtml} from '../src/shared-chat.js';
 // Node does not import Wrangler's HTML text modules. Adapt only that import in memory.
 const entry=new URL('../worker.js',import.meta.url);
 const html=await readFile(new URL('../src/page/games/Mini_Motorways.html',import.meta.url),'utf8');
-const bangBangHtml=await readFile(new URL('../src/page/games/Bang_Bang.html',import.meta.url),'utf8');
 const chibiRushHtml=await readFile(new URL('../src/page/games/chibi-rush.html',import.meta.url),'utf8');
 const partyCatsHtml=await readFile(new URL('../src/page/games/party-cats.html',import.meta.url),'utf8');
 const towerCityHtml=await readFile(new URL('../src/page/games/tower-city.html',import.meta.url),'utf8');
@@ -17,7 +16,6 @@ const source=(await readFile(entry,'utf8'))
   .replace("import chuaMebi from './src/page/games/chua-mebi.html';",`const chuaMebi=${JSON.stringify(chuaMebiHtml)};`)
   .replace("import coCaNgua from './src/page/games/co-ca-ngua.html';",`const coCaNgua=${JSON.stringify(coCaNguaHtml)};`)
   .replace("import miniMotorways from './src/page/games/Mini_Motorways.html';",`const miniMotorways=${JSON.stringify(html)};`)
-  .replace("import bangBang from './src/page/games/Bang_Bang.html';",`const bangBang=${JSON.stringify(bangBangHtml)};`)
   .replace("import chibiRush from './src/page/games/chibi-rush.html';",`const chibiRush=${JSON.stringify(chibiRushHtml)};`)
   .replace("import partyCats from './src/page/games/party-cats.html';",`const partyCats=${JSON.stringify(partyCatsHtml)};`)
   .replace("import towerCity from './src/page/games/tower-city.html';",`const towerCity=${JSON.stringify(towerCityHtml)};`)

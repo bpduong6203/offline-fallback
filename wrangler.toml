@@ -43,11 +43,6 @@ new_sqlite_classes = ["BombRoom"]
 name = "STICKMAN"
 class_name = "StickmanRoom"
 
-# Bang Bang 3v3 global ready queue and authoritative match simulation.
-[[durable_objects.bindings]]
-name = "BANGBANG"
-class_name = "BangBangQueue"
-
 # Tiến Lên Miền Nam: server-authoritative room cho tối đa 4 người
 [[durable_objects.bindings]]
 name = "TIENLEN"
@@ -61,6 +56,7 @@ new_sqlite_classes = ["StickmanRoom"]
 tag = "v5"
 new_sqlite_classes = ["TienLenRoom"]
 
+# Lịch sử tạo class BangBangQueue, giữ nguyên để khớp trạng thái đã deploy.
 [[migrations]]
 tag = "v6"
 new_sqlite_classes = ["BangBangQueue"]
@@ -160,3 +156,8 @@ class_name = "SharedChatRoom"
 [[migrations]]
 tag = "v16"
 new_sqlite_classes = ["SharedChatRoom"]
+
+# Gỡ Bang Bang và Durable Object hàng đợi của game.
+[[migrations]]
+tag = "v17"
+deleted_classes = ["BangBangQueue"]

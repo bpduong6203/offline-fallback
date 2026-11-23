@@ -1,6 +1,6 @@
 # Kết quả kiểm tra — 29/10/2026
 
-- Build toàn project: qua. Bundle Worker bằng esbuild, HTML text loader: qua; có cảnh báo duplicate `name` đã có ở `bang-bang-engine.js`, không chỉnh game đó.
+- Build toàn project: qua. Bundle Worker bằng esbuild, HTML text loader: qua; có cảnh báo duplicate `name` trong một game cũ, không chỉnh game đó.
 - Kiểm tra TOML bằng Python tomllib: tag migration không trùng, hai binding Snake đúng class; bucket R2 hiện có giữ nguyên.
 - Toàn bộ Node tests: **182/182 qua** với `node --test --test-timeout=15000 tests/*.test.mjs`. Bộ riêng Snake **15/15 qua**, gồm matchmaking đồng thời/retry, reservation, boost, food, collision, spawn, disconnect, snapshot ACK và restart.
 - Browser: qua. Hai context độc lập điều khiển rắn thật bằng mouse events/Space; vòng tròn nhỏ, resize, Pointer Events hai ngón, reload cùng snake ID, chết do server xác nhận và respawn cùng arena. Ba context mạng giả lập RTT 50/100/200 ms + jitter + bỏ 12% snapshot ở tầng ứng dụng; có thử CPU throttling ×4. Không runtime exception sau khi sửa trường hợp reconnect chưa có snapshot.
